@@ -248,6 +248,20 @@
 .accountLink {
   min-width: 0;
 }
+.accountLink > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace h2,
+.workspace p {
+  overflow-wrap: anywhere;
+}
+.actions > div {
+  min-width: 0;
+  flex: 1;
+}
 .header > a:first-child,
 .header > button {
   flex-shrink: 0;

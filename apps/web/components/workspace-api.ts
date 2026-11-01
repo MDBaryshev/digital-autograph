@@ -14,6 +14,7 @@ export type Workspace = {
     createdAt: string;
   }[];
   canModerate: boolean;
+  canEditProfile: boolean;
 };
 export async function workspaceRequest<T>(
   origin: string,
@@ -31,7 +32,7 @@ export async function workspaceRequest<T>(
       body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const result = await response.json();
+  const result = await response.json().catch(() => null);
   if (!response.ok)
     throw Error(
       response.status === 401

@@ -703,4 +703,8 @@ export const messages: Record<string, string> = {
   'Security | Destka': 'Безопасность | Destka',
   'Documents | Destka': 'Документы | Destka',
   'Before your first action | Destka': 'Перед первым действием | Destka',
+  'Profile changes are temporarily unavailable.':
+    'Изменение профиля временно недоступно.',
+  'Use at most 200 characters for your display name.':
+    'Отображаемое имя должно содержать не более 200 символов.',
 };

@@ -7,6 +7,7 @@ import {
 } from '@digital-autograph/config';
 import {
   createPgAgeDeclarationRepository,
+  createPgAccountWorkspaceRepository,
   createPgLegalRepository,
 } from '@digital-autograph/db';
 import {
@@ -250,7 +251,11 @@ export async function startApi(
         }
       : undefined,
   );
-  registerAccountWorkspace(app, database);
+  registerAccountWorkspace(
+    app,
+    createPgAccountWorkspaceRepository(database.pool),
+    config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+  );
   let closing = false;
 
   const shutdown = async (): Promise<void> => {

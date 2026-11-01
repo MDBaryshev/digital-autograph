@@ -1,5 +1,33 @@
 import { e2eUserId, expect, test } from './fixtures';
 test.use({ uiLocale: 'ru' });
+test('maximum-length public names remain readable without horizontal overflow', async ({
+  scenario,
+}) => {
+  const context = await scenario.actorContext(e2eUserId);
+  const page = await context.newPage();
+  const name = 'Ж'.repeat(80);
+  const response = await context.request.put(
+    (process.env.API_PUBLIC_ORIGIN ?? 'http://127.0.0.1:4000') + '/me/profile',
+    {
+      headers: { origin: process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000' },
+      data: { displayName: name, slug: 'long-name-owner' },
+    },
+  );
+  expect(response.status()).toBe(200);
+  await page.goto((process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000') + '/me');
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  for (const width of [320, 390, 640, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      ),
+      `overflow at ${width}px`,
+    ).toBe(true);
+  }
+});
 test('owner sets up a profile, creates a draft and explicitly publishes their own Wall', async ({
   scenario,
 }, testInfo) => {

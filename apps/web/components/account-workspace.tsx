@@ -1,5 +1,6 @@
 'use client';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
+import { isPublicWall } from '@digital-autograph/domain';
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from './locale-provider';
 import { AccountSession } from './account-session';
@@ -8,6 +9,7 @@ import { LanguageSwitcher } from './language-switcher';
 import { workspaceRequest, type Workspace } from './workspace-api';
 import { autographApi } from '../lib/autograph-api';
 import { CleanedAutographReview } from './cleaned-autograph-review';
+import { FirstUseActionNotice } from './first-use-action-notice';
 import styles from './workspace.module.css';
 type Section = 'overview' | 'autographs' | 'walls' | 'settings';
 const statuses: Record<AutographStatus | WallStatus, string> = {
@@ -53,6 +55,7 @@ export function AccountWorkspace({
     const c = new AbortController();
     workspaceRequest<Workspace>(apiOrigin, '/me/workspace', c.signal)
       .then((d) => {
+        if (c.signal.aborted) return;
         setData(d);
         setError('');
       })
@@ -87,9 +90,19 @@ export function AccountWorkspace({
     } catch (e) {
       if (!c.signal.aborted)
         setError(
-          e instanceof Error && e.message === 'SLUG_TAKEN'
-            ? 'This username is already taken.'
-            : 'Could not save changes. Refresh before retrying.',
+          e instanceof Error &&
+            [
+              'FIRST_USE_REQUIRED',
+              'LEGAL_DOCUMENT_UNAVAILABLE',
+              'LEGAL_DOCUMENT_CHANGED',
+            ].includes(e.message)
+            ? 'FIRST_USE_REQUIRED'
+            : e instanceof Error &&
+                e.message === 'PROFILE_PUBLICATION_UNAVAILABLE'
+              ? 'Profile changes are temporarily unavailable.'
+              : e instanceof Error && e.message === 'SLUG_TAKEN'
+                ? 'This username is already taken.'
+                : 'Could not save changes. Refresh before retrying.',
         );
     } finally {
       busy.current = false;
@@ -151,7 +164,11 @@ export function AccountWorkspace({
           </a>
         ))}
       </nav>
-      {error && <p role="alert">{t(error)}</p>}
+      {error === 'FIRST_USE_REQUIRED' ? (
+        <FirstUseActionNotice returnTo="/me/settings" />
+      ) : (
+        error && <p role="alert">{t(error)}</p>
+      )}
       {saved && <p role="status">{t('Changes saved.')}</p>}
       {section === 'overview' && (
         <>
@@ -330,7 +347,7 @@ export function AccountWorkspace({
                   </p>
                   <p>{date(w.createdAt)}</p>
                   <div className={styles.actions}>
-                    {w.status !== 'draft' && (
+                    {isPublicWall(w.status) && (
                       <a href={`/walls/${w.id}`}>{t('Open Wall')}</a>
                     )}
                     {w.status === 'draft' && (
@@ -362,6 +379,11 @@ export function AccountWorkspace({
         <>
           <section className={styles.card}>
             <h2>{t('Public profile')}</h2>
+            {!data.canEditProfile && (
+              <p role="status">
+                {t('Profile changes are temporarily unavailable.')}
+              </p>
+            )}
             <p>
               {t(
                 'Your name and username appear on your creator page. Your sign-in details stay private.',
@@ -388,8 +410,15 @@ export function AccountWorkspace({
                 {t('Display name')}
                 <input
                   name="displayName"
-                  disabled={pending}
-                  maxLength={80}
+                  disabled={pending || !data.canEditProfile}
+                  maxLength={400}
+                  onInput={(event) =>
+                    event.currentTarget.setCustomValidity(
+                      Array.from(event.currentTarget.value).length > 200
+                        ? t('Use at most 200 characters for your display name.')
+                        : '',
+                    )
+                  }
                   defaultValue={profile?.displayName ?? ''}
                   required
                   autoComplete="nickname"
@@ -399,9 +428,9 @@ export function AccountWorkspace({
                 {t('Username')}
                 <input
                   name="slug"
-                  disabled={pending}
-                  minLength={3}
-                  maxLength={64}
+                  disabled={pending || !data.canEditProfile}
+                  minLength={1}
+                  maxLength={128}
                   pattern="[a-z0-9]+(-[a-z0-9]+)*"
                   defaultValue={profile?.slug ?? ''}
                   required
@@ -413,7 +442,7 @@ export function AccountWorkspace({
                   'Use lowercase Latin letters, numbers and hyphens. Changing this changes your public profile link.',
                 )}
               </p>
-              <button disabled={pending}>
+              <button disabled={pending || !data.canEditProfile}>
                 {pending ? t('Saving…') : t('Save profile')}
               </button>
               {profile && (

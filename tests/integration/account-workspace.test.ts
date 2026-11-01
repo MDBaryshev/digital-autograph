@@ -4,6 +4,7 @@ import { beforeAll, afterAll, it, expect } from 'vitest';
 import { SessionService } from '../../packages/auth/src/index';
 import {
   createPgSessionRepository,
+  createPgAccountWorkspaceRepository,
   createDatabase,
   migrate,
 } from '../../packages/db/src/index';
@@ -41,7 +42,11 @@ const app = buildApi(db, sessions, {
   sessionTtlSeconds: 3600,
   trustedWebOrigins: ['http://127.0.0.1:3000'],
 });
-registerAccountWorkspace(app, db);
+registerAccountWorkspace(
+  app,
+  createPgAccountWorkspaceRepository(db.pool),
+  true,
+);
 beforeAll(async () => {
   expect(
     (
@@ -87,6 +92,25 @@ afterAll(async () => {
 });
 it('denies anonymous access and lists only the authenticated owner, with no private keys', async () => {
   expect((await app.inject('/me/workspace')).statusCode).toBe(401);
+  expect(
+    (
+      await app.inject({
+        method: 'PUT',
+        url: '/me/profile',
+        payload: { displayName: 'Anonymous', slug: 'anonymous' },
+      })
+    ).statusCode,
+  ).toBe(401);
+  expect(
+    (
+      await app.inject({
+        method: 'PUT',
+        url: '/me/profile',
+        headers: { ...headers(id), origin: 'https://untrusted.example.test' },
+        payload: { displayName: 'Forged', slug: 'forged' },
+      })
+    ).statusCode,
+  ).toBe(403);
   const r = await app.inject({
     url: '/me/workspace',
     headers: headers(id),
@@ -202,4 +226,155 @@ it('never returns another owner’s private draft Wall', async () => {
   });
   expect(result.json().walls.map((w: { id: string }) => w.id)).toEqual([own]);
   expect(result.body).not.toContain(foreign);
+});
+it.each(['x', 'a'.repeat(128)])(
+  'can edit an existing valid creator slug of length %s without changing its URL',
+  async (existingSlug) => {
+    const user = randomUUID();
+    await admin.pool.query('INSERT INTO users(id) VALUES ($1)', [user]);
+    tokens[user] = (await sessions.createSession(user)).token;
+    const creator = (
+      await admin.pool.query(
+        'INSERT INTO creators(owner_user_id) VALUES ($1) RETURNING id',
+        [user],
+      )
+    ).rows[0].id;
+    await admin.pool.query(
+      'INSERT INTO creator_profiles(creator_id,slug,display_name) VALUES ($1,$2,$3)',
+      [creator, existingSlug, 'Existing creator'],
+    );
+    const result = await app.inject({
+      method: 'PUT',
+      url: '/me/profile',
+      headers: headers(user),
+      payload: { displayName: 'Updated creator', slug: existingSlug },
+    });
+    expect(result.statusCode).toBe(200);
+    expect(result.json().slug).toBe(existingSlug);
+  },
+);
+it('keeps public profile writes closed by default without mutating existing data', async () => {
+  const closed = buildApi(db, sessions, {
+    appEnvironment: 'test',
+    sessionTtlSeconds: 3600,
+    trustedWebOrigins: ['http://127.0.0.1:3000'],
+  });
+  registerAccountWorkspace(closed, createPgAccountWorkspaceRepository(db.pool));
+  try {
+    const result = await closed.inject({
+      method: 'PUT',
+      url: '/me/profile',
+      headers: headers(id),
+      payload: { displayName: 'Must not publish', slug: 'must-not-publish' },
+    });
+    expect(result.statusCode).toBe(409);
+    expect(result.json().error.code).toBe('PROFILE_PUBLICATION_UNAVAILABLE');
+    const summary = await closed.inject({
+      url: '/me/workspace',
+      headers: headers(id),
+    });
+    expect(summary.json().canEditProfile).toBe(false);
+    expect(summary.json().profile.slug).toBe(slug);
+    expect(result.headers['cache-control']).toBe('no-store');
+  } finally {
+    await closed.close();
+  }
+});
+it('requires the first-use gate even when profile publication has been separately approved', async () => {
+  const gated = buildApi(db, sessions, {
+    appEnvironment: 'test',
+    sessionTtlSeconds: 3600,
+    trustedWebOrigins: ['http://127.0.0.1:3000'],
+    firstUseEnforced: true,
+  });
+  registerAccountWorkspace(
+    gated,
+    createPgAccountWorkspaceRepository(db.pool),
+    true,
+  );
+  try {
+    const result = await gated.inject({
+      method: 'PUT',
+      url: '/me/profile',
+      headers: headers(id),
+      payload: { displayName: 'Not accepted', slug: 'not-accepted' },
+    });
+    expect(result.statusCode).toBe(409);
+    expect(result.json().error.code).toBe('LEGAL_DOCUMENT_UNAVAILABLE');
+    expect(
+      (
+        await admin.pool.query(
+          'SELECT slug FROM creator_profiles WHERE creator_id IN (SELECT id FROM creators WHERE owner_user_id=$1)',
+          [id],
+        )
+      ).rows,
+    ).toEqual([{ slug }]);
+  } finally {
+    await gated.close();
+  }
+});
+it('updates the displayed profile when an older owned creator has no profile', async () => {
+  const user = randomUUID();
+  await admin.pool.query('INSERT INTO users(id) VALUES ($1)', [user]);
+  tokens[user] = (await sessions.createSession(user)).token;
+  await admin.pool.query(
+    "INSERT INTO creators(owner_user_id,created_at) VALUES ($1,'2020-01-01')",
+    [user],
+  );
+  const current = (
+    await admin.pool.query(
+      "INSERT INTO creators(owner_user_id,created_at) VALUES ($1,'2021-01-01') RETURNING id",
+      [user],
+    )
+  ).rows[0].id;
+  await admin.pool.query(
+    'INSERT INTO creator_profiles(creator_id,slug,display_name) VALUES ($1,$2,$3)',
+    [current, 'legacy-' + user, 'Existing profile'],
+  );
+  const before = await app.inject({
+    url: '/me/workspace',
+    headers: headers(user),
+  });
+  expect(before.json().profile.id).toBe(current);
+  const result = await app.inject({
+    method: 'PUT',
+    url: '/me/profile',
+    headers: headers(user),
+    payload: { displayName: 'Changed name', slug: 'legacy-' + user },
+  });
+  expect(result.statusCode).toBe(200);
+  expect(result.json().id).toBe(current);
+  expect(
+    (
+      await admin.pool.query(
+        'SELECT creator_id FROM creator_profiles WHERE creator_id IN (SELECT id FROM creators WHERE owner_user_id=$1)',
+        [user],
+      )
+    ).rows,
+  ).toEqual([{ creator_id: current }]);
+});
+it('preserves PostgreSQL Unicode name limits and rejects invalid names before SQL', async () => {
+  const name = '😀'.repeat(200);
+  const result = await app.inject({
+    method: 'PUT',
+    url: '/me/profile',
+    headers: headers(id),
+    payload: { displayName: name, slug },
+  });
+  expect(result.statusCode).toBe(200);
+  expect(result.json().displayName).toBe(name);
+  for (const displayName of ['x\u0000y', '\uD800', '😀'.repeat(201)]) {
+    const invalid = await app.inject({
+      method: 'PUT',
+      url: '/me/profile',
+      headers: headers(id),
+      payload: { displayName, slug },
+    });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.json().error.code).toBe('INVALID_PROFILE');
+  }
+  expect(
+    (await app.inject({ url: '/me/workspace', headers: headers(id) })).json()
+      .profile.displayName,
+  ).toBe(name);
 });

@@ -1,9 +1,18 @@
 // @vitest-environment jsdom
 import { afterEach, it, expect, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent } from '@testing-library/react';
+import {
+  cleanup,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import { AccountWorkspace } from './account-workspace';
 import { WorkspaceNavigation } from './workspace-navigation';
-vi.mock('next/navigation', () => ({ usePathname: () => '/me' }));
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/me',
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 const data = {
   profile: { id: 'creator', displayName: 'My studio', slug: 'my-studio' },
   autographs: [
@@ -16,6 +25,7 @@ const data = {
   ],
   walls: [],
   canModerate: false,
+  canEditProfile: true,
 };
 afterEach(() => {
   cleanup();
@@ -70,6 +80,76 @@ it('does not advertise creating an autograph to a guest', async () => {
       .getByRole('link', { name: 'Sign in to continue' })
       .getAttribute('href'),
   ).toBe('/me');
+});
+it('clears the previous account from navigation when a refreshed session expires', async () => {
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify(data)))
+    .mockResolvedValueOnce(new Response('{}', { status: 401 }));
+  vi.stubGlobal('fetch', fetcher);
+  render(<WorkspaceNavigation apiOrigin="https://api.example.test" />);
+  expect(await screen.findByText('My studio')).toBeTruthy();
+  fireEvent(window, new Event('destka-workspace-updated'));
+  await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(screen.queryByText('My studio')).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+  expect(screen.queryByRole('link', { name: 'Create autograph' })).toBeNull();
+});
+it('does not link an archived Wall to a public endpoint that returns 404', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...data,
+          walls: [
+            {
+              id: 'archived',
+              status: 'archived',
+              slotCount: 3,
+              createdAt: '2026-10-31T09:00:00Z',
+            },
+          ],
+        }),
+      ),
+    ),
+  );
+  render(
+    <AccountWorkspace apiOrigin="https://api.example.test" section="walls" />,
+  );
+  expect(await screen.findByText(/Archived/)).toBeTruthy();
+  expect(screen.queryByRole('link', { name: 'Open Wall' })).toBeNull();
+});
+it('disables public profile editing when the server has not admitted publication', async () => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  );
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ ...data, canEditProfile: false })),
+      ),
+  );
+  render(
+    <AccountWorkspace
+      apiOrigin="https://api.example.test"
+      section="settings"
+    />,
+  );
+  expect(
+    await screen.findByText('Profile changes are temporarily unavailable.'),
+  ).toBeTruthy();
+  expect(
+    (screen.getByRole('button', { name: 'Save profile' }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
 });
 it('creates a draft explicitly and does not publish it or duplicate a pending request', async () => {
   let finish!: (r: Response) => void;

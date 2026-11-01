@@ -22,8 +22,12 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
   useEffect(() => {
     const c = new AbortController();
     workspaceRequest<Workspace>(apiOrigin, '/me/workspace', c.signal)
-      .then(setAccount)
-      .catch(() => {});
+      .then((data) => {
+        if (!c.signal.aborted) setAccount(data);
+      })
+      .catch(() => {
+        if (!c.signal.aborted) setAccount(null);
+      });
     return () => c.abort();
   }, [apiOrigin, path, revision]);
   useEffect(() => {
