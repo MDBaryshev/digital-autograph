@@ -13,7 +13,9 @@ function isSectionTitle(block: string): boolean {
 export function LegalDocumentBody({ text }: { text: string }) {
   // The API verifies the immutable byte hash before this presentation-only split.
   // Paragraphs are rendered as ordinary React text, not trusted HTML.
-  const blocks = text.split(/\r?\n[ \t]*\r?\n/u).filter((block) => block.length > 0);
+  const blocks = text
+    .split(/\r?\n[ \t]*\r?\n/u)
+    .filter((block) => block.length > 0);
 
   return (
     <div className={styles.documentBody}>
