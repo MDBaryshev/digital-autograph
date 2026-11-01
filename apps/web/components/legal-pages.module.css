@@ -129,8 +129,15 @@
   min-height: 44px;
 }
 
+.copyActions > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .copyActions p {
-  margin: 0.5rem 0;
+  margin: 0;
   color: var(--color-muted);
 }
 
@@ -228,6 +235,13 @@
     max-width: 100%;
     padding: 0;
     margin: 0;
+    color: #000;
+    background: #fff;
+  }
+
+  .meta,
+  .languageNote {
+    color: #333;
   }
 
   .breadcrumbs,

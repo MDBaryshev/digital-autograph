@@ -218,43 +218,80 @@ try {
     phase = 'published';
     const out = process.env.LEGAL_SMOKE_SCREENSHOTS;
     if (out) await mkdir(out, { recursive: true });
-    for (const width of [1440, 1024, 390, 320]) {
-      await page.setViewportSize({ width, height: 1000 });
-      await page.goto(`${origin}/legal/terms/versions/fixture-old`);
+    for (const theme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme: theme });
+      for (const width of [1440, 1024, 390, 320]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.goto(`${origin}/legal/terms/versions/fixture-old`);
+        assert.equal(
+          await page
+            .getByRole('region', { name: 'Текст документа' })
+            .locator('h2, p')
+            .evaluateAll((blocks) =>
+              blocks.map((b) => b.textContent).join('\n\n'),
+            ),
+          oldText,
+        );
+        for (const scale of [1, 2]) {
+          await page.evaluate((scale) => {
+            globalThis.document.documentElement.style.fontSize = `${16 * scale}px`;
+          }, scale);
+          assert(
+            await page.evaluate(
+              () =>
+                globalThis.document.documentElement.scrollWidth <=
+                globalThis.innerWidth,
+            ),
+            `Horizontal overflow at ${width}px / ${scale * 100}%`,
+          );
+          if (out)
+            await page.screenshot({
+              path: `${out}/legal-${theme}-${width}-${scale * 100}.png`,
+              fullPage: true,
+            });
+        }
+      }
+      await page.goto(`${origin}/legal`);
+      assert.equal(
+        await page.locator('html').getAttribute('data-theme'),
+        theme,
+      );
       assert.equal(
         await page
-          .getByRole('region', { name: 'Текст документа' })
-          .textContent(),
-        oldText,
+          .getByRole('link', {
+            name: 'Пользовательское соглашение',
+            exact: true,
+          })
+          .count(),
+        1,
       );
-      for (const scale of [1, 2]) {
-        await page.evaluate((scale) => {
-          globalThis.document.documentElement.style.fontSize = `${16 * scale}px`;
-        }, scale);
-        assert(
-          await page.evaluate(
-            () =>
-              globalThis.document.documentElement.scrollWidth <=
-              globalThis.innerWidth,
-          ),
-          `Horizontal overflow at ${width}px / ${scale * 100}%`,
-        );
-        if (out)
-          await page.screenshot({
-            path: `${out}/legal-${width}-${scale * 100}.png`,
-            fullPage: true,
-          });
-      }
+      if (out)
+        await page.screenshot({
+          path: `${out}/catalog-${theme}-320.png`,
+          fullPage: true,
+        });
     }
     await page.goto(`${origin}/legal/terms/versions/fixture-old`);
     await page.keyboard.press('Tab');
-    assert.equal(await page.locator(':focus').textContent(), 'Skip to content');
+    assert.equal(
+      await page.locator(':focus').textContent(),
+      'Перейти к содержимому',
+    );
     await page.keyboard.press('Enter');
     assert.equal(
       await page.locator(':focus').getAttribute('id'),
       'main-content',
     );
-    await page.keyboard.press('Tab');
+    // Breadcrumbs precede the toolbar in the reading layout. Reach it using
+    // actual keyboard navigation instead of assuming it is the first link.
+    for (let i = 0; i < 10; i++) {
+      await page.keyboard.press('Tab');
+      if (
+        (await page.locator(':focus').textContent()) ===
+        'Копировать ссылку на редакцию'
+      )
+        break;
+    }
     assert.equal(
       await page.locator(':focus').textContent(),
       'Копировать ссылку на редакцию',
@@ -271,9 +308,25 @@ try {
       .filter({ hasText: /Ссылка скопирована|Не удалось скопировать/ })
       .waitFor();
     assert.equal(await page.locator('main h1').count(), 1);
-    assert.equal(await page.locator('main').getAttribute('lang'), 'ru');
+    assert.equal(
+      await page
+        .getByRole('region', { name: 'Текст документа' })
+        .getAttribute('lang'),
+      'ru',
+    );
+    await page
+      .context()
+      .addCookies([{ name: 'destka-locale', value: 'en', url: origin }]);
+    await page.reload();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    assert.equal(
+      await page
+        .getByRole('region', { name: 'Document text' })
+        .getAttribute('lang'),
+      'ru',
+    );
     process.stdout.write(
-      'Responsive/keyboard PASS: 1440/1024/390/320px, 100/200% text, long URLs, exact text, focus/skip link/copy, Russian language.\n',
+      'Responsive/keyboard PASS: light/dark, 1440/1024/390/320px, 100/200% text, long URLs, exact text, focus/skip link/copy, Russian text with RU/EN interface.\n',
     );
   }
 } finally {

@@ -40,16 +40,24 @@ export async function DocumentLinks({
             <li key={route.type}>
               <a
                 className={styles.documentLink}
+                aria-labelledby={`document-title-${route.type}`}
+                aria-describedby={`document-status-${route.type}`}
                 href={
                   current
                     ? documentBase(route.type)
                     : documentBase(route.type) + '/archive'
                 }
               >
-                <span className={styles.documentLinkTitle}>
+                <span
+                  id={`document-title-${route.type}`}
+                  className={styles.documentLinkTitle}
+                >
                   {t(route.title)}
                 </span>
-                <span className={styles.documentLinkMeta}>
+                <span
+                  id={`document-status-${route.type}`}
+                  className={styles.documentLinkMeta}
+                >
                   {current ? t('Текущая редакция') : t('Архив редакций')}
                 </span>
               </a>

@@ -2,6 +2,10 @@
 import { afterEach, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { LegalDocumentBody } from './legal-document-body';
+import {
+  loadLegalDocuments,
+  loadSecurityDocuments,
+} from '@digital-autograph/config';
 
 afterEach(cleanup);
 
@@ -39,4 +43,23 @@ it('treats HTML and Markdown syntax as literal text', () => {
   expect(screen.getByText('<script>alert("test")</script>')).toBeTruthy();
   const markdown = screen.getByText('[Публичная оферта](https://destka.ru)');
   expect(markdown).toBeTruthy();
+});
+
+it('preserves every character of the eight current Destka source texts in reading blocks', () => {
+  // Test-only source access; the Web runtime still reads published API bytes only.
+  const documents = [
+    ...loadLegalDocuments().filter((document) => document.current),
+    ...loadSecurityDocuments().filter((document) => document.current),
+  ];
+  expect(documents).toHaveLength(8);
+  for (const document of documents) {
+    const { container, unmount } = render(
+      <LegalDocumentBody text={document.content} />,
+    );
+    const rendered = Array.from(container.querySelectorAll('h2, p'))
+      .map((block) => block.textContent)
+      .join('\n\n');
+    expect(rendered).toBe(document.content);
+    unmount();
+  }
 });
