@@ -19,7 +19,7 @@ it('preserves source wording in paragraphs and sections', () => {
     name: '1. Термины и определения',
   });
   expect(heading).toBeTruthy();
-  expect(screen.getByText('Первый абзац.\nВторая строка.')).toBeTruthy();
+  expect(screen.getByText('Первый абзац. Вторая строка.')).toBeTruthy();
 
   const rendered = Array.from(container.querySelectorAll('h2, p')).map(
     (element) => element.textContent,
