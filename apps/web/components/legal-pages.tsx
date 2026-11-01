@@ -46,7 +46,9 @@ export async function DocumentLinks({
                     : documentBase(route.type) + '/archive'
                 }
               >
-                <span className={styles.documentLinkTitle}>{t(route.title)}</span>
+                <span className={styles.documentLinkTitle}>
+                  {t(route.title)}
+                </span>
                 <span className={styles.documentLinkMeta}>
                   {current ? t('Текущая редакция') : t('Архив редакций')}
                 </span>
@@ -147,7 +149,10 @@ export async function DocumentPage({
         >
           <LegalDocumentBody text={text} />
         </section>
-        <nav className={styles.documentFooter} aria-label={t('Другие документы')}>
+        <nav
+          className={styles.documentFooter}
+          aria-label={t('Другие документы')}
+        >
           <a className="actionLink" href={documentBase(type) + '/archive'}>
             {t('Архив редакций')}
           </a>
