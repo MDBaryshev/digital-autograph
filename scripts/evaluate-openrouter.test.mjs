@@ -59,3 +59,73 @@ test('normalizes inline JPEG and rejects returned URLs and SVG', async () => {
     }),
   );
 });
+
+test('production moderation parser rejects truncated approvals and invalid evidence', async () => {
+  const { autographModerationRequest, parseModerationResponse } =
+    await import('../packages/integrations/src/autograph-moderation.ts');
+  const request = autographModerationRequest(
+    'synthetic/vision',
+    Buffer.from('cleaned'),
+  );
+  assert.equal(request.max_tokens, 300);
+  assert.equal(request.provider.data_collection, 'deny');
+  const response = (value, finish_reason = 'stop') => ({
+    choices: [{ finish_reason, message: { content: JSON.stringify(value) } }],
+  });
+  const approved = { decision: 'approved', reasonCode: null, confidence: 0.99 };
+  assert.deepEqual(parseModerationResponse(response(approved)), approved);
+  for (const finish of ['length', 'content_filter', null])
+    assert.throws(() => parseModerationResponse(response(approved, finish)));
+  for (const value of [
+    { ...approved, confidence: '0.99' },
+    { ...approved, reasonCode: 'NOT_AN_AUTOGRAPH' },
+    { ...approved, unexpected: true },
+    { decision: 'rejected', reasonCode: 'invented', confidence: 1 },
+  ])
+    assert.throws(() => parseModerationResponse(response(value)));
+});
+
+test('moderation summary separates false rejections, false approvals and unusable responses', async () => {
+  const { summarizeModeration, models } =
+    await import('./evaluate-openrouter.mjs');
+  const model = models.moderation[0];
+  const report = summarizeModeration([
+    {
+      kind: 'moderation',
+      model,
+      expected: 'approved',
+      decision: 'rejected',
+      confidence: 0.99,
+      matches: false,
+    },
+    {
+      kind: 'moderation',
+      model,
+      expected: 'rejected',
+      decision: 'approved',
+      matches: false,
+    },
+    { kind: 'moderation', model, expected: 'approved', invalidResponse: true },
+    {
+      kind: 'moderation',
+      model,
+      expected: 'manual',
+      decision: 'manual',
+      matches: true,
+    },
+  ])[model];
+  assert.deepEqual(report, {
+    total: 4,
+    valid: 3,
+    invalid: 1,
+    expectedApproved: 2,
+    falseRejections: 1,
+    falseApprovals: 1,
+    manual: 1,
+    matched: 1,
+    autoDecisions: 1,
+    autoFalseApprovals: 0,
+    autoFalseRejections: 1,
+    autoOnAmbiguous: 0,
+  });
+});

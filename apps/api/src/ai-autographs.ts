@@ -7,7 +7,11 @@ import {
   aiFingerprint,
   createPgAutographModerationRepository,
 } from '@digital-autograph/db';
-import { createOpenRouter } from '@digital-autograph/integrations';
+import {
+  createOpenRouter,
+  autographModerationPolicy,
+  autographModerationMinConfidence,
+} from '@digital-autograph/integrations';
 import type { loadOpenRouterConfig } from '@digital-autograph/config';
 import type { PrivateOriginalStorage } from '@digital-autograph/autographs';
 import { authenticatedSession, requireAuthenticatedUser } from './auth/http';
@@ -148,9 +152,13 @@ export function registerAiAutographs(
         ...verdict,
         autographId: item.id,
         cleanedAssetId: item.cleaned_asset_id,
-        policy: 'autograph-v1',
+        policy: autographModerationPolicy,
       });
-      if (closing || verdict.decision === 'manual' || verdict.confidence < 0.95)
+      if (
+        closing ||
+        verdict.decision === 'manual' ||
+        verdict.confidence < autographModerationMinConfidence
+      )
         return;
       await moderation.decide(
         config.moderatorId,

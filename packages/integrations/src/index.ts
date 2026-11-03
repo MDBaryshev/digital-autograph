@@ -26,3 +26,8 @@ export {
 } from './vk-id';
 
 export { createOpenRouter, type AiVerdict } from './openrouter';
+
+export {
+  autographModerationPolicy,
+  autographModerationMinConfidence,
+} from './autograph-moderation';

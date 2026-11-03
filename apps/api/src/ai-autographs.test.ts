@@ -21,6 +21,8 @@ vi.mock('@digital-autograph/db', async (original) => ({
 }));
 vi.mock('@digital-autograph/integrations', () => ({
   createOpenRouter: () => mocks.provider,
+  autographModerationPolicy: 'autograph-v2-simple-marks',
+  autographModerationMinConfidence: 0.95,
 }));
 const actor = 'f1111111-1111-4111-8111-111111111111';
 const storage = {
