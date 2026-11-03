@@ -46,12 +46,14 @@ test('owner sets up a profile, creates a draft and explicitly publishes their ow
     page.getByRole('link', { name: 'Александр', exact: true }),
   ).toBeVisible();
   await page.getByRole('link', { name: 'Мои стены', exact: true }).click();
-  await page.getByLabel('Количество мест', { exact: true }).fill('12');
+  await expect(page.getByLabel('Количество мест', { exact: true })).toHaveCount(
+    0,
+  );
   await page
     .getByRole('button', { name: 'Создать черновик стены', exact: true })
     .click();
   await expect(
-    page.getByText('Черновик · Мест: 12', { exact: true }),
+    page.getByText('Черновик · Мест: 10', { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Открыть стену', exact: true }),
@@ -61,11 +63,14 @@ test('owner sets up a profile, creates a draft and explicitly publishes their ow
     .click();
   await page.getByRole('link', { name: 'Открыть стену', exact: true }).click();
   await expect(page).toHaveURL(/\/walls\/[a-f0-9-]+$/);
+  await expect(page.getByRole('listitem', { name: /^Место \d+$/ })).toHaveCount(
+    10,
+  );
   const states = await scenario.database.pool.query(
-    'SELECT w.status FROM walls w JOIN creators c ON c.id=w.creator_id WHERE c.owner_user_id=$1',
+    'SELECT w.status,w.slot_count FROM walls w JOIN creators c ON c.id=w.creator_id WHERE c.owner_user_id=$1',
     [e2eUserId],
   );
-  expect(states.rows).toEqual([{ status: 'live' }]);
+  expect(states.rows).toEqual([{ status: 'live', slot_count: 10 }]);
   await page.goto(web + '/me');
   await page.setViewportSize({ width: 1000, height: 850 });
   await expect(

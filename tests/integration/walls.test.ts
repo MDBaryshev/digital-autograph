@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { SessionService } from '../../packages/auth/src/index';
 import { buildApi } from '../../apps/api/src/app';
@@ -301,10 +302,13 @@ describe('Creator and Wall Domain with PostgreSQL', () => {
   it('creates all ten positions with the limited API row-lock and insert privileges', async () => {
     const { owner, creator } = await fixture();
     const role = 'wall_policy_api_' + creator.id.replaceAll('-', '');
-    await database.pool.query(`CREATE ROLE ${role} LOGIN`);
+    const password = randomUUID();
+    await database.pool.query(
+      `CREATE ROLE ${role} LOGIN PASSWORD '${password}'`,
+    );
     const target = new URL(url!);
     target.username = role;
-    target.password = '';
+    target.password = password;
     const restricted = createDatabase(target.href);
     try {
       await database.pool.query(

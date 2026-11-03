@@ -438,7 +438,6 @@ describe('public Placement media and ready selection with PostgreSQL and MinIO',
   });
 
   it('fails closed on missing, rejected or mismatched moderation evidence', async () => {
-    const owner = await person();
     const scenarios = [
       { approval: false },
       { moderation: 'missing' as const },
@@ -447,6 +446,7 @@ describe('public Placement media and ready selection with PostgreSQL and MinIO',
       { status: 'awaiting_moderation' },
     ];
     for (const scenario of scenarios) {
+      const owner = await person();
       const wall = await wallFixture(owner.id);
       const autograph = await autographFixture(owner.id, scenario);
       const placementId = await placementFixture(
