@@ -43,6 +43,10 @@ const exactOrigin = z.string().refine((value) => {
 
 const apiSchema = databaseSchema
   .extend({
+    CREATOR_PROFILE_PUBLICATION_APPROVED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
     FIRST_USE_ENFORCEMENT_ENABLED: z
       .enum(['true', 'false'])
       .default('false')
