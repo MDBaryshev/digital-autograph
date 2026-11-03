@@ -57,17 +57,15 @@ vi.mock('next/headers', () => ({
 it('exposes only the public invitation image origin in social metadata', async () => {
   vi.stubGlobal(
     'fetch',
-    vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            id,
-            creator: { displayName: 'Creator' },
-            appearance: { title: 'My ten', description: 'Public description' },
-          }),
-        ),
+    vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id,
+          creator: { displayName: 'Creator' },
+          appearance: { title: 'My ten', description: 'Public description' },
+        }),
       ),
+    ),
   );
   const metadata = await generateMetadata({ params: Promise.resolve({ id }) });
   expect(metadata.title).toBe('My ten');
