@@ -323,3 +323,10 @@
   display: grid;
   gap: 1rem;
 }
+
+.navigationAvatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
