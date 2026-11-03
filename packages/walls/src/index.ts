@@ -47,6 +47,12 @@ export type PublicCreator = {
 };
 
 export type PublicWall = {
+  appearance?: {
+    title: string;
+    description: string;
+    avatarDataUrl: string | null;
+    coverDataUrl: string | null;
+  };
   id: string;
   status: WallStatus;
   startAt: Date | null;

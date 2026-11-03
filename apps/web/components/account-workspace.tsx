@@ -1,4 +1,5 @@
 'use client';
+import { WallAppearanceEditor } from './wall-appearance-editor';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
 import { isPublicWall } from '@digital-autograph/domain';
 import { useEffect, useRef, useState } from 'react';
@@ -176,7 +177,18 @@ export function AccountWorkspace({
         <>
           <div className={styles.actions}>
             <span className={styles.avatar} aria-hidden="true">
-              {Array.from(profile?.displayName ?? '')[0]?.toUpperCase() ?? 'D'}
+              {profile?.avatarDataUrl ? (
+                <img
+                  className={styles.profileAvatar}
+                  src={profile.avatarDataUrl}
+                  alt=""
+                />
+              ) : (
+                <>
+                  {Array.from(profile?.displayName ?? '')[0]?.toUpperCase() ??
+                    'D'}
+                </>
+              )}
             </span>
             <div>
               <h2>{profile?.displayName ?? t('Your space')}</h2>
@@ -285,6 +297,7 @@ export function AccountWorkspace({
       )}
       {section === 'walls' && (
         <>
+          <a href="/me/settings">{t('Edit Wall appearance')}</a>
           {!profile ? (
             <section className={styles.card}>
               <h2>{t('Give your Wall a name')}</h2>
@@ -443,6 +456,10 @@ export function AccountWorkspace({
               )}
             </form>
           </section>
+          <WallAppearanceEditor
+            apiOrigin={apiOrigin}
+            canEdit={data.canEditProfile}
+          />
           {preferences}
           <section className={styles.card}>
             <h2>{t('Session')}</h2>

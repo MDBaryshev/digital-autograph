@@ -13,6 +13,7 @@ import {
   type WallSnapshot,
 } from '@digital-autograph/walls';
 import type { Pool, PoolClient } from 'pg';
+import type { WallAppearance } from './appearance-repository';
 
 type WallRow = {
   id: string;
@@ -27,6 +28,7 @@ type WallRow = {
 type SlotRow = { id: string; position: number };
 
 type PublicWallRow = {
+  appearance: WallAppearance | null;
   id: string;
   creator_id: string;
   slug: string;
@@ -179,6 +181,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
       const result = await pool.query<PublicWallRow>(
         `SELECT w.id, w.status, w.start_at, w.end_at, w.slot_count,
                 c.id AS creator_id, cp.slug, cp.display_name,
+                CASE WHEN ap.user_id IS NOT NULL THEN json_build_object('title',ap.title,'description',ap.description,'avatarDataUrl',ap.avatar_data_url,'coverDataUrl',ap.cover_data_url) ELSE NULL END AS appearance,
                 s.id AS slot_id, s.position,
                 p.id AS placement_id, p.source AS placement_source,
                 p.started_at AS placement_started_at,
@@ -199,6 +202,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
          FROM walls w
          JOIN creators c ON c.id = w.creator_id
          JOIN creator_profiles cp ON cp.creator_id = c.id
+         LEFT JOIN account_appearance ap ON ap.user_id=c.owner_user_id
          LEFT JOIN slots s ON s.wall_id = w.id
          LEFT JOIN placements p ON p.slot_id = s.id AND p.ended_at IS NULL
          LEFT JOIN autographs a ON a.id = p.autograph_id
@@ -244,6 +248,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
         startAt: first.start_at,
         endAt: first.end_at,
         slotCount: first.slot_count,
+        ...(first.appearance ? { appearance: first.appearance } : {}),
         creator: {
           id: first.creator_id,
           slug: first.slug,

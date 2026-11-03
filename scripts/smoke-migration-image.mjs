@@ -18,6 +18,7 @@ const journal = JSON.parse(
   ),
 );
 const expectedTables = [
+  'account_appearance',
   ...readFileSync(
     new URL('../packages/db/src/schema.ts', import.meta.url),
     'utf8',

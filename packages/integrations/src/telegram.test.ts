@@ -21,6 +21,7 @@ type TokenClaims = {
   aud?: string;
   exp?: number;
   nonce?: string;
+  picture?: string;
 };
 
 function signedIdToken(overrides: TokenClaims = {}): string {
@@ -195,5 +196,36 @@ describe('Telegram production OIDC adapter with local discovery and JWKS', () =>
         codeVerifier: 'test-verifier',
       }),
     ).rejects.toThrow();
+  });
+});
+
+it('requests optional profile scope and accepts only the verified token photo claim', async () => {
+  const client = createTelegramOidcClient(
+    { clientId, clientSecret: 'testsecret', redirectUri, includeProfile: true },
+    {
+      fetch: fakeFetch(
+        () => signedIdToken({ picture: 'https://t.me/i/userpic/320/test.jpg' }),
+        [],
+      ),
+    },
+  );
+  const url = new URL(
+    await client.authorizationUrl({
+      state: 'test-state',
+      nonce: 'test-nonce',
+      codeChallenge: 'test-challenge',
+    }),
+  );
+  expect(url.searchParams.get('scope')).toBe('openid profile');
+  expect(
+    await client.verifyCode({
+      code: 'test-code',
+      state: 'test-state',
+      nonce: 'test-nonce',
+      codeVerifier: 'v'.repeat(43),
+    }),
+  ).toEqual({
+    subject: 'telegram-sub',
+    picture: 'https://t.me/i/userpic/320/test.jpg',
   });
 });

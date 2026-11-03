@@ -5,12 +5,17 @@ export class AccountWorkspaceError extends Error {
     super(code);
   }
 }
-type Profile = { id: string; slug: string; displayName: string };
+type Profile = {
+  id: string;
+  slug: string;
+  displayName: string;
+  avatarDataUrl: string | null;
+};
 export function createPgAccountWorkspaceRepository(pool: Pool) {
   return {
     async read(userId: string) {
       const profile = await pool.query<Profile>(
-        'SELECT c.id,p.slug,p.display_name AS "displayName" FROM creators c JOIN creator_profiles p ON p.creator_id=c.id WHERE c.owner_user_id=$1 ORDER BY c.created_at,c.id LIMIT 1',
+        `SELECT c.id,p.slug,p.display_name AS "displayName",CASE WHEN ap.avatar_source='none' THEN NULL ELSE COALESCE(ap.avatar_data_url,ap.provider_avatar_data_url) END AS "avatarDataUrl" FROM creators c JOIN creator_profiles p ON p.creator_id=c.id LEFT JOIN account_appearance ap ON ap.user_id=c.owner_user_id WHERE c.owner_user_id=$1 ORDER BY c.created_at,c.id LIMIT 1`,
         [userId],
       );
       const autographs = await pool.query<{

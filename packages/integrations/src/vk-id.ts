@@ -2,6 +2,7 @@ export type VkIdOAuthConfig = {
   clientId: string;
   serviceToken: string;
   redirectUri: string;
+  includeProfile?: boolean;
 };
 export interface VkIdOAuthClient {
   authorizationUrl(input: { state: string; codeChallenge: string }): string;
@@ -10,7 +11,7 @@ export interface VkIdOAuthClient {
     codeVerifier: string;
     deviceId: string;
     state: string;
-  }): Promise<{ subject: string }>;
+  }): Promise<{ subject: string; picture?: string }>;
 }
 
 const maxResponseBytes = 65536;
@@ -127,7 +128,13 @@ export function createVkIdOAuthClient(
           tokenSubject
         )
           throw new Error();
-        return { subject: tokenSubject };
+        const picture = (info.user as Record<string, unknown>).avatar;
+        return {
+          subject: tokenSubject,
+          ...(config.includeProfile && typeof picture === 'string'
+            ? { picture }
+            : {}),
+        };
       } catch {
         // Never expose provider body, tokens, service credential, code or cause.
         throw new Error('VK ID authentication failed');

@@ -31,3 +31,8 @@ export {
   autographModerationPolicy,
   autographModerationMinConfidence,
 } from './autograph-moderation';
+
+export {
+  normalizeAppearanceImage,
+  importProviderAvatar,
+} from './appearance-images';

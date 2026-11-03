@@ -13,13 +13,14 @@ export interface TelegramOidcClient {
     state: string;
     nonce: string;
     codeVerifier: string;
-  }): Promise<{ subject: string }>;
+  }): Promise<{ subject: string; picture?: string }>;
 }
 
 export type TelegramOidcConfig = {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  includeProfile?: boolean;
 };
 
 export function createTelegramOidcClient(
@@ -52,7 +53,7 @@ export function createTelegramOidcClient(
       return oidc.buildAuthorizationUrl(client, {
         redirect_uri: config.redirectUri,
         response_type: 'code',
-        scope: 'openid',
+        scope: config.includeProfile ? 'openid profile' : 'openid',
         state,
         nonce,
         code_challenge: codeChallenge,
@@ -80,7 +81,13 @@ export function createTelegramOidcClient(
       if (typeof subject !== 'string' || !subject) {
         throw new Error('Telegram identity subject is missing');
       }
-      return { subject };
+      const picture = tokens.claims()?.picture;
+      return {
+        subject,
+        ...(config.includeProfile && typeof picture === 'string'
+          ? { picture }
+          : {}),
+      };
     },
   };
 }

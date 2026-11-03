@@ -1,5 +1,30 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Edit Wall appearance': 'Оформить стену',
+  'Wall appearance': 'Оформление стены',
+  'Choose a name, avatar and cover. Saving publishes this appearance on your Wall.':
+    'Выбери название, аватар и обложку. После сохранения они появятся на твоей стене.',
+  'Could not load Wall appearance.': 'Не удалось загрузить оформление стены.',
+  'Could not save Wall appearance.': 'Не удалось сохранить оформление стены.',
+  'Wall appearance saved.': 'Оформление стены сохранено.',
+  'Wall name': 'Название стены',
+  'Wall description': 'Описание стены',
+  'Avatar source': 'Аватар',
+  'Initials only': 'Только инициалы',
+  'Photo from sign-in account': 'Фото из аккаунта входа',
+  'My uploaded photo': 'Моё загруженное фото',
+  'Upload avatar': 'Загрузить аватар',
+  'Upload cover': 'Загрузить обложку',
+  'Avatar preview': 'Предпросмотр аватара',
+  'Cover preview': 'Предпросмотр обложки',
+  'Remove cover': 'Убрать обложку',
+  'Images are cropped to fit. Check the previews before saving.':
+    'Изображения обрезаются по размеру. Проверь предпросмотр перед сохранением.',
+  'Choose a PNG, JPEG or WebP image up to 10 MB and 20 megapixels.':
+    'Выбери PNG, JPEG или WebP до 10 МБ и 20 мегапикселей.',
+  'Save Wall appearance': 'Сохранить оформление стены',
+  'Wall cover': 'Обложка стены',
+  'Wall owner avatar': 'Аватар владельца стены',
   'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.':
     'На аккаунте может быть одна стена — ровно 10 мест. Сначала она появится как приватный черновик.',
   'Your account already has its Wall with 10 places.':

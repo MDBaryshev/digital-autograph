@@ -1,3 +1,6 @@
+import { createPgAppearanceRepository } from '@digital-autograph/db';
+import { importProviderAvatar } from '@digital-autograph/integrations';
+import { registerAppearance } from './appearance';
 import { registerAiAutographs } from './ai-autographs';
 import { registerAccountWorkspace } from './account-workspace';
 import { loadApiStartupConfig } from './startup-config';
@@ -112,15 +115,27 @@ export async function startApi(
   const identities = new IdentityService(
     createPgProviderIdentityRepository(database.pool),
   );
+  const appearance = createPgAppearanceRepository(database.pool);
+  const storeAvatar = async (
+    provider: string,
+    userId: string,
+    picture: string,
+  ) => {
+    if (!config.CREATOR_PROFILE_PUBLICATION_APPROVED) return;
+    const image = await importProviderAvatar(provider, picture);
+    if (image) await appearance.saveProviderAvatar(userId, image);
+  };
   const googleLogin = new GoogleLoginService(
     attempts,
     createGoogleOidcClient({
       clientId: config.GOOGLE_CLIENT_ID,
       clientSecret: config.GOOGLE_CLIENT_SECRET,
       redirectUri: config.GOOGLE_REDIRECT_URI,
+      includeProfile: config.CREATOR_PROFILE_PUBLICATION_APPROVED,
     }),
     identities,
     sessions,
+    (userId, picture) => storeAvatar('google', userId, picture),
   );
   const telegramLogin = new TelegramLoginService(
     attempts,
@@ -128,9 +143,11 @@ export async function startApi(
       clientId: config.TELEGRAM_CLIENT_ID,
       clientSecret: config.TELEGRAM_CLIENT_SECRET,
       redirectUri: config.TELEGRAM_REDIRECT_URI,
+      includeProfile: config.CREATOR_PROFILE_PUBLICATION_APPROVED,
     }),
     identities,
     sessions,
+    (userId, picture) => storeAvatar('telegram', userId, picture),
   );
   const payments =
     paymentConfig || syntheticPayment
@@ -226,9 +243,13 @@ export async function startApi(
       ? {
           login: new YandexLoginService(
             attempts,
-            createYandexOAuthClient(yandexConfig),
+            createYandexOAuthClient({
+              ...yandexConfig,
+              includeProfile: config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+            }),
             identities,
             sessions,
+            (userId, picture) => storeAvatar('yandex', userId, picture),
           ),
           config: {
             appEnvironment: config.APP_ENV,
@@ -241,9 +262,13 @@ export async function startApi(
       ? {
           login: new VkIdLoginService(
             attempts,
-            createVkIdOAuthClient(vkIdConfig),
+            createVkIdOAuthClient({
+              ...vkIdConfig,
+              includeProfile: config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+            }),
             identities,
             sessions,
+            (userId, picture) => storeAvatar('vk_id', userId, picture),
           ),
           config: {
             appEnvironment: config.APP_ENV,
@@ -256,6 +281,11 @@ export async function startApi(
   registerAccountWorkspace(
     app,
     createPgAccountWorkspaceRepository(database.pool),
+    config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+  );
+  registerAppearance(
+    app,
+    appearance,
     config.CREATOR_PROFILE_PUBLICATION_APPROVED,
   );
   registerAiAutographs(app, database.pool, storage, openRouter);

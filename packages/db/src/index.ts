@@ -100,3 +100,10 @@ export {
   AiAdmissionError,
   aiFingerprint,
 } from './ai-autograph-repository';
+
+export {
+  createPgAppearanceRepository,
+  type AppearanceRepository,
+  type WallAppearance,
+  type PrivateAppearance,
+} from './appearance-repository';

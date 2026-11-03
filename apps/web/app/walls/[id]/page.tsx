@@ -28,11 +28,15 @@ export async function generateMetadata({
     return { title: t('Wall not found'), robots: { index: false } };
   try {
     const wall = await loadWall(parsed.data.id);
-    const title = t("{name}'s Wall", { name: wall.creator.displayName });
-    const description = t(
-      'View {name}’s digital autograph Wall and its public placement history.',
-      { name: wall.creator.displayName },
-    );
+    const title =
+      wall.appearance?.title ||
+      t("{name}'s Wall", { name: wall.creator.displayName });
+    const description =
+      wall.appearance?.description ||
+      t(
+        'View {name}’s digital autograph Wall and its public placement history.',
+        { name: wall.creator.displayName },
+      );
     return {
       title,
       description,
