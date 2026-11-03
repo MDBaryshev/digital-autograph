@@ -23,6 +23,7 @@ import { FirstUseGate } from './first-use-gate';
 import { ReadyAutographPicker } from './ready-autograph-picker';
 import { WallPlacementHistory } from './placement-history';
 import { WallSlot } from './wall-slot';
+import { WallInvite } from './wall-invite';
 import { WallCountdown } from './wall-countdown';
 import { ShareControls } from './share-controls';
 import { SignatureArt } from './signature-art';
@@ -336,6 +337,14 @@ export function PublicWallScreen({
         </aside>
       </header>
 
+      <WallInvite
+        wallId={wall.id}
+        title={
+          wall.appearance?.title ||
+          t("{name}'s Wall", { name: wall.creator.displayName })
+        }
+        apiOrigin={apiOrigin}
+      />
       <section aria-labelledby="slots-heading">
         <h2 id="slots-heading">{t('Slots')}</h2>
         <ol className={styles.grid}>

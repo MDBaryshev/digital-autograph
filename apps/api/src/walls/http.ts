@@ -8,7 +8,8 @@ import {
 } from '@digital-autograph/contracts';
 import { WallError, type WallService } from '@digital-autograph/walls';
 import type { FastifyInstance, FastifyReply } from 'fastify';
-import type { z } from 'zod';
+import { z } from 'zod';
+import { renderWallInviteCard } from './invite-card';
 import { authenticatedSession, requireAuthenticatedUser } from '../auth/http';
 
 function parse<T extends z.ZodType>(
@@ -75,6 +76,36 @@ export function registerWallRoutes(
       return await walls.getWall(params.id);
     } catch (error) {
       return sendWallError(error, reply);
+    }
+  });
+
+  let renderingCards = 0;
+  app.get('/walls/:id/invite-card', async (request, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    const params = parse(wallIdParams, request.params, reply);
+    const query = parse(
+      z.strictObject({ locale: z.enum(['ru', 'en']).default('ru') }),
+      request.query,
+      reply,
+    );
+    if (!params || !query) return reply;
+    try {
+      const wall = await walls.getWall(params.id);
+      if (renderingCards >= 2)
+        return reply
+          .header('Retry-After', '3')
+          .code(503)
+          .send({ error: { code: 'CARD_BUSY' } });
+      renderingCards++;
+      try {
+        return reply
+          .type('image/png')
+          .send(await renderWallInviteCard(wall, query.locale));
+      } finally {
+        renderingCards--;
+      }
+    } catch (e) {
+      return sendWallError(e, reply);
     }
   });
 

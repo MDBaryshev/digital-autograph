@@ -1,5 +1,18 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Invite to this Wall': 'Приглашение на стену',
+  'Invite your people': 'Позови своих',
+  'One Wall. Ten places. Send the link to someone who should be here.':
+    'Одна стена. Десять мест. Отправь ссылку тем, кого хочешь здесь видеть.',
+  'Share invitation': 'Поделиться приглашением',
+  'Copy Wall link': 'Скопировать ссылку на стену',
+  'Open invitation card': 'Открыть карточку приглашения',
+  'Wall invitation link': 'Ссылка на стену',
+  'Copy the link from the field below.': 'Скопируй ссылку из поля ниже.',
+  'Show QR code': 'Показать QR-код',
+  'QR code for this Wall': 'QR-код этой стены',
+  'Download QR code': 'Скачать QR-код',
+  'Wall invitation card': 'Карточка приглашения на стену',
   'Edit Wall appearance': 'Оформить стену',
   'Wall appearance': 'Оформление стены',
   'Choose a name, avatar and cover. Saving publishes this appearance on your Wall.':

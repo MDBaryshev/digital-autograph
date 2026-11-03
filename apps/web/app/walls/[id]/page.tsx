@@ -1,4 +1,4 @@
-import { getTranslator } from '../../../lib/i18n-server';
+import { getTranslator, getLocale } from '../../../lib/i18n-server';
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { loadWebConfig } from '@digital-autograph/config';
@@ -40,7 +40,36 @@ export async function generateMetadata({
     return {
       title,
       description,
-      openGraph: { title, description, type: 'website' },
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        images: [
+          {
+            url:
+              loadWebConfig().API_PUBLIC_ORIGIN +
+              '/walls/' +
+              parsed.data.id +
+              '/invite-card?locale=' +
+              (await getLocale()),
+            width: 1200,
+            height: 630,
+            alt: t('Wall invitation card'),
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [
+          loadWebConfig().API_PUBLIC_ORIGIN +
+            '/walls/' +
+            parsed.data.id +
+            '/invite-card?locale=' +
+            (await getLocale()),
+        ],
+      },
     };
   } catch {
     return { title: t('Wall unavailable'), robots: { index: false } };
