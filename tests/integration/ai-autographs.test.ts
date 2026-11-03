@@ -119,3 +119,41 @@ it('replays only the owner result and keeps moderation evidence immutable', asyn
     repo.claim(owner, op, 'moderation', aiFingerprint(op), 'test/vision'),
   ).rejects.toThrow();
 });
+
+it('retains moderation admission and evidence against deletion in every state', async () => {
+  for (const userId of [owner, other]) {
+    for (const state of ['pending', 'completed', 'failed'] as const) {
+      const op = 'moderation:' + randomUUID();
+      await repo.claim(
+        userId,
+        op,
+        'moderation',
+        aiFingerprint(op),
+        'test/vision',
+      );
+      if (state !== 'pending')
+        await repo.finish(
+          userId,
+          op,
+          { decision: 'manual' },
+          state === 'failed',
+        );
+      await expect(
+        db.pool.query(
+          'DELETE FROM ai_autograph_requests WHERE user_id=$1 AND operation=$2',
+          [userId, op],
+        ),
+      ).rejects.toThrow('immutable');
+      expect(await repo.read(userId, op)).toMatchObject({ state });
+      await expect(
+        repo.claim(
+          userId === owner ? other : owner,
+          op,
+          'moderation',
+          aiFingerprint(op),
+          'test/vision',
+        ),
+      ).rejects.toThrow();
+    }
+  }
+});

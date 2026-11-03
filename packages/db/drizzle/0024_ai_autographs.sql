@@ -20,6 +20,12 @@ ALTER TABLE ai_autograph_requests ADD CONSTRAINT ai_state CHECK(state IN ('pendi
 --> statement-breakpoint
 CREATE FUNCTION guard_ai_moderation_audit() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
+  IF TG_OP='DELETE' THEN
+    IF OLD.kind='moderation' THEN
+      RAISE EXCEPTION 'AI moderation evidence is immutable';
+    END IF;
+    RETURN OLD;
+  END IF;
   IF OLD.kind='moderation' AND OLD.state<>'pending' THEN
     RAISE EXCEPTION 'Completed AI moderation evidence is immutable';
   END IF;
@@ -29,4 +35,4 @@ BEGIN
   RETURN NEW;
 END $$;
 --> statement-breakpoint
-CREATE TRIGGER ai_moderation_audit_immutable BEFORE UPDATE ON ai_autograph_requests FOR EACH ROW EXECUTE FUNCTION guard_ai_moderation_audit();
+CREATE TRIGGER ai_moderation_audit_immutable BEFORE UPDATE OR DELETE ON ai_autograph_requests FOR EACH ROW EXECUTE FUNCTION guard_ai_moderation_audit();
