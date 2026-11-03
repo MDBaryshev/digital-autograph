@@ -212,7 +212,7 @@ try {
     'Legal SSR smoke PASS: drafts/unknown/internal 404; current/history/security; outage/tampering; noindex; no source files in runtime.\n',
   );
   if (process.argv.includes('--visual')) {
-    const { chromium } = await import('@playwright/test');
+    const { chromium, expect } = await import('@playwright/test');
     browser = await chromium.launch();
     const page = await browser.newPage();
     phase = 'published';
@@ -223,15 +223,21 @@ try {
       for (const width of [1440, 1024, 390, 320]) {
         await page.setViewportSize({ width, height: 1000 });
         await page.goto(`${origin}/legal/terms/versions/fixture-old`);
-        assert.equal(
-          await page
-            .getByRole('region', { name: 'Текст документа' })
-            .locator('h2, p')
-            .evaluateAll((blocks) =>
-              blocks.map((b) => b.textContent).join('\n\n'),
-            ),
-          oldText,
-        );
+        await expect
+          .poll(
+            async () =>
+              page
+                .getByRole('region', { name: 'Текст документа' })
+                .locator('h2, p')
+                .evaluateAll((blocks) =>
+                  blocks.map((b) => b.textContent).join('\n\n'),
+                ),
+            {
+              timeout: 10000,
+              message: 'Wait for the complete streamed document',
+            },
+          )
+          .toBe(oldText);
         for (const scale of [1, 2]) {
           await page.evaluate((scale) => {
             globalThis.document.documentElement.style.fontSize = `${16 * scale}px`;
