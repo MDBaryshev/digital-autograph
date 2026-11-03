@@ -707,4 +707,33 @@ export const messages: Record<string, string> = {
     'Изменение профиля временно недоступно.',
   'Use at most 200 characters for your display name.':
     'Отображаемое имя должно содержать не более 200 символов.',
+  'AI autograph suggestions': 'Варианты от нейросети',
+  'Enter your nickname to generate three decorative autographs. Your nickname is sent to OpenRouter and the selected model. Never use a bank or legal signature.':
+    'Введи свой ник — нейросеть предложит три декоративных автографа. Ник передаётся OpenRouter и выбранной модели. Это не банковская или юридическая подпись.',
+  'Your nickname': 'Твой ник',
+  'Generating three variants…': 'Генерируем три варианта…',
+  'Suggest 3 variants': 'Предложить 3 варианта',
+  'This can take up to three minutes. Choose a variant before uploading.':
+    'Это может занять до трёх минут. Ты сможешь выбрать один вариант перед загрузкой.',
+  'Autograph variant {number}': 'Вариант автографа {number}',
+  'Choose variant {number}': 'Выбрать вариант {number}',
+  'Variant {number} selected. Create a private preview to check the processed result.':
+    'Выбран вариант {number}. Создай приватный предпросмотр, чтобы проверить результат обработки.',
+  'After approval, the cleaned image is sent to OpenRouter for automated content review. Uncertain cases go to a moderator.':
+    'После подтверждения очищенное изображение будет передано OpenRouter для автоматической проверки содержания. Спорные случаи проверяет модератор.',
+  'Sign in first.': 'Сначала войди в аккаунт.',
+  'Generation limit reached. Draw your own autograph or try tomorrow.':
+    'Лимит генераций исчерпан. Нарисуй свой автограф или попробуй завтра.',
+  'Generation is unavailable. You can draw your own autograph.':
+    'Генерация пока недоступна. Можно нарисовать свой автограф.',
+  'Could not start generation. Check the account requirements and retry.':
+    'Не удалось начать генерацию. Проверь подтверждение правил в аккаунте.',
+  'Could not load variants. Retry with the same nickname.':
+    'Не удалось получить варианты. Повтори запрос с тем же ником.',
+  'Generation failed. Draw your autograph or change your nickname for a new attempt.':
+    'Генерация не удалась. Нарисуй свой автограф или измени ник для новой попытки.',
+  'Variants are unavailable.': 'Варианты недоступны.',
+  'Generation has not finished. Retry with the same nickname to avoid another API charge.':
+    'Генерация ещё не завершилась. Повтори запрос с тем же ником: повторной оплаты API не будет.',
+  'Generation is unavailable.': 'Генерация недоступна.',
 };

@@ -1270,3 +1270,27 @@ export const autographCleanupSchedule = pgTable(
     ),
   ],
 );
+
+export const aiAutographRequests = pgTable(
+  'ai_autograph_requests',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    operation: varchar('operation', { length: 80 }).notNull(),
+    kind: varchar('kind', { length: 16 }).notNull(),
+    fingerprint: varchar('fingerprint', { length: 64 }).notNull(),
+    model: varchar('model', { length: 200 }).notNull(),
+    state: varchar('state', { length: 16 }).notNull().default('pending'),
+    result: jsonb('result'),
+    createdAt: createdAt(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.operation] }),
+    index('ai_requests_daily').on(t.kind, t.createdAt),
+    uniqueIndex('ai_moderation_once')
+      .on(t.operation)
+      .where(sql`kind = 'moderation'`),
+  ],
+);

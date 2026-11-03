@@ -1,3 +1,4 @@
+import { registerAiAutographs } from './ai-autographs';
 import { registerAccountWorkspace } from './account-workspace';
 import { loadApiStartupConfig } from './startup-config';
 import type { LegalHttp } from './legal-http';
@@ -80,6 +81,7 @@ export async function startApi(
     vkIdConfig,
     notificationTelegram,
     enableTestAuthSeam,
+    openRouter,
   } = loadApiStartupConfig(legalDocuments);
   if (
     syntheticPayment &&
@@ -256,6 +258,7 @@ export async function startApi(
     createPgAccountWorkspaceRepository(database.pool),
     config.CREATOR_PROFILE_PUBLICATION_APPROVED,
   );
+  registerAiAutographs(app, database.pool, storage, openRouter);
   let closing = false;
 
   const shutdown = async (): Promise<void> => {

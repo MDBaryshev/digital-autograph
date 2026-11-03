@@ -260,6 +260,9 @@ importers:
       '@digital-autograph/autographs':
         specifier: workspace:*
         version: link:../autographs
+      '@digital-autograph/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@digital-autograph/notifications':
         specifier: workspace:*
         version: link:../notifications

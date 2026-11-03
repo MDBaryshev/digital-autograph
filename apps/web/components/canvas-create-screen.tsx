@@ -1,4 +1,5 @@
 'use client';
+import { AiAutographChoices } from './ai-autograph-choices';
 import { useLocale } from './locale-provider';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -23,7 +24,7 @@ type ScreenState =
   | { kind: 'error'; message: string; legalRequired?: boolean }
   | { kind: 'preview'; assetId: string; url: string; expiresAt: string };
 
-type CreationMode = 'draw' | 'photo';
+type CreationMode = 'draw' | 'photo' | 'ai';
 
 const stageLabels: Record<SubmissionStage, string> = {
   creating: 'Creating your private draft…',
@@ -59,6 +60,28 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
   const controller = useRef<AbortController | null>(null);
   const busy = useRef(false);
   const [mode, setMode] = useState<CreationMode>('draw');
+  const [aiCapabilities, setAiCapabilities] = useState({
+    generation: false,
+    moderation: false,
+  });
+  useEffect(() => {
+    const c = new AbortController();
+    void fetch(apiOrigin + '/ai/autographs/capabilities', {
+      cache: 'no-store',
+      signal: c.signal,
+    })
+      .then(async (r) => {
+        if (!r.ok) return;
+        const v = await r.json();
+        if (!c.signal.aborted)
+          setAiCapabilities({
+            generation: v.generation === true,
+            moderation: v.moderation === true,
+          });
+      })
+      .catch(() => {});
+    return () => c.abort();
+  }, [apiOrigin]);
   const [hasMarks, setHasMarks] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
   const [state, setState] = useState<ScreenState>({ kind: 'editing' });
@@ -191,6 +214,13 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
 
   return (
     <div className={styles.flow}>
+      {aiCapabilities.moderation && (
+        <p>
+          {t(
+            'After approval, the cleaned image is sent to OpenRouter for automated content review. Uncertain cases go to a moderator.',
+          )}
+        </p>
+      )}
       {state.kind !== 'preview' && (
         <div
           className={styles.modeTabs}
@@ -215,6 +245,16 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           >
             {t('Photo')}
           </button>
+          <button
+            type="button"
+            className={mode === 'ai' ? styles.activeTab : styles.tab}
+            aria-pressed={mode === 'ai'}
+            disabled={state.kind === 'working' || Boolean(autographId.current)}
+            onClick={() => selectMode('ai')}
+            hidden={!aiCapabilities.generation}
+          >
+            {t('AI autograph suggestions')}
+          </button>
         </div>
       )}
       {state.kind !== 'preview' &&
@@ -230,6 +270,13 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
               image.current = null;
             }}
             disabled={state.kind === 'working' || Boolean(autographId.current)}
+          />
+        ) : mode === 'ai' ? (
+          <AiAutographChoices
+            key={editorKey}
+            apiOrigin={apiOrigin}
+            disabled={state.kind === 'working' || Boolean(autographId.current)}
+            onChoose={onPhotoChange}
           />
         ) : (
           <PhotoUploadEditor

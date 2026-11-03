@@ -18,6 +18,7 @@
     "google-auth-library": "^11.1.0",
     "openid-client": "^6.8.8",
     "@digital-autograph/payments": "workspace:*",
-    "@digital-autograph/notifications": "workspace:*"
+    "@digital-autograph/notifications": "workspace:*",
+    "@digital-autograph/domain": "workspace:*"
   }
 }
