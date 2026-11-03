@@ -1,7 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { Buffer } from 'node:buffer';
 import sharp from 'sharp';
 import { callModel, imageBytes } from './evaluate-openrouter.mjs';
+
+const { Response } = globalThis;
 
 test('uses the dedicated Image API and reports measured cost without returning credentials', async () => {
   const result = await callModel(

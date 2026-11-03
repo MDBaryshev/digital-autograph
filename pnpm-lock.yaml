@@ -275,6 +275,9 @@ importers:
       openid-client:
         specifier: ^6.8.8
         version: 6.8.8
+      sharp:
+        specifier: 0.35.5
+        version: 0.35.5(@types/node@24.13.6)
 
   packages/notifications:
     dependencies:
