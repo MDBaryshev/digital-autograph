@@ -1,5 +1,7 @@
 import type { WallStatus } from './index';
 
+export const wallSlotCount = 10;
+
 export const wallActions = [
   'schedule',
   'unschedule',

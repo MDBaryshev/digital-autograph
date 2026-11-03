@@ -506,6 +506,9 @@ export const walls = pgTable(
     creatorId: uuid('creator_id')
       .notNull()
       .references(() => creators.id, { onDelete: 'restrict' }),
+    ownerUserId: uuid('owner_user_id').references(() => users.id, {
+      onDelete: 'restrict',
+    }),
     pricingConfigId: uuid('pricing_config_id').references(
       () => pricingConfigVersions.id,
       { onDelete: 'restrict' },
@@ -513,14 +516,15 @@ export const walls = pgTable(
     status: wallStatus().notNull().default('draft'),
     startAt: timestamp('start_at', { withTimezone: true }),
     endAt: timestamp('end_at', { withTimezone: true }),
-    slotCount: integer('slot_count').notNull().default(0),
+    slotCount: integer('slot_count').notNull().default(10),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
     index('walls_creator_created_idx').on(table.creatorId, table.createdAt),
+    uniqueIndex('walls_owner_user_uidx').on(table.ownerUserId),
     index('walls_status_start_idx').on(table.status, table.startAt),
-    check('walls_slot_count_nonnegative', sql`${table.slotCount} >= 0`),
+    check('walls_slot_count_ten', sql`${table.slotCount} = 10`),
     check(
       'walls_end_after_start',
       sql`${table.startAt} IS NULL OR ${table.endAt} IS NULL OR ${table.endAt} > ${table.startAt}`,
@@ -540,7 +544,7 @@ export const slots = pgTable(
   },
   (table) => [
     uniqueIndex('slots_wall_position_uidx').on(table.wallId, table.position),
-    check('slots_position_nonnegative', sql`${table.position} >= 0`),
+    check('slots_position_in_wall', sql`${table.position} BETWEEN 0 AND 9`),
   ],
 );
 

@@ -18,13 +18,12 @@ import {
   creators,
   creatorProfiles,
   placements,
-  slots,
   users,
   walls,
 } from '../../packages/db/src/schema';
 import { createPrivateS3Storage } from '../../packages/integrations/src/index';
 import { WallService } from '../../packages/walls/src/index';
-import { userFixture } from './fixtures';
+import { userFixture, slotForWall } from './fixtures';
 
 const dbUrl = process.env.TEST_DATABASE_URL;
 const s3Endpoint = process.env.S3_ENDPOINT;
@@ -898,13 +897,10 @@ describe('Autograph private upload with PostgreSQL and MinIO', () => {
     });
     const [wall] = await database.db
       .insert(walls)
-      .values({ creatorId: creator.id, status: 'live', slotCount: 1 })
+      .values({ creatorId: creator.id, status: 'live', slotCount: 10 })
       .returning();
     if (!wall) throw new Error('Expected wall');
-    const [slot] = await database.db
-      .insert(slots)
-      .values({ wallId: wall.id, position: 0 })
-      .returning();
+    const slot = await slotForWall(database, wall.id);
     if (!slot) throw new Error('Expected slot');
     await database.db.insert(placements).values({
       slotId: slot.id,

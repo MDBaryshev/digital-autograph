@@ -235,12 +235,16 @@ it.each([17, 19])(
         [user],
       );
       await db.pool.query(
-        "INSERT INTO walls(id,creator_id,status,slot_count,pricing_config_id) VALUES($1,$2,'live',1,$3)",
+        "INSERT INTO walls(id,creator_id,status,slot_count,pricing_config_id) VALUES($1,$2,'live',10,$3)",
         [wall, creator, config.rows[0].id],
       );
       await db.pool.query(
         'INSERT INTO slots(id,wall_id,position) VALUES($1,$2,0)',
         [slot, wall],
+      );
+      await db.pool.query(
+        'INSERT INTO slots(wall_id,position) SELECT $1,n FROM generate_series(1,9) n',
+        [wall],
       );
       await db.pool.query(
         "INSERT INTO autographs(id,user_id,source,status) VALUES($1,$2,'canvas','draft')",
@@ -427,7 +431,7 @@ it('applies all migrations to a clean database and repeats idempotently', async 
           "SELECT count(*)::int AS count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'",
         )
       ).rows[0].count,
-    ).toBe(38);
+    ).toBe(39);
     expect(
       (
         await db.pool.query(

@@ -29,7 +29,8 @@ function sendWallError(error: unknown, reply: FastifyReply): unknown {
       ? 404
       : error.code === 'FORBIDDEN'
         ? 403
-        : error.code === 'WALL_STRUCTURE_LOCKED' ||
+        : error.code === 'WALL_ALREADY_EXISTS' ||
+            error.code === 'WALL_STRUCTURE_LOCKED' ||
             error.code === 'INVALID_WALL_TRANSITION'
           ? 409
           : 400;

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { wallSlotCount } from '@digital-autograph/domain';
 
 export const wallIdParams = z.strictObject({ id: z.uuid() });
 export const creatorIdParams = z.strictObject({ creatorId: z.uuid() });
@@ -12,7 +13,7 @@ export const creatorSlugParams = z.strictObject({
 const dateTime = z.iso.datetime({ offset: true });
 
 export const createWallBody = z.strictObject({
-  slotCount: z.number().int().min(1).max(1000),
+  slotCount: z.literal(wallSlotCount).optional(),
   startAt: dateTime.nullable().optional(),
   endAt: dateTime.nullable().optional(),
 });
