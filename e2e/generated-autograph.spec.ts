@@ -53,6 +53,21 @@ test('signed-in owner creates a ten-place Wall, chooses a generated variant, rev
   await expect(
     page.getByRole('img', { name: /^Autograph variant \d$/ }),
   ).toHaveCount(3);
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    if (width === 320)
+      await page.screenshot({
+        path: testInfo.outputPath('generated-choices-320.png'),
+        fullPage: true,
+      });
+  }
   const count = async () =>
     (
       await scenario.database.pool.query(
