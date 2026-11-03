@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import jsQR from 'jsqr';
 import { e2eWallId, expect, test } from './fixtures';
@@ -44,6 +44,10 @@ test('a guest can copy and download a readable QR invitation before any claim', 
   );
   expect(card.status()).toBe(200);
   expect((await sharp(await card.body()).metadata()).width).toBe(1200);
+  await writeFile(
+    testInfo.outputPath('invitation-card.png'),
+    await card.body(),
+  );
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
@@ -54,6 +58,7 @@ test('a guest can copy and download a readable QR invitation before any claim', 
       ),
     ).toBe(true);
   }
+  await invite.evaluate((e) => e.scrollIntoView({ block: 'center' }));
   await invite.screenshot({ path: testInfo.outputPath('wall-invitation.png') });
   const owner = await scenario.actorContext(scenario.ownerId);
   for (const action of ['end', 'archive'])
