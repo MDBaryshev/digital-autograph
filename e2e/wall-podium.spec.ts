@@ -39,11 +39,11 @@ test('the ten-place podium stays readable in light and dark themes on mobile and
         ),
         theme + ' ' + width,
       ).toBe(true);
-      await page
-        .locator('section[aria-labelledby="slots-heading"]')
-        .screenshot({
-          path: testInfo.outputPath('podium-' + theme + '-' + width + '.png'),
-        });
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath('podium-' + theme + '-' + width + '.png'),
+      });
     }
   }
 });
