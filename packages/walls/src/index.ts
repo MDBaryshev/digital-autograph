@@ -1,5 +1,6 @@
 import {
   WallRuleError,
+  wallSlotCount,
   transitionWall,
   validateScheduledConfiguration,
   validateWallConfiguration,
@@ -46,6 +47,12 @@ export type PublicCreator = {
 };
 
 export type PublicWall = {
+  appearance?: {
+    title: string;
+    description: string;
+    avatarDataUrl: string | null;
+    coverDataUrl: string | null;
+  };
   id: string;
   status: WallStatus;
   startAt: Date | null;
@@ -68,6 +75,7 @@ export type PublicWall = {
 export type WallErrorCode =
   | 'CREATOR_NOT_FOUND'
   | 'WALL_NOT_FOUND'
+  | 'WALL_ALREADY_EXISTS'
   | 'FORBIDDEN'
   | 'INVALID_WALL_TRANSITION'
   | 'WALL_STRUCTURE_LOCKED'
@@ -105,7 +113,7 @@ function validateConfig(config: { startAt: Date | null; endAt: Date | null }) {
 }
 
 function validSlotCount(value: number): boolean {
-  return Number.isInteger(value) && value >= 1 && value <= 1000;
+  return value === wallSlotCount;
 }
 
 export class WallService {
@@ -138,13 +146,16 @@ export class WallService {
   async createWall(
     actorUserId: string,
     creatorId: string,
-    input: { slotCount: number; startAt: Date | null; endAt: Date | null },
+    input: { slotCount?: number; startAt: Date | null; endAt: Date | null },
   ): Promise<WallSnapshot> {
-    if (!validSlotCount(input.slotCount)) {
+    if (input.slotCount !== undefined && !validSlotCount(input.slotCount)) {
       throw new WallError('INVALID_WALL_CONFIGURATION');
     }
     validateConfig(input);
-    return this.repository.createOwnedWall(actorUserId, creatorId, input);
+    return this.repository.createOwnedWall(actorUserId, creatorId, {
+      ...input,
+      slotCount: wallSlotCount,
+    });
   }
 
   async updateWall(

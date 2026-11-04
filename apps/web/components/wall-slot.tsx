@@ -26,6 +26,10 @@ export function WallSlot({
 
   const [failedPath, setFailedPath] = useState<string | null>(null);
   const number = slot.position + 1;
+  const podium = ['gold', 'silver', 'bronze'][slot.position];
+  const podiumLabel = ['Gold place', 'Silver place', 'Bronze place'][
+    slot.position
+  ];
   const mediaPath = slot.currentPlacement?.mediaPath;
   const showMedia = Boolean(mediaPath && failedPath !== mediaPath);
 
@@ -34,9 +38,32 @@ export function WallSlot({
       id={`slot-${slot.id}`}
       tabIndex={-1}
       className={styles.slot}
+      data-podium={podium}
       aria-label={t(`Slot ${number}`)}
     >
       <span className={styles.slotNumber}>
+        {podium && (
+          <svg
+            className={styles.crown}
+            viewBox="0 0 32 26"
+            role="img"
+            aria-label={t(podiumLabel!)}
+          >
+            <path
+              d="M4 8 10 13 16 3 22 13 28 8 25 22H7Z"
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M8 25H24"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        )}
         {t('Slot ')}
         {number}
       </span>

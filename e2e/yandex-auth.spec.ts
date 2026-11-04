@@ -191,7 +191,10 @@ test('default deployment exposes no Yandex route or public button; UI uses serve
     }),
   );
   await page.goto(`/walls/${e2eWallId}`);
-  await page.getByRole('button', { name: 'Sign in to claim' }).click();
+  await page
+    .getByRole('listitem', { name: 'Slot 1', exact: true })
+    .getByRole('button', { name: 'Sign in to claim' })
+    .click();
   const link = page.getByRole('link', { name: 'Continue with Yandex ID' });
   await expect(link).toHaveAttribute(
     'href',

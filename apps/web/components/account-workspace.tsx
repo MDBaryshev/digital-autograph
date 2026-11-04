@@ -1,4 +1,5 @@
 'use client';
+import { WallAppearanceEditor } from './wall-appearance-editor';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
 import { isPublicWall } from '@digital-autograph/domain';
 import { useEffect, useRef, useState } from 'react';
@@ -102,7 +103,9 @@ export function AccountWorkspace({
               ? 'Profile changes are temporarily unavailable.'
               : e instanceof Error && e.message === 'SLUG_TAKEN'
                 ? 'This username is already taken.'
-                : 'Could not save changes. Refresh before retrying.',
+                : e instanceof Error && e.message === 'WALL_ALREADY_EXISTS'
+                  ? 'Your account already has its Wall with 10 places.'
+                  : 'Could not save changes. Refresh before retrying.',
         );
     } finally {
       busy.current = false;
@@ -174,7 +177,18 @@ export function AccountWorkspace({
         <>
           <div className={styles.actions}>
             <span className={styles.avatar} aria-hidden="true">
-              {Array.from(profile?.displayName ?? '')[0]?.toUpperCase() ?? 'D'}
+              {profile?.avatarDataUrl ? (
+                <img
+                  className={styles.profileAvatar}
+                  src={profile.avatarDataUrl}
+                  alt=""
+                />
+              ) : (
+                <>
+                  {Array.from(profile?.displayName ?? '')[0]?.toUpperCase() ??
+                    'D'}
+                </>
+              )}
             </span>
             <div>
               <h2>{profile?.displayName ?? t('Your space')}</h2>
@@ -283,6 +297,7 @@ export function AccountWorkspace({
       )}
       {section === 'walls' && (
         <>
+          <a href="/me/settings">{t('Edit Wall appearance')}</a>
           {!profile ? (
             <section className={styles.card}>
               <h2>{t('Give your Wall a name')}</h2>
@@ -293,44 +308,34 @@ export function AccountWorkspace({
               </p>
               <a href="/me/settings">{t('Set up profile')} →</a>
             </section>
-          ) : (
+          ) : data.walls.length === 0 ? (
             <>
               <p>
                 {t(
-                  'A new Wall starts as a private draft. Publish it only when you are ready.',
+                  'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.',
                 )}
               </p>
               <form
                 className={styles.form}
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const form = new FormData(e.currentTarget);
                   void act((signal) =>
                     workspaceRequest(
                       apiOrigin,
                       `/creators/${profile.id}/walls`,
                       signal,
-                      { slotCount: Number(form.get('slots')) },
+                      {},
                     ),
                   );
                 }}
               >
-                <label>
-                  {t('Number of places')}
-                  <input
-                    name="slots"
-                    type="number"
-                    min={1}
-                    max={1000}
-                    defaultValue={24}
-                    required
-                  />
-                </label>
                 <button disabled={pending}>
                   {pending ? t('Saving…') : t('Create draft Wall')}
                 </button>
               </form>
             </>
+          ) : (
+            <p>{t('Your account already has its Wall with 10 places.')}</p>
           )}
           {data.walls.length === 0 ? (
             <p>{t('Your Walls will appear here.')}</p>
@@ -372,7 +377,6 @@ export function AccountWorkspace({
               ))}
             </div>
           )}
-          <p className={styles.muted}>{t('Showing up to 50 recent Walls.')}</p>
         </>
       )}
       {section === 'settings' && (
@@ -452,6 +456,10 @@ export function AccountWorkspace({
               )}
             </form>
           </section>
+          <WallAppearanceEditor
+            apiOrigin={apiOrigin}
+            canEdit={data.canEditProfile}
+          />
           {preferences}
           <section className={styles.card}>
             <h2>{t('Session')}</h2>

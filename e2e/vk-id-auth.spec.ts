@@ -198,7 +198,10 @@ test('default deployment exposes no VkId route or public button; UI uses server 
     }),
   );
   await page.goto(`/walls/${e2eWallId}`);
-  await page.getByRole('button', { name: 'Sign in to claim' }).click();
+  await page
+    .getByRole('listitem', { name: 'Slot 1', exact: true })
+    .getByRole('button', { name: 'Sign in to claim' })
+    .click();
   const link = page.getByRole('link', { name: 'Continue with VK ID' });
   await expect(link).toHaveAttribute(
     'href',

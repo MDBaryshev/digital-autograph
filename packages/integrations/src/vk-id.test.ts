@@ -57,7 +57,9 @@ describe('VK ID confidential code/PKCE contract', () => {
   });
   it('exchanges code with service_token, state and device_id in POST body; confirms matching user_info', async () => {
     const { adapter, fetcher } = client();
-    expect(await adapter.verifyCode(input)).toEqual({ subject: '123456789' });
+    expect(await adapter.verifyCode(input)).toEqual({
+      subject: '123456789',
+    });
     const [url, options] = fetcher.mock.calls[0]!;
     expect(url).toBe('https://id.vk.ru/oauth2/auth');
     expect(options).toMatchObject({
@@ -168,4 +170,17 @@ describe('VK ID confidential code/PKCE contract', () => {
         ).rejects.toThrow(/^VK ID authentication failed$/);
       }
   });
+});
+
+it('returns an optional photo only with enabled import and matched user_info identity', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json(goodToken))
+    .mockResolvedValueOnce(Response.json(goodInfo));
+  expect(
+    await createVkIdOAuthClient(
+      { ...config, includeProfile: true },
+      fetcher,
+    ).verifyCode(input),
+  ).toEqual({ subject: '123456789', picture: 'irrelevant' });
 });

@@ -506,6 +506,9 @@ export const walls = pgTable(
     creatorId: uuid('creator_id')
       .notNull()
       .references(() => creators.id, { onDelete: 'restrict' }),
+    ownerUserId: uuid('owner_user_id').references(() => users.id, {
+      onDelete: 'restrict',
+    }),
     pricingConfigId: uuid('pricing_config_id').references(
       () => pricingConfigVersions.id,
       { onDelete: 'restrict' },
@@ -513,14 +516,15 @@ export const walls = pgTable(
     status: wallStatus().notNull().default('draft'),
     startAt: timestamp('start_at', { withTimezone: true }),
     endAt: timestamp('end_at', { withTimezone: true }),
-    slotCount: integer('slot_count').notNull().default(0),
+    slotCount: integer('slot_count').notNull().default(10),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
     index('walls_creator_created_idx').on(table.creatorId, table.createdAt),
+    uniqueIndex('walls_owner_user_uidx').on(table.ownerUserId),
     index('walls_status_start_idx').on(table.status, table.startAt),
-    check('walls_slot_count_nonnegative', sql`${table.slotCount} >= 0`),
+    check('walls_slot_count_ten', sql`${table.slotCount} = 10`),
     check(
       'walls_end_after_start',
       sql`${table.startAt} IS NULL OR ${table.endAt} IS NULL OR ${table.endAt} > ${table.startAt}`,
@@ -540,7 +544,7 @@ export const slots = pgTable(
   },
   (table) => [
     uniqueIndex('slots_wall_position_uidx').on(table.wallId, table.position),
-    check('slots_position_nonnegative', sql`${table.position} >= 0`),
+    check('slots_position_in_wall', sql`${table.position} BETWEEN 0 AND 9`),
   ],
 );
 
@@ -1267,6 +1271,64 @@ export const autographCleanupSchedule = pgTable(
     check(
       'autograph_cleanup_schedule_source',
       sql`${table.nextSource} BETWEEN 0 AND 2`,
+    ),
+  ],
+);
+
+export const aiAutographRequests = pgTable(
+  'ai_autograph_requests',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    operation: varchar('operation', { length: 80 }).notNull(),
+    kind: varchar('kind', { length: 16 }).notNull(),
+    fingerprint: varchar('fingerprint', { length: 64 }).notNull(),
+    model: varchar('model', { length: 200 }).notNull(),
+    state: varchar('state', { length: 16 }).notNull().default('pending'),
+    result: jsonb('result'),
+    createdAt: createdAt(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.operation] }),
+    index('ai_requests_daily').on(t.kind, t.createdAt),
+    uniqueIndex('ai_moderation_once')
+      .on(t.operation)
+      .where(sql`kind = 'moderation'`),
+  ],
+);
+
+export const accountAppearance = pgTable(
+  'account_appearance',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id),
+    title: varchar('title', { length: 100 }).notNull().default(''),
+    description: varchar('description', { length: 500 }).notNull().default(''),
+    avatarDataUrl: text('avatar_data_url'),
+    coverDataUrl: text('cover_data_url'),
+    providerAvatarDataUrl: text('provider_avatar_data_url'),
+    avatarSource: varchar('avatar_source', { length: 16 }),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check(
+      'appearance_avatar_source',
+      sql`(${t.avatarSource} IS NULL AND ${t.avatarDataUrl} IS NULL) OR (${t.avatarSource} IS NOT NULL AND ${t.avatarSource} IN ('provider','upload','none') AND (${t.avatarSource} <> 'none' OR ${t.avatarDataUrl} IS NULL))`,
+    ),
+    check(
+      'appearance_avatar_bounded',
+      sql`${t.avatarDataUrl} IS NULL OR (length(${t.avatarDataUrl}) BETWEEN 24 AND 350000 AND ${t.avatarDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+    check(
+      'appearance_cover_bounded',
+      sql`${t.coverDataUrl} IS NULL OR (length(${t.coverDataUrl}) BETWEEN 24 AND 350000 AND ${t.coverDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+    check(
+      'appearance_provider_bounded',
+      sql`${t.providerAvatarDataUrl} IS NULL OR (length(${t.providerAvatarDataUrl}) BETWEEN 24 AND 350000 AND ${t.providerAvatarDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
     ),
   ],
 );

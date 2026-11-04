@@ -2,13 +2,16 @@ import { OAuth2Client } from 'google-auth-library';
 
 export interface GoogleOidcClient {
   authorizationUrl(input: { state: string; nonce: string }): string;
-  verifyCode(code: string): Promise<{ subject: string; nonce: string }>;
+  verifyCode(
+    code: string,
+  ): Promise<{ subject: string; nonce: string; picture?: string }>;
 }
 
 export type GoogleOidcConfig = {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  includeProfile?: boolean;
 };
 
 export function createGoogleOidcClient(
@@ -26,7 +29,7 @@ export function createGoogleOidcClient(
     authorizationUrl({ state, nonce }) {
       return client.generateAuthUrl({
         response_type: 'code',
-        scope: ['openid'],
+        scope: config.includeProfile ? ['openid', 'profile'] : ['openid'],
         access_type: 'online',
         state,
         nonce,
@@ -50,7 +53,13 @@ export function createGoogleOidcClient(
       if (payload.azp && payload.azp !== config.clientId) {
         throw new Error('Google authorized presenter does not match client');
       }
-      return { subject: payload.sub, nonce: payload.nonce };
+      return {
+        subject: payload.sub,
+        nonce: payload.nonce,
+        ...(config.includeProfile && typeof payload.picture === 'string'
+          ? { picture: payload.picture }
+          : {}),
+      };
     },
   };
 }

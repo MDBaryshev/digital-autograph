@@ -1,5 +1,37 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Edit Wall appearance': 'Оформить стену',
+  'Wall appearance': 'Оформление стены',
+  'Choose a name, avatar and cover. Saving publishes this appearance on your Wall.':
+    'Выбери название, аватар и обложку. После сохранения они появятся на твоей стене.',
+  'Could not load Wall appearance.': 'Не удалось загрузить оформление стены.',
+  'Could not save Wall appearance.': 'Не удалось сохранить оформление стены.',
+  'Wall appearance saved.': 'Оформление стены сохранено.',
+  'Wall name': 'Название стены',
+  'Wall description': 'Описание стены',
+  'Avatar source': 'Аватар',
+  'Initials only': 'Только инициалы',
+  'Photo from sign-in account': 'Фото из аккаунта входа',
+  'My uploaded photo': 'Моё загруженное фото',
+  'Upload avatar': 'Загрузить аватар',
+  'Upload cover': 'Загрузить обложку',
+  'Avatar preview': 'Предпросмотр аватара',
+  'Cover preview': 'Предпросмотр обложки',
+  'Remove cover': 'Убрать обложку',
+  'Images are cropped to fit. Check the previews before saving.':
+    'Изображения обрезаются по размеру. Проверь предпросмотр перед сохранением.',
+  'Choose a PNG, JPEG or WebP image up to 10 MB and 20 megapixels.':
+    'Выбери PNG, JPEG или WebP до 10 МБ и 20 мегапикселей.',
+  'Save Wall appearance': 'Сохранить оформление стены',
+  'Wall cover': 'Обложка стены',
+  'Wall owner avatar': 'Аватар владельца стены',
+  'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.':
+    'На аккаунте может быть одна стена — ровно 10 мест. Сначала она появится как приватный черновик.',
+  'Your account already has its Wall with 10 places.':
+    'Твоя единственная стена с 10 местами уже создана.',
+  'Gold place': 'Золотое место',
+  'Silver place': 'Серебряное место',
+  'Bronze place': 'Бронзовое место',
   'Places: {count}': 'Мест: {count}',
   'Preview expired. Open it again.':
     'Срок предпросмотра истёк. Открой его ещё раз.',
@@ -707,4 +739,33 @@ export const messages: Record<string, string> = {
     'Изменение профиля временно недоступно.',
   'Use at most 200 characters for your display name.':
     'Отображаемое имя должно содержать не более 200 символов.',
+  'AI autograph suggestions': 'Варианты от нейросети',
+  'Enter your nickname to generate three decorative autographs. Your nickname is sent to OpenRouter and the selected model. Never use a bank or legal signature.':
+    'Введи свой ник — нейросеть предложит три декоративных автографа. Ник передаётся OpenRouter и выбранной модели. Это не банковская или юридическая подпись.',
+  'Your nickname': 'Твой ник',
+  'Generating three variants…': 'Генерируем три варианта…',
+  'Suggest 3 variants': 'Предложить 3 варианта',
+  'This can take up to three minutes. Choose a variant before uploading.':
+    'Это может занять до трёх минут. Ты сможешь выбрать один вариант перед загрузкой.',
+  'Autograph variant {number}': 'Вариант автографа {number}',
+  'Choose variant {number}': 'Выбрать вариант {number}',
+  'Variant {number} selected. Create a private preview to check the processed result.':
+    'Выбран вариант {number}. Создай приватный предпросмотр, чтобы проверить результат обработки.',
+  'After approval, the cleaned image is sent to OpenRouter for automated content review. Uncertain cases go to a moderator.':
+    'После подтверждения очищенное изображение будет передано OpenRouter для автоматической проверки содержания. Спорные случаи проверяет модератор.',
+  'Sign in first.': 'Сначала войди в аккаунт.',
+  'Generation limit reached. Draw your own autograph or try tomorrow.':
+    'Лимит генераций исчерпан. Нарисуй свой автограф или попробуй завтра.',
+  'Generation is unavailable. You can draw your own autograph.':
+    'Генерация пока недоступна. Можно нарисовать свой автограф.',
+  'Could not start generation. Check the account requirements and retry.':
+    'Не удалось начать генерацию. Проверь подтверждение правил в аккаунте.',
+  'Could not load variants. Retry with the same nickname.':
+    'Не удалось получить варианты. Повтори запрос с тем же ником.',
+  'Generation failed. Draw your autograph or change your nickname for a new attempt.':
+    'Генерация не удалась. Нарисуй свой автограф или измени ник для новой попытки.',
+  'Variants are unavailable.': 'Варианты недоступны.',
+  'Generation has not finished. Retry with the same nickname to avoid another API charge.':
+    'Генерация ещё не завершилась. Повтори запрос с тем же ником: повторной оплаты API не будет.',
+  'Generation is unavailable.': 'Генерация недоступна.',
 };

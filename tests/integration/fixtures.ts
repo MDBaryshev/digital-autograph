@@ -6,6 +6,34 @@ import {
   users,
   walls,
 } from '../../packages/db/src/schema';
+import type { Database } from '../../packages/db/src/index';
+import { randomUUID } from 'node:crypto';
+
+// Tests of fan/quote behavior may need several Walls. Each extra Wall now needs
+// its own synthetic owner; the fan can still participate in all of them.
+export async function distinctWallOwner(database: Database, preferred: string) {
+  const existing = await database.pool.query(
+    'SELECT 1 FROM walls WHERE owner_user_id=$1',
+    [preferred],
+  );
+  if (!existing.rowCount) return preferred;
+  const id = randomUUID();
+  await database.pool.query('INSERT INTO users(id) VALUES($1)', [id]);
+  return id;
+}
+
+export async function slotForWall(
+  database: Database,
+  wallId: string,
+  position = 0,
+) {
+  const result = await database.pool.query<typeof slots.$inferSelect>(
+    'SELECT id,wall_id AS "wallId",position,created_at AS "createdAt" FROM slots WHERE wall_id=$1 AND position=$2',
+    [wallId, position],
+  );
+  if (!result.rows[0]) throw Error('Expected a database-created Wall slot');
+  return result.rows[0];
+}
 
 // Explicit IDs make relationships and failure cases repeatable; production IDs default to PostgreSQL.
 export function fixtureId(number: number): string {
@@ -39,7 +67,7 @@ export function wallFixture(
   creatorId: string,
   number: number,
 ): typeof walls.$inferInsert {
-  return { id: fixtureId(4000 + number), creatorId, slotCount: 1 };
+  return { id: fixtureId(4000 + number), creatorId, slotCount: 10 };
 }
 
 export function slotFixture(

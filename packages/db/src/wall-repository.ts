@@ -1,4 +1,8 @@
-import { isPublicWall, type WallStatus } from '@digital-autograph/domain';
+import {
+  isPublicWall,
+  wallSlotCount,
+  type WallStatus,
+} from '@digital-autograph/domain';
 import {
   WallError,
   type PublicCreator,
@@ -9,6 +13,7 @@ import {
   type WallSnapshot,
 } from '@digital-autograph/walls';
 import type { Pool, PoolClient } from 'pg';
+import type { WallAppearance } from './appearance-repository';
 
 type WallRow = {
   id: string;
@@ -23,6 +28,7 @@ type WallRow = {
 type SlotRow = { id: string; position: number };
 
 type PublicWallRow = {
+  appearance: WallAppearance | null;
   id: string;
   creator_id: string;
   slug: string;
@@ -63,6 +69,16 @@ async function withTransaction<T>(
     return result;
   } catch (error) {
     await client.query('ROLLBACK');
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === '23505' &&
+      'constraint' in error &&
+      error.constraint === 'walls_owner_user_uidx'
+    ) {
+      throw new WallError('WALL_ALREADY_EXISTS');
+    }
     throw error;
   } finally {
     client.release();
@@ -165,6 +181,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
       const result = await pool.query<PublicWallRow>(
         `SELECT w.id, w.status, w.start_at, w.end_at, w.slot_count,
                 c.id AS creator_id, cp.slug, cp.display_name,
+                CASE WHEN ap.user_id IS NOT NULL THEN json_build_object('title',ap.title,'description',ap.description,'avatarDataUrl',ap.avatar_data_url,'coverDataUrl',ap.cover_data_url) ELSE NULL END AS appearance,
                 s.id AS slot_id, s.position,
                 p.id AS placement_id, p.source AS placement_source,
                 p.started_at AS placement_started_at,
@@ -185,6 +202,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
          FROM walls w
          JOIN creators c ON c.id = w.creator_id
          JOIN creator_profiles cp ON cp.creator_id = c.id
+         LEFT JOIN account_appearance ap ON ap.user_id=c.owner_user_id
          LEFT JOIN slots s ON s.wall_id = w.id
          LEFT JOIN placements p ON p.slot_id = s.id AND p.ended_at IS NULL
          LEFT JOIN autographs a ON a.id = p.autograph_id
@@ -230,6 +248,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
         startAt: first.start_at,
         endAt: first.end_at,
         slotCount: first.slot_count,
+        ...(first.appearance ? { appearance: first.appearance } : {}),
         creator: {
           id: first.creator_id,
           slug: first.slug,
@@ -240,6 +259,8 @@ export function createPgWallRepository(pool: Pool): WallRepository {
     },
 
     async createOwnedWall(actorUserId, creatorId, input) {
+      if (input.slotCount !== wallSlotCount)
+        throw new WallError('INVALID_WALL_CONFIGURATION');
       return withTransaction(pool, async (client) => {
         await ownerForCreator(client, creatorId, actorUserId);
         const created = await client.query<WallRow>(
@@ -251,12 +272,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
         );
         const row = created.rows[0];
         if (!row) throw new Error('Wall insertion returned no row');
-        await client.query(
-          `INSERT INTO slots (wall_id, position)
-           SELECT $1::uuid, position
-           FROM generate_series(0, $2::integer - 1) AS position`,
-          [row.id, input.slotCount],
-        );
+        // The database creates the ten positions atomically with the Wall.
         return lockedSnapshot(client, row);
       });
     },
@@ -283,24 +299,13 @@ export function createPgWallRepository(pool: Pool): WallRepository {
         const current = await lockedSnapshot(client, row);
         const mutation = decide(current);
         const slotCount = mutation.slotCount ?? current.slotCount;
+        if (slotCount !== wallSlotCount)
+          throw new WallError('INVALID_WALL_CONFIGURATION');
         const startAt =
           mutation.startAt === undefined ? current.startAt : mutation.startAt;
         const endAt =
           mutation.endAt === undefined ? current.endAt : mutation.endAt;
         const status = mutation.status ?? current.status;
-        if (slotCount > current.slotCount) {
-          await client.query(
-            `INSERT INTO slots (wall_id, position)
-             SELECT $1::uuid, position
-             FROM generate_series($2::integer, $3::integer - 1) AS position`,
-            [wallId, current.slotCount, slotCount],
-          );
-        } else if (slotCount < current.slotCount) {
-          await client.query(
-            'DELETE FROM slots WHERE wall_id = $1::uuid AND position >= $2::integer',
-            [wallId, slotCount],
-          );
-        }
         const updated = await client.query<WallRow>(
           `UPDATE walls SET status = $2::wall_status,
              slot_count = $3::integer, start_at = $4::timestamptz,

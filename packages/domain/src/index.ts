@@ -82,6 +82,7 @@ export {
   type PricingCalculation,
 } from './pricing';
 export {
+  wallSlotCount,
   wallActions,
   transitionWall,
   validateWallConfiguration,

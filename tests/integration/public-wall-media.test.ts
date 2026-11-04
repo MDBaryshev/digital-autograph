@@ -98,12 +98,12 @@ async function wallFixture(ownerId: string) {
   );
   await database.pool.query(
     `INSERT INTO walls (id, creator_id, status, slot_count)
-     VALUES ($1::uuid, $2::uuid, 'live', 2)`,
+     VALUES ($1::uuid, $2::uuid, 'live', 10)`,
     [wallId, creatorId],
   );
   for (const [position, id] of [slotId, emptySlotId].entries()) {
     await database.pool.query(
-      'INSERT INTO slots (id, wall_id, position) VALUES ($1::uuid, $2::uuid, $3)',
+      'UPDATE slots SET id=$1::uuid WHERE wall_id=$2::uuid AND position=$3',
       [id, wallId, position],
     );
   }
@@ -438,7 +438,6 @@ describe('public Placement media and ready selection with PostgreSQL and MinIO',
   });
 
   it('fails closed on missing, rejected or mismatched moderation evidence', async () => {
-    const owner = await person();
     const scenarios = [
       { approval: false },
       { moderation: 'missing' as const },
@@ -447,6 +446,7 @@ describe('public Placement media and ready selection with PostgreSQL and MinIO',
       { status: 'awaiting_moderation' },
     ];
     for (const scenario of scenarios) {
+      const owner = await person();
       const wall = await wallFixture(owner.id);
       const autograph = await autographFixture(owner.id, scenario);
       const placementId = await placementFixture(

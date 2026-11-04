@@ -169,6 +169,27 @@
       "when": 1793295346327,
       "tag": "0023_fair_storage_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793731714675,
+      "tag": "0024_ai_autographs",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793739081689,
+      "tag": "0025_fixed_ten_slot_wall",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793746385614,
+      "tag": "0026_account_appearance",
+      "breakpoints": true
     }
   ]
 }

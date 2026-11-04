@@ -210,13 +210,13 @@ it('never returns another owner’s private draft Wall', async () => {
   ).rows[0].id;
   const own = (
     await admin.pool.query(
-      'INSERT INTO walls(creator_id,slot_count) VALUES ($1,3) RETURNING id',
+      'INSERT INTO walls(creator_id,slot_count) VALUES ($1,10) RETURNING id',
       [ownCreator],
     )
   ).rows[0].id;
   const foreign = (
     await admin.pool.query(
-      'INSERT INTO walls(creator_id,slot_count) VALUES ($1,7) RETURNING id',
+      'INSERT INTO walls(creator_id,slot_count) VALUES ($1,10) RETURNING id',
       [p.json().id],
     )
   ).rows[0].id;

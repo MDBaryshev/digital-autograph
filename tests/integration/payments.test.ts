@@ -200,14 +200,14 @@ async function fixture(
   await database.pool.query(
     `INSERT INTO walls (id, creator_id, pricing_config_id, status, slot_count)
      VALUES ($1::uuid, $2::uuid, $3::uuid, 'live', $4::integer)`,
-    [wallId, creatorId, configId, slotCount],
+    [wallId, creatorId, configId, 10],
   );
   const slots: Array<{ slotId: string; placementId: string }> = [];
   for (let position = 0; position < slotCount; position++) {
     const slotId = randomUUID();
     const placementId = randomUUID();
     await database.pool.query(
-      'INSERT INTO slots (id, wall_id, position) VALUES ($1::uuid, $2::uuid, $3)',
+      'UPDATE slots SET id=$1::uuid WHERE wall_id=$2::uuid AND position=$3',
       [slotId, wallId, position],
     );
     await database.pool.query(

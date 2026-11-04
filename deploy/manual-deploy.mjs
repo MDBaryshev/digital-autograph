@@ -94,7 +94,7 @@ export function validateManifest(m) {
   if (
     !hash.test(m.toolBundleSha256) ||
     !Array.isArray(m.migrations) ||
-    m.migrations.length !== 24 ||
+    ![24, 25, 26, 27].includes(m.migrations.length) ||
     m.migrations.some(
       (x) => !hash.test(x.hash) || !Number.isSafeInteger(x.created_at),
     )

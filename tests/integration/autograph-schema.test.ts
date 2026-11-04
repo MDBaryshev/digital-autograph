@@ -4,12 +4,11 @@ import {
   autographAssets,
   autographs,
   placements,
-  slots,
   users,
   walls,
   creators,
 } from '../../packages/db/src/schema';
-import { userFixture } from './fixtures';
+import { userFixture, slotForWall } from './fixtures';
 
 const url = process.env.TEST_DATABASE_URL;
 if (!url || new URL(url).pathname !== '/autograph_test') {
@@ -110,18 +109,12 @@ describe('Autograph schema constraints', () => {
     if (!creator) throw new Error('Expected creator');
     const [wall] = await database.db
       .insert(walls)
-      .values({ creatorId: creator.id, slotCount: 2 })
+      .values({ creatorId: creator.id, slotCount: 10 })
       .returning();
     if (!wall) throw new Error('Expected wall');
-    const [slot] = await database.db
-      .insert(slots)
-      .values({ wallId: wall.id, position: 0 })
-      .returning();
+    const slot = await slotForWall(database, wall.id);
     if (!slot) throw new Error('Expected slot');
-    const [secondSlot] = await database.db
-      .insert(slots)
-      .values({ wallId: wall.id, position: 1 })
-      .returning();
+    const secondSlot = await slotForWall(database, wall.id, 1);
     if (!secondSlot) throw new Error('Expected second slot');
     const [placement] = await database.db
       .insert(placements)

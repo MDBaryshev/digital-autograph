@@ -1,6 +1,11 @@
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
 export type Workspace = {
-  profile: { id: string; slug: string; displayName: string } | null;
+  profile: {
+    id: string;
+    slug: string;
+    displayName: string;
+    avatarDataUrl?: string | null;
+  } | null;
   autographs: {
     id: string;
     source: string;

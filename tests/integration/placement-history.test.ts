@@ -72,11 +72,11 @@ async function createWall() {
   );
   await database.pool.query(
     `INSERT INTO walls (id, creator_id, status, slot_count)
-     VALUES ($1::uuid, $2::uuid, 'live', 1)`,
+     VALUES ($1::uuid, $2::uuid, 'live', 10)`,
     [wallId, creatorId],
   );
   await database.pool.query(
-    `INSERT INTO slots (id, wall_id, position) VALUES ($1::uuid, $2::uuid, 0)`,
+    `UPDATE slots SET id=$1::uuid WHERE wall_id=$2::uuid AND position=0`,
     [slotId, wallId],
   );
   return { wallId, slotId };

@@ -8,7 +8,6 @@ import {
 import {
   creators,
   creatorProfiles,
-  slots,
   users,
   walls,
 } from '../packages/db/src/schema';
@@ -77,7 +76,10 @@ export const test = base.extend<{ scenario: Scenario; uiLocale: 'en' | 'ru' }>({
         await database.db
           .insert(walls)
           .values({ ...wallFixture(e2eCreatorId, 1), status: 'live' });
-        await database.db.insert(slots).values(slotFixture(e2eWallId, 1));
+        await database.pool.query(
+          'UPDATE slots SET id=$1 WHERE wall_id=$2 AND position=0',
+          [e2eSlotId, e2eWallId],
+        );
         const sessions = new SessionService(
           createPgSessionRepository(database.pool),
           1209600,
