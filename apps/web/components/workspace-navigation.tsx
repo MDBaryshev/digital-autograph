@@ -83,9 +83,17 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
       </button>
       <a className={styles.accountLink} href="/me">
         <span className={styles.avatar} aria-hidden="true">
-          {Array.from(
-            account?.profile?.displayName ?? '',
-          )[0]?.toUpperCase() ?? <Icon name="user" />}
+          {account?.profile?.avatarDataUrl ? (
+            <img
+              className={styles.navigationAvatar}
+              src={account.profile.avatarDataUrl}
+              alt=""
+            />
+          ) : (
+            (Array.from(
+              account?.profile?.displayName ?? '',
+            )[0]?.toUpperCase() ?? <Icon name="user" />)
+          )}
         </span>
         <span>{account?.profile?.displayName ?? t('Your account')}</span>
       </a>

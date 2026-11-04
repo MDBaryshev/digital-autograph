@@ -4,10 +4,12 @@
   border-radius: 1.5rem;
   background: var(--brand-color-surface);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.75rem;
 }
 .modeTabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   width: max-content;
   max-width: 100%;
@@ -17,6 +19,8 @@
 }
 .tab,
 .activeTab {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   border: 0;
   border-radius: 0.6rem;
   padding: 0.65rem 1.5rem;

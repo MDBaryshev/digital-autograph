@@ -1,0 +1,9 @@
+# Generated autograph browser rehearsal
+
+The standard browser suite now runs generation only against `e2e/synthetic-ai.ts`, installed by the existing isolated synthetic API composition. The application entrypoint never imports it. Installation refuses anything except the dedicated loopback E2E database/bucket/environment before changing fetch or flags. It uses a clearly synthetic key/model, disables AI moderation, and intercepts every request to the fixed OpenRouter host: unexpected models/endpoints fail instead of reaching a provider. No paid provider call or real credential is needed.
+
+`generated-autograph.spec.ts` rehearses sign-in through the test auth seam and actual first-use confirmations, profile setup, creation/publication of exactly ten places, three choices through the real API/provider adapter, explicit selection, private upload/worker processing, cleaned-preview approval, an authorized moderator decision, Free Claim and persisted public media after reload. It checks that merely generating/selecting creates no Autograph, admission replay retains one record, and unsigned originals/derivatives in storage remain inaccessible. Separate adapter and PostgreSQL tests prove dispatch/idempotency; this browser assertion alone is not a once-charge proof.
+
+Existing drawing/photo, OAuth verification, ownership/concurrency, crown/theme, appearance and invitation/QR scenarios remain in the suite. Local fixture-safety tests verify that unexpected provider calls cannot reach fallback and that production installation is rejected. The saved account avatar also appears in the navigation; no new publication action occurs there.
+
+This is synthetic integration evidence, not a live OAuth, OpenRouter privacy-policy, real moderation-quality, payment, deployment or physical-device acceptance claim. Production AI defaults and profile-publication controls remain closed until an accepted release and the existing operational requirements are met.
