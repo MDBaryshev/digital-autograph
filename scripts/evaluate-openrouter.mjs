@@ -75,20 +75,45 @@ export async function callModel(key, path, payload, fetcher = fetch) {
 }
 
 export async function imageBytes(data) {
+  const maxInputBytes = 4 * 1024 * 1024;
   const image = data?.data?.[0];
   if (
+    !Array.isArray(data?.data) ||
+    data.data.length !== 1 ||
     !image ||
     !['image/png', 'image/jpeg', 'image/webp'].includes(image.media_type) ||
     typeof image.b64_json !== 'string' ||
     !/^[A-Za-z0-9+/]+={0,2}$/.test(image.b64_json) ||
-    image.b64_json.length > 6 * 1024 * 1024
+    image.b64_json.length > 4 * Math.ceil(maxInputBytes / 3)
   )
     throw Error('Image API returned unsupported inline image');
-  // Never follow a returned URL or render SVG/HTML. Normalize actual bounded bytes.
-  return sharp(Buffer.from(image.b64_json, 'base64'), {
+  const bytes = Buffer.from(image.b64_json, 'base64');
+  if (
+    bytes.length > maxInputBytes ||
+    bytes.toString('base64') !== image.b64_json
+  )
+    throw Error('Image API returned unsupported inline image');
+  // Check bytes before Sharp: a mislabeled SVG/HTML must never reach its decoder.
+  const format =
+    bytes.subarray(0, 8).toString('hex') === '89504e470d0a1a0a'
+      ? 'png'
+      : bytes.subarray(0, 3).toString('hex') === 'ffd8ff'
+        ? 'jpeg'
+        : bytes.subarray(0, 4).toString('ascii') === 'RIFF' &&
+            bytes.subarray(8, 12).toString('ascii') === 'WEBP'
+          ? 'webp'
+          : null;
+  if (!format || image.media_type !== `image/${format}`)
+    throw Error('Image API returned unsupported inline image');
+  const decoder = sharp(bytes, {
     limitInputPixels: 16 * 1024 * 1024,
     failOn: 'warning',
-  })
+  });
+  const metadata = await decoder.metadata();
+  if (metadata.format !== format || (metadata.pages ?? 1) !== 1)
+    throw Error('Image API returned unsupported inline image');
+  const png = await decoder
+    .rotate()
     .resize({
       width: 1024,
       height: 1024,
@@ -97,7 +122,18 @@ export async function imageBytes(data) {
     })
     .png()
     .toBuffer();
+  if (png.length > 2 * 1024 * 1024)
+    throw Error('Normalized image is too large');
+  return png;
 }
+
+export const csvRow = (fields) =>
+  fields
+    .map((value) => {
+      const text = String(value);
+      return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+    })
+    .join(',');
 
 const escapeHtml = (text) =>
   String(text).replace(
@@ -262,7 +298,7 @@ async function main() {
             mode: 0o600,
           });
           records.at(-1).file = file;
-          csv.push([file, model, nickname, style, '', '', '', ''].join(','));
+          csv.push(csvRow([file, model, nickname, style, '', '', '', '']));
           gallery.push(
             `<figure><img src="${file}"><figcaption>${escapeHtml(model)}<br>${escapeHtml(nickname)} · ${escapeHtml(style)}</figcaption></figure>`,
           );
