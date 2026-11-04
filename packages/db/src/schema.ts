@@ -1298,3 +1298,37 @@ export const aiAutographRequests = pgTable(
       .where(sql`kind = 'moderation'`),
   ],
 );
+
+export const accountAppearance = pgTable(
+  'account_appearance',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id),
+    title: varchar('title', { length: 100 }).notNull().default(''),
+    description: varchar('description', { length: 500 }).notNull().default(''),
+    avatarDataUrl: text('avatar_data_url'),
+    coverDataUrl: text('cover_data_url'),
+    providerAvatarDataUrl: text('provider_avatar_data_url'),
+    avatarSource: varchar('avatar_source', { length: 16 }),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check(
+      'appearance_avatar_source',
+      sql`(${t.avatarSource} IS NULL AND ${t.avatarDataUrl} IS NULL) OR (${t.avatarSource} IS NOT NULL AND ${t.avatarSource} IN ('provider','upload','none') AND (${t.avatarSource} <> 'none' OR ${t.avatarDataUrl} IS NULL))`,
+    ),
+    check(
+      'appearance_avatar_bounded',
+      sql`${t.avatarDataUrl} IS NULL OR (length(${t.avatarDataUrl}) BETWEEN 24 AND 350000 AND ${t.avatarDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+    check(
+      'appearance_cover_bounded',
+      sql`${t.coverDataUrl} IS NULL OR (length(${t.coverDataUrl}) BETWEEN 24 AND 350000 AND ${t.coverDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+    check(
+      'appearance_provider_bounded',
+      sql`${t.providerAvatarDataUrl} IS NULL OR (length(${t.providerAvatarDataUrl}) BETWEEN 24 AND 350000 AND ${t.providerAvatarDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+  ],
+);

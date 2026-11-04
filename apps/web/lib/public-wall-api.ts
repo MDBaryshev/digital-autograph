@@ -1,4 +1,10 @@
 export type PublicWall = {
+  appearance?: {
+    title: string;
+    description: string;
+    avatarDataUrl: string | null;
+    coverDataUrl: string | null;
+  };
   id: string;
   status: 'scheduled' | 'live' | 'paused' | 'ended';
   startAt: string | null;

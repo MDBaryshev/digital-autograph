@@ -247,12 +247,30 @@ export function PublicWallScreen({
 
   return (
     <main className={styles.page}>
+      {wall.appearance?.coverDataUrl && (
+        <img
+          className={styles.cover}
+          src={wall.appearance.coverDataUrl}
+          alt={t('Wall cover')}
+        />
+      )}
       <header className={styles.header}>
         <div className={styles.wallIdentity}>
+          {wall.appearance?.avatarDataUrl && (
+            <img
+              className={styles.ownerAvatar}
+              src={wall.appearance.avatarDataUrl}
+              alt={t('Wall owner avatar')}
+            />
+          )}
           <p className="eyebrow">
             {t('A creator. A community. Your autograph.')}
           </p>
-          <h1>{t("{name}'s Wall", { name: wall.creator.displayName })}</h1>
+          <h1>
+            {wall.appearance?.title ||
+              t("{name}'s Wall", { name: wall.creator.displayName })}
+          </h1>
+          {wall.appearance?.description && <p>{wall.appearance.description}</p>}
           <p className={styles.state}>
             {t('Wall status: ')}
             <strong>{t(wall.status)}</strong>

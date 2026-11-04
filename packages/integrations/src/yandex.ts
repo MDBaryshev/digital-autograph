@@ -2,6 +2,7 @@ export type YandexOAuthConfig = {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  includeProfile?: boolean;
 };
 
 export interface YandexOAuthClient {
@@ -9,7 +10,7 @@ export interface YandexOAuthClient {
   verifyCode(input: {
     code: string;
     codeVerifier: string;
-  }): Promise<{ subject: string }>;
+  }): Promise<{ subject: string; picture?: string }>;
 }
 
 const maxResponseBytes = 65536;
@@ -52,7 +53,7 @@ export function createYandexOAuthClient(
         response_type: 'code',
         client_id: config.clientId,
         redirect_uri: config.redirectUri,
-        scope: 'login:info',
+        scope: config.includeProfile ? 'login:info login:avatar' : 'login:info',
         state,
         code_challenge: codeChallenge,
         code_challenge_method: 'S256',
@@ -99,7 +100,16 @@ export function createYandexOAuthClient(
           !subjectPattern.test(info.id)
         )
           throw new Error();
-        return { subject: info.id };
+        const picture =
+          config.includeProfile &&
+          typeof info.default_avatar_id === 'string' &&
+          /^[A-Za-z0-9/_-]{1,200}$/.test(info.default_avatar_id) &&
+          info.is_avatar_empty !== true
+            ? 'https://avatars.yandex.net/get-yapic/' +
+              info.default_avatar_id +
+              '/islands-200'
+            : null;
+        return { subject: info.id, ...(picture ? { picture } : {}) };
       } catch {
         // No provider response, request body, token, code or error cause escapes.
         throw new Error('Yandex authentication failed');

@@ -93,3 +93,17 @@ it('bounds Google token and certificate transport instead of using the unbounded
     vi.restoreAllMocks();
   }
 });
+
+it('requests the optional profile scope only for approved avatar import', () => {
+  const client = createGoogleOidcClient({
+    clientId: 'test',
+    clientSecret: 'secret',
+    redirectUri: 'http://127.0.0.1:4000/auth/google/callback',
+    includeProfile: true,
+  });
+  expect(
+    new URL(
+      client.authorizationUrl({ state: 'state', nonce: 'nonce' }),
+    ).searchParams.get('scope'),
+  ).toBe('openid profile');
+});

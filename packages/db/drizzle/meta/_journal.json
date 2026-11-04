@@ -183,6 +183,13 @@
       "when": 1793739081689,
       "tag": "0025_fixed_ten_slot_wall",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793746385614,
+      "tag": "0026_account_appearance",
+      "breakpoints": true
     }
   ]
 }

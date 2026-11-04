@@ -22,7 +22,15 @@ import {
 } from '../../packages/db/src/schema';
 import type { GoogleOidcClient } from '../../packages/integrations/src/google';
 import { userFixture } from './fixtures';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 if (
@@ -57,6 +65,7 @@ class FakeGoogle implements GoogleOidcClient {
   exchangeCalls = 0;
   invalidNonce = false;
   email = 'shared@example.test';
+  picture: string | undefined;
 
   authorizationUrl(input: { state: string; nonce: string }): string {
     this.nonce = input.nonce;
@@ -82,6 +91,7 @@ class FakeGoogle implements GoogleOidcClient {
       subject: code,
       nonce: this.invalidNonce ? 'wrong-nonce' : this.nonce,
       email: this.email,
+      picture: this.picture,
       emailVerified: true,
     };
   }
@@ -90,12 +100,14 @@ class FakeGoogle implements GoogleOidcClient {
 function createApp(
   fake = new FakeGoogle(),
   environment = authConfig.appEnvironment,
+  storeAvatar?: (userId: string, picture: string) => Promise<void>,
 ) {
   const login = new GoogleLoginService(
     attempts,
     fake,
     identities,
     sessionService,
+    storeAvatar,
   );
   const app = buildApi(
     database,
@@ -182,6 +194,30 @@ describe('Google Authentication with PostgreSQL', () => {
   });
   afterAll(async () => database.close());
 
+  it('imports a photo only after verification and survives optional photo failures', async () => {
+    const fake = new FakeGoogle();
+    fake.picture = 'https://lh3.googleusercontent.com/synthetic.jpg';
+    const importer = vi
+      .fn()
+      .mockRejectedValue(Error('optional photo unavailable'));
+    const { app } = createApp(fake, 'test', importer);
+    try {
+      fake.invalidNonce = true;
+      await callback(app, (await start(app)).result, 'bad-nonce-user');
+      expect(importer).not.toHaveBeenCalled();
+      fake.invalidNonce = false;
+      const response = await callback(
+        app,
+        (await start(app)).result,
+        'verified-photo-user',
+      );
+      expect(sessionCookie(response)).toMatch(/^da_session=/);
+      expect(importer).toHaveBeenCalledOnce();
+      expect(importer.mock.calls[0]?.[1]).toBe(fake.picture);
+    } finally {
+      await app.close();
+    }
+  });
   it('starts with random state, nonce, browser binding and only hashes in the database', async () => {
     const { app } = createApp();
     try {

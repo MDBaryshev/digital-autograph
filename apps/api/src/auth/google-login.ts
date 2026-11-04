@@ -17,6 +17,10 @@ export class GoogleLoginService {
     private readonly google: GoogleOidcClient,
     private readonly identities: IdentityService,
     private readonly sessions: Pick<SessionService, 'createSession'>,
+    private readonly storeAvatar?: (
+      userId: string,
+      picture: string,
+    ) => Promise<void>,
   ) {}
 
   async start(returnPath: string): Promise<{
@@ -61,6 +65,9 @@ export class GoogleLoginService {
         verified.subject,
       );
       const session = await this.sessions.createSession(userId);
+      // Optional profile data cannot fail authentication or overwrite a custom image.
+      if (verified.picture && this.storeAvatar)
+        await this.storeAvatar(userId, verified.picture).catch(() => {});
       return {
         kind: 'success',
         token: session.token,

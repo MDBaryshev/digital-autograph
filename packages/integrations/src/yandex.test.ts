@@ -47,7 +47,9 @@ describe('Yandex OAuth code/PKCE adapter', () => {
   });
   it('exchanges on the backend and returns only app-bound immutable ID', async () => {
     const { adapter, fetcher } = client();
-    expect(await adapter.verifyCode(input)).toEqual({ subject: goodInfo.id });
+    expect(await adapter.verifyCode(input)).toEqual({
+      subject: goodInfo.id,
+    });
     const [tokenUrl, tokenOptions] = fetcher.mock.calls[0]!;
     expect(tokenUrl).toBe('https://oauth.yandex.ru/token');
     expect(tokenOptions?.redirect).toBe('error');
@@ -135,5 +137,25 @@ describe('Yandex OAuth code/PKCE adapter', () => {
         /^Yandex authentication failed$/,
       );
     }
+  });
+});
+
+it('requests portrait permission only when enabled and exposes a verified optional candidate', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json(goodToken))
+    .mockResolvedValueOnce(Response.json(goodInfo));
+  const adapter = createYandexOAuthClient(
+    { ...config, includeProfile: true },
+    fetcher,
+  );
+  expect(
+    new URL(
+      adapter.authorizationUrl({ state: 'state', codeChallenge: 'challenge' }),
+    ).searchParams.get('scope'),
+  ).toBe('login:info login:avatar');
+  expect(await adapter.verifyCode(input)).toEqual({
+    subject: goodInfo.id,
+    picture: 'https://avatars.yandex.net/get-yapic/irrelevant/islands-200',
   });
 });
