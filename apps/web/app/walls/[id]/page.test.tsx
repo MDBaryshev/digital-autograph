@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import WallPage from './page';
+import WallPage, { generateMetadata } from './page';
 
 vi.mock('@digital-autograph/config', () => ({
   loadWebConfig: () => ({
@@ -53,3 +53,24 @@ describe('public Wall server page', () => {
 vi.mock('next/headers', () => ({
   cookies: async () => ({ get: () => ({ value: 'en' }) }),
 }));
+
+it('exposes only the public invitation image origin in social metadata', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id,
+          creator: { displayName: 'Creator' },
+          appearance: { title: 'My ten', description: 'Public description' },
+        }),
+      ),
+    ),
+  );
+  const metadata = await generateMetadata({ params: Promise.resolve({ id }) });
+  expect(metadata.title).toBe('My ten');
+  expect(JSON.stringify(metadata)).toContain(
+    'https://api.example.test/walls/' + id + '/invite-card?locale=en',
+  );
+  expect(JSON.stringify(metadata)).not.toContain('internal-api');
+});

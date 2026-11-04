@@ -323,3 +323,41 @@
   border-radius: 50%;
   margin-bottom: 1rem;
 }
+
+.invite {
+  margin-bottom: 2.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--brand-color-border);
+  border-radius: 1rem;
+  background: var(--brand-color-surface);
+}
+.invite h2 {
+  margin-top: 0;
+}
+.invite label {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.inviteUrl {
+  width: 100%;
+  min-width: 0;
+}
+.invite details summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0.75rem 0;
+}
+.inviteQr {
+  display: block;
+  width: min(100%, 224px);
+  height: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--brand-color-border);
+}
+.invite a {
+  overflow-wrap: anywhere;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
