@@ -55,6 +55,7 @@ describe('typed configuration', () => {
       API_PORT: 4000,
       APP_ENV: 'local',
       FIRST_USE_ENFORCEMENT_ENABLED: false,
+      CREATOR_PROFILE_PUBLICATION_APPROVED: false,
     });
   });
 

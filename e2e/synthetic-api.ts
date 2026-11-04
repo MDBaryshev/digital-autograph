@@ -6,6 +6,8 @@ import { isolatedE2EEnvironment } from './environment';
 isolatedE2EEnvironment();
 // Explicitly exercise the opt-in gate with synthetic published texts only.
 process.env.FIRST_USE_ENFORCEMENT_ENABLED = 'true';
+// Synthetic, isolated profile publication only; the production default remains closed.
+process.env.CREATOR_PROFILE_PUBLICATION_APPROVED = 'true';
 const terms = syntheticFirstUseDocuments.find(
   (d) => d.type === 'terms_of_use',
 )!;
