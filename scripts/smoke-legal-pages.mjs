@@ -215,6 +215,22 @@ try {
     const { chromium, expect } = await import('@playwright/test');
     browser = await chromium.launch();
     const page = await browser.newPage();
+    const waitForReadingText = () =>
+      expect
+        .poll(
+          async () =>
+            page
+              .getByRole('region', { name: 'Текст документа' })
+              .locator('h2, p')
+              .evaluateAll((blocks) =>
+                blocks.map((b) => b.textContent).join('\n\n'),
+              ),
+          {
+            timeout: 10000,
+            message: 'Wait for the complete streamed document',
+          },
+        )
+        .toBe(oldText);
     phase = 'published';
     const out = process.env.LEGAL_SMOKE_SCREENSHOTS;
     if (out) await mkdir(out, { recursive: true });
@@ -223,21 +239,7 @@ try {
       for (const width of [1440, 1024, 390, 320]) {
         await page.setViewportSize({ width, height: 1000 });
         await page.goto(`${origin}/legal/terms/versions/fixture-old`);
-        await expect
-          .poll(
-            async () =>
-              page
-                .getByRole('region', { name: 'Текст документа' })
-                .locator('h2, p')
-                .evaluateAll((blocks) =>
-                  blocks.map((b) => b.textContent).join('\n\n'),
-                ),
-            {
-              timeout: 10000,
-              message: 'Wait for the complete streamed document',
-            },
-          )
-          .toBe(oldText);
+        await waitForReadingText();
         for (const scale of [1, 2]) {
           await page.evaluate((scale) => {
             globalThis.document.documentElement.style.fontSize = `${16 * scale}px`;
@@ -262,15 +264,12 @@ try {
         await page.locator('html').getAttribute('data-theme'),
         theme,
       );
-      assert.equal(
-        await page
-          .getByRole('link', {
-            name: 'Пользовательское соглашение',
-            exact: true,
-          })
-          .count(),
-        1,
-      );
+      await expect(
+        page.getByRole('link', {
+          name: 'Пользовательское соглашение',
+          exact: true,
+        }),
+      ).toHaveCount(1);
       if (out)
         await page.screenshot({
           path: `${out}/catalog-${theme}-320.png`,
@@ -278,30 +277,27 @@ try {
         });
     }
     await page.goto(`${origin}/legal/terms/versions/fixture-old`);
+    await waitForReadingText();
     await page.keyboard.press('Tab');
-    assert.equal(
-      await page.locator(':focus').textContent(),
-      'Перейти к содержимому',
-    );
+    await expect(
+      page.getByRole('link', { name: 'Перейти к содержимому', exact: true }),
+    ).toBeFocused();
     await page.keyboard.press('Enter');
-    assert.equal(
-      await page.locator(':focus').getAttribute('id'),
-      'main-content',
-    );
+    await expect(page.locator('#main-content')).toBeFocused();
     // Breadcrumbs precede the toolbar in the reading layout. Reach it using
     // actual keyboard navigation instead of assuming it is the first link.
+    const copyButton = page.getByRole('button', {
+      name: 'Копировать ссылку на редакцию',
+      exact: true,
+    });
     for (let i = 0; i < 10; i++) {
       await page.keyboard.press('Tab');
       if (
-        (await page.locator(':focus').textContent()) ===
-        'Копировать ссылку на редакцию'
+        await copyButton.evaluate((el) => el.ownerDocument.activeElement === el)
       )
         break;
     }
-    assert.equal(
-      await page.locator(':focus').textContent(),
-      'Копировать ссылку на редакцию',
-    );
+    await expect(copyButton).toBeFocused();
     assert.equal(
       await page
         .locator(':focus')
