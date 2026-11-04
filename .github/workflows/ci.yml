@@ -60,6 +60,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # On Windows the default command runs every portable unit test.
       - run: pnpm test
+      - name: Verify offline evaluation image boundaries and CSV exports
+        run: node --import tsx --test scripts/evaluate-openrouter.test.mjs
   checks:
     timeout-minutes: 45
     runs-on: ubuntu-latest
@@ -122,6 +124,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Verify offline evaluation image boundaries and CSV exports
+        run: node --import tsx --test scripts/evaluate-openrouter.test.mjs
       - name: Verify Caddy body, header and connection bounds
         run: pnpm test:ingress
       - name: Start private MinIO

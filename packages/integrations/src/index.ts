@@ -24,3 +24,5 @@ export {
   type VkIdOAuthClient,
   type VkIdOAuthConfig,
 } from './vk-id';
+
+export { createOpenRouter, type AiVerdict } from './openrouter';

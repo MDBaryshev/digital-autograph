@@ -51,6 +51,8 @@ function installApi(failFirstUpload = false) {
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (url.endsWith('/ai/autographs/capabilities'))
+        return response({ generation: false, moderation: false });
       calls.push({ url, init });
       if (url.endsWith('/autographs')) {
         const body = JSON.parse(String(init?.body)) as { source: string };

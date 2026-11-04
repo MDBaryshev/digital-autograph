@@ -1,3 +1,4 @@
+import { loadOpenRouterConfig } from '@digital-autograph/config';
 import type { LegalHttp } from './legal-http';
 import { assertFirstUseActivation } from './first-use';
 import {
@@ -30,6 +31,7 @@ export function loadApiStartupConfig(
     );
   return {
     config,
+    openRouter: loadOpenRouterConfig(environment),
     paymentConfig,
     yandexConfig,
     vkIdConfig,

@@ -26,6 +26,8 @@ import {
 } from '../../deploy/manual-deploy.mjs';
 import {
   createDatabase,
+  createPgAiAutographRepository,
+  aiFingerprint,
   migrate,
   createPgProviderIdentityRepository,
   createPgWallRepository,
@@ -249,7 +251,10 @@ it('migrates populated baseline with a non-superuser owner; separate runtime rol
         'SELECT count(*)::int AS n FROM drizzle.__drizzle_migrations',
       )
     ).rows[0].n,
-  ).toBe(24);
+  ).toBe(
+    JSON.parse(readFileSync('packages/db/drizzle/meta/_journal.json', 'utf8'))
+      .entries.length,
+  );
   for (const role of ['da_api', 'da_worker', 'da_migrator'])
     expect(
       (
@@ -748,3 +753,28 @@ it('verifies the real database dump and actual private bytes with the off-VM res
     client.destroy();
   }
 }, 65000);
+
+it('admits AI jobs with API-only restricted grants and denies worker access to private results', async () => {
+  const user = randomUUID();
+  await admin.query('INSERT INTO users(id) VALUES($1)', [user]);
+  const request = randomUUID();
+  const repo = createPgAiAutographRepository(roleDbs[0]!.pool);
+  expect(
+    (
+      await repo.claim(
+        user,
+        request,
+        'generation',
+        aiFingerprint('nick'),
+        'synthetic/image',
+      )
+    ).fresh,
+  ).toBe(true);
+  await repo.finish(user, request, { images: ['synthetic-private-result'] });
+  expect((await repo.read(user, request)).result.images).toEqual([
+    'synthetic-private-result',
+  ]);
+  await expect(
+    roleDbs[1]!.pool.query('SELECT * FROM ai_autograph_requests'),
+  ).rejects.toThrow('permission denied');
+});
