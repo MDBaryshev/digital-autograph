@@ -673,7 +673,10 @@ describe('Free Claim and atomic Placement', () => {
       }),
     );
     const outcomes = await Promise.allSettled(
-      wall.slotIds.map((slotId) =>
+      // Force both tentative inserts before either can commit. Later requests
+      // may legitimately stop at the existing-claim check; the HTTP race above
+      // separately exercises all ten places.
+      wall.slotIds.slice(0, 2).map((slotId) =>
         simultaneous.claimFreeSlot({
           userId: owner.id,
           wallId: wall.wallId,
@@ -682,8 +685,14 @@ describe('Free Claim and atomic Placement', () => {
         }),
       ),
     );
-    expect(arrivals).toBe(10);
+    expect(arrivals).toBe(2);
     expect(outcomes.filter((item) => item.status === 'fulfilled')).toHaveLength(
+      1,
+    );
+    expect(outcomes.find((item) => item.status === 'fulfilled')).toMatchObject({
+      value: { created: true },
+    });
+    expect(outcomes.filter((item) => item.status === 'rejected')).toHaveLength(
       1,
     );
     expect(outcomes.find((item) => item.status === 'rejected')).toMatchObject({
