@@ -9,9 +9,18 @@ test('the ten-place podium stays readable in light and dark themes on mobile and
   await expect(slots).toHaveCount(10);
   for (const theme of ['light', 'dark']) {
     await page.goto('/me/settings');
+    // Wait for the client session check: the loading view exposes the SSR select
+    // before its event handler is ready and replaces the preferences on completion.
+    await expect(
+      page.getByRole('heading', { name: 'Sign in to continue', exact: true }),
+    ).toBeVisible();
     await page
       .getByRole('combobox', { name: 'Color theme' })
       .selectOption(theme);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('autograph-theme')))
+      .toBe(theme);
     await page.goto('/walls/' + e2eWallId);
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     for (const width of [320, 390, 768, 1440]) {
