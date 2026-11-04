@@ -216,8 +216,16 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await expect(
     page.getByRole('radio', { name: /Drawn autograph/ }),
   ).toBeVisible();
-  await responsive(page, page.getByRole('button', { name: 'Claim this slot' }));
-  await page.getByRole('button', { name: 'Claim this slot' }).click();
+  await responsive(
+    page,
+    page
+      .getByRole('listitem', { name: 'Slot 1', exact: true })
+      .getByRole('button', { name: 'Claim this slot' }),
+  );
+  await page
+    .getByRole('listitem', { name: 'Slot 1', exact: true })
+    .getByRole('button', { name: 'Claim this slot' })
+    .click();
   await expect(
     page.getByRole('heading', { name: 'Confirm your free claim' }),
   ).toBeFocused();
@@ -227,15 +235,22 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   );
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(
-    page.getByRole('button', { name: 'Claim this slot' }),
+    page
+      .getByRole('listitem', { name: 'Slot 1', exact: true })
+      .getByRole('button', { name: 'Claim this slot' }),
   ).toBeFocused();
-  await page.getByRole('button', { name: 'Claim this slot' }).click();
+  await page
+    .getByRole('listitem', { name: 'Slot 1', exact: true })
+    .getByRole('button', { name: 'Claim this slot' })
+    .click();
   await page.getByRole('button', { name: 'Confirm free claim' }).click();
   await expect(
     page.getByText('Your autograph is on the Wall.', { exact: true }),
   ).toBeVisible();
   await expect(history.getByText('Current placement')).toBeVisible();
-  await expect(page.getByRole('listitem', { name: 'Slot 1' })).toBeVisible();
+  await expect(
+    page.getByRole('listitem', { name: 'Slot 1', exact: true }),
+  ).toBeVisible();
   await expect(history.getByText('Free Claim', { exact: true })).toBeVisible();
   await expect(history.getByRole('heading', { name: 'Slot 1' })).toBeVisible();
   await expect(
@@ -268,7 +283,9 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await expect(history.getByText('Current placement')).toBeVisible();
   await page.reload();
   await expect(history.getByText('Current placement')).toBeVisible();
-  await expect(page.getByRole('listitem', { name: 'Slot 1' })).toBeVisible();
+  await expect(
+    page.getByRole('listitem', { name: 'Slot 1', exact: true }),
+  ).toBeVisible();
   const publicWall = await page.request.get(`${apiUrl}/walls/${e2eWallId}`);
   expect(publicWall.ok()).toBeTruthy();
   expect((await publicWall.json()).slots[0]).toMatchObject({
@@ -276,7 +293,9 @@ test('new user uploads, reviews, claims and reads only their persistent history'
     currentPlacement: { source: 'free_claim' },
   });
   await expect(
-    page.getByRole('button', { name: 'Claim this slot' }),
+    page
+      .getByRole('listitem', { name: 'Slot 1', exact: true })
+      .getByRole('button', { name: 'Claim this slot' }),
   ).toHaveCount(0);
   await page.getByRole('link', { name: 'View your placement history' }).click();
   await expect(

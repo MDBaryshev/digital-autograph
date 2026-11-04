@@ -176,6 +176,13 @@
       "when": 1793731714675,
       "tag": "0024_ai_autographs",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793739081689,
+      "tag": "0025_fixed_ten_slot_wall",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { e2eCreatorId, e2eUserId, expect, test } from './fixtures';
+import { e2eUserId, expect, test } from './fixtures';
 
 const apiUrl = process.env.API_PUBLIC_ORIGIN ?? 'http://127.0.0.1:4000';
 const origin = process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000';
@@ -7,17 +7,32 @@ test('creator creates a draft, schedules, launches when due and ends their Wall'
   page,
   scenario,
 }) => {
-  const owner = await scenario.actorContext(scenario.ownerId);
+  const ownerId = (
+    await scenario.database.pool.query(
+      'INSERT INTO users DEFAULT VALUES RETURNING id',
+    )
+  ).rows[0].id;
+  const creatorId = (
+    await scenario.database.pool.query(
+      'INSERT INTO creators(owner_user_id) VALUES($1) RETURNING id',
+      [ownerId],
+    )
+  ).rows[0].id;
+  await scenario.database.pool.query(
+    'INSERT INTO creator_profiles(creator_id,slug,display_name) VALUES($1,$2,$3)',
+    [creatorId, `lifecycle-${creatorId}`, 'Lifecycle creator'],
+  );
+  const owner = await scenario.actorContext(ownerId);
   const future = '2100-01-01T00:00:00.000Z';
   const created = await owner.request.post(
-    `${apiUrl}/creators/${e2eCreatorId}/walls`,
-    { headers: { Origin: origin }, data: { slotCount: 2, startAt: future } },
+    `${apiUrl}/creators/${creatorId}/walls`,
+    { headers: { Origin: origin }, data: { startAt: future } },
   );
   expect(created.status()).toBe(201);
   const wall = await created.json();
   expect(wall.status).toBe('draft');
   expect(wall.slots.map((slot: { position: number }) => slot.position)).toEqual(
-    [0, 1],
+    Array.from({ length: 10 }, (_, i) => i),
   );
   expect((await page.request.get(`${apiUrl}/walls/${wall.id}`)).status()).toBe(
     404,
@@ -71,5 +86,5 @@ test('creator creates a draft, schedules, launches when due and ends their Wall'
     'SELECT status, slot_count FROM walls WHERE id = $1',
     [wall.id],
   );
-  expect(stored.rows[0]).toEqual({ status: 'ended', slot_count: 2 });
+  expect(stored.rows[0]).toEqual({ status: 'ended', slot_count: 10 });
 });

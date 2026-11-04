@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { distinctWallOwner } from './fixtures';
 import { approvedDestkaPolicy } from '../../apps/api/scripts/destka-pricing-plan';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -99,6 +100,7 @@ async function createWall(
     slotCount?: number;
   } = {},
 ) {
+  ownerId = await distinctWallOwner(database, ownerId);
   const creatorId = randomUUID();
   const wallId = randomUUID();
   const slotId = randomUUID();
@@ -116,15 +118,14 @@ async function createWall(
       options.startAt ?? null,
       options.endAt ?? null,
       options.pricingConfigId ?? null,
-      options.slotCount ?? 1,
+      10,
     ],
   );
   const slotIds = [slotId];
-  for (let position = 1; position < (options.slotCount ?? 1); position++)
-    slotIds.push(randomUUID());
+  for (let position = 1; position < 10; position++) slotIds.push(randomUUID());
   for (const [position, id] of slotIds.entries())
     await database.pool.query(
-      'INSERT INTO slots (id, wall_id, position) VALUES ($1::uuid, $2::uuid, $3)',
+      'UPDATE slots SET id=$1::uuid WHERE wall_id=$2::uuid AND position=$3',
       [id, wallId, position],
     );
   return { creatorId, wallId, slotId, slotIds };
@@ -340,19 +341,20 @@ describe('Pricing config and persisted takeover quotes', () => {
 
   it('pins each new Wall to the explicitly activated default and never repins it', async () => {
     const admin = await person('admin');
-    const owner = await person();
-    const creatorId = randomUUID();
-    await database.pool.query(
-      'INSERT INTO creators (id, owner_user_id) VALUES ($1::uuid, $2::uuid)',
-      [creatorId, owner.id],
-    );
-    const newWall = () =>
-      app.inject({
+    const newWall = async () => {
+      const owner = await person();
+      const creatorId = randomUUID();
+      await database.pool.query(
+        'INSERT INTO creators (id,owner_user_id) VALUES ($1,$2)',
+        [creatorId, owner.id],
+      );
+      return app.inject({
         method: 'POST',
         url: `/creators/${creatorId}/walls`,
         headers: headers(owner.token),
-        payload: { slotCount: 1 },
+        payload: {},
       });
+    };
     const unpriced = await newWall();
     expect(unpriced.statusCode).toBe(201);
     const beforeDefault = await database.pool.query<{

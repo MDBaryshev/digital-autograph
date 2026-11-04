@@ -4,6 +4,8 @@
 
 The authenticated User may manage a Creator only when `creators.owner_user_id` equals the session User ID. A null owner cannot use the ordinary owner API. The submitted Creator ID identifies the target; it is never authorization evidence. There is no admin bypass. HTTP validates requests in `packages/contracts`, `packages/walls` applies rules independently of frameworks, and `packages/db` owns SQL and transactions. The existing session guard and origin policy apply to mutations.
 
+An account may own at most one Wall across all its Creator records and all Wall statuses, including archived. `walls.owner_user_id` is derived by PostgreSQL from the Creator, never trusted from caller input; a unique index enforces the account limit under concurrent inserts. Creator ownership changes synchronize this value and reject collisions. A second creation returns `WALL_ALREADY_EXISTS` (409). See [ADR 0011](../adr/0011-one-ten-place-wall-per-account.md).
+
 The public Creator read returns ID, slug, display name, and visible Wall summaries. A Creator with no profile has no public page. Owner ID, account details, roles, and internal state are omitted.
 
 ## Lifecycle
@@ -40,7 +42,11 @@ Public Wall data includes ordered Slot IDs and positions, an occupied flag deriv
 
 New Walls pin the explicitly activated platform pricing version when one exists; existing Walls retain their pin. An unpriced Wall still supports Free Claim. See [pricing.md](pricing.md).
 
-Wall creation inserts the draft Wall and positions `0..slotCount-1` in one transaction. The API accepts 1–1000 Slots. `slots.id` is stable identity; `position` is ordering. Draft resize adds or removes only trailing positions, retaining every surviving Slot ID. Any Placement history blocks all structural changes, including removal of a completed Slot. Once scheduled or later, structure is locked. A read or mutation detects mismatched `slot_count`, row count, or positions and fails rather than silently returning a partial structure. PostgreSQL's unique `(wall_id, position)` index also prevents duplicate positions.
+Every Wall has exactly ten positions. The creation request can omit `slotCount`; an explicit value is accepted only if it is 10. PostgreSQL inserts positions `0..9` atomically with the Wall, even for a direct SQL insertion. `slots.id` is stable identity; `position` is fixed ordering. Owners cannot resize at any lifecycle stage, even without placement history. Count/range checks, unique `(wall_id, position)`, automatic creation and guards against Slot deletion/movement keep the ten positions intact. A read or mutation still detects any inconsistent structure and fails instead of silently returning a partial result.
+
+The workspace has one explicit creation action and no capacity input. Once a Wall exists, including an archived Wall, the creation action is hidden. The public view marks positions 1, 2 and 3 with gold, silver and bronze crown badges and borders; all other positions have a black border and numbered badge. Position, crown label and number remain accessible independently of color. These are presentation cues, not a recalculation of payment rank or ownership.
+
+Migration 0025 first checks existing capacity/positions and duplicate account ownership under write-blocking table locks. Incompatible data aborts the migration without deleting or selecting Walls/Slots or changing placement/payment history. Review [the rollout instructions](../operations/fixed-wall-policy.md) before deployment.
 
 Wall mutations lock the Wall and Creator rows, then Slot rows, evaluate the rule against the locked snapshot, and update in the same transaction. Competing lifecycle actions therefore observe serial states. Free Claim locks the Wall `FOR SHARE` and the selected Slot `FOR UPDATE` in the same order. Independent Slot claims can run concurrently while Wall lifecycle updates wait. The partial unique active Placement index remains the final database guard against duplicate active placements. See [free-claim.md](free-claim.md).
 

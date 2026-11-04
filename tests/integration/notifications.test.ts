@@ -74,11 +74,11 @@ async function fixture() {
     [creatorId],
   );
   await database.pool.query(
-    "INSERT INTO walls (id,creator_id,status,slot_count) VALUES ($1,$2,'live',1)",
+    "INSERT INTO walls (id,creator_id,status,slot_count) VALUES ($1,$2,'live',10)",
     [wallId, creatorId],
   );
   await database.pool.query(
-    'INSERT INTO slots (id,wall_id,position) VALUES ($1,$2,0)',
+    'UPDATE slots SET id=$1 WHERE wall_id=$2 AND position=0',
     [slotId, wallId],
   );
   await database.pool.query(
@@ -172,9 +172,20 @@ it('bounds overall fanout to 20 per channel per hour, disabled users receive not
   const f = await fixture();
   for (let i = 0; i < 23; i++) {
     const wall = randomUUID();
+    const owner = randomUUID(),
+      creator = randomUUID();
+    await database.pool.query('INSERT INTO users(id) VALUES($1)', [owner]);
     await database.pool.query(
-      "INSERT INTO walls (id,creator_id,status,slot_count) VALUES ($1,$2,'live',0)",
-      [wall, f.creatorId],
+      'INSERT INTO creators(id,owner_user_id) VALUES($1,$2)',
+      [creator, owner],
+    );
+    await database.pool.query(
+      'INSERT INTO creator_profiles(creator_id,slug,display_name) VALUES($1,$2,$3)',
+      [creator, `notify-${creator}`, 'Synthetic creator'],
+    );
+    await database.pool.query(
+      "INSERT INTO walls (id,creator_id,status,slot_count) VALUES ($1,$2,'live',10)",
+      [wall, creator],
     );
     await database.pool.query(
       "INSERT INTO notification_events (source_key,user_id,kind,wall_id) VALUES ($1,$2,'user_displaced',$3)",

@@ -106,7 +106,7 @@ it('does not link an archived Wall to a public endpoint that returns 404', async
             {
               id: 'archived',
               status: 'archived',
-              slotCount: 3,
+              slotCount: 10,
               createdAt: '2026-10-31T09:00:00Z',
             },
           ],
@@ -119,6 +119,9 @@ it('does not link an archived Wall to a public endpoint that returns 404', async
   );
   expect(await screen.findByText(/Archived/)).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'Open Wall' })).toBeNull();
+  expect(
+    screen.queryByRole('button', { name: 'Create draft Wall' }),
+  ).toBeNull();
 });
 it('disables public profile editing when the server has not admitted publication', async () => {
   vi.stubGlobal(
@@ -170,7 +173,7 @@ it('creates a draft explicitly and does not publish it or duplicate a pending re
             {
               id: 'draft-wall',
               status: 'draft',
-              slotCount: 12,
+              slotCount: 10,
               createdAt: '2026-10-31T09:00:00Z',
             },
           ],
@@ -181,24 +184,25 @@ it('creates a draft explicitly and does not publish it or duplicate a pending re
   render(
     <AccountWorkspace apiOrigin="https://api.example.test" section="walls" />,
   );
-  fireEvent.change(await screen.findByLabelText('Number of places'), {
-    target: { value: '12' },
+  const create = await screen.findByRole('button', {
+    name: 'Create draft Wall',
   });
-  const create = screen.getByRole('button', { name: 'Create draft Wall' });
+  expect(screen.queryByRole('spinbutton')).toBeNull();
   fireEvent.click(create);
   fireEvent.click(create);
   expect(fetcher).toHaveBeenCalledTimes(2);
   expect(fetcher.mock.calls[1]?.[0]).toBe(
     'https://api.example.test/creators/creator/walls',
   );
-  expect(JSON.parse(fetcher.mock.calls[1]?.[1].body)).toEqual({
-    slotCount: 12,
-  });
+  expect(JSON.parse(fetcher.mock.calls[1]?.[1].body)).toEqual({});
   finish(new Response('{}', { status: 201 }));
   expect(
     await screen.findByRole('button', { name: 'Publish Wall' }),
   ).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'Open Wall' })).toBeNull();
+  expect(
+    screen.queryByRole('button', { name: 'Create draft Wall' }),
+  ).toBeNull();
 });
 it.each([
   ['ready', 'Approved'],

@@ -164,12 +164,12 @@ try {
   );
   for (const entry of journal.entries) {
     assert.match(entry.tag, /^\d{4}_[a-z0-9_]+$/);
-    sql(
-      source,
-      readFileSync(
-        new URL(`../packages/db/drizzle/${entry.tag}.sql`, import.meta.url),
-      ),
+    // Match the transactional migration runner: explicit LOCK statements require BEGIN.
+    const migration = readFileSync(
+      new URL(`../packages/db/drizzle/${entry.tag}.sql`, import.meta.url),
+      'utf8',
     );
+    sql(source, 'BEGIN;\n' + migration + '\nCOMMIT;');
   }
   // Real schema and triggers, synthetic fixture. No providers or workers run.
   phase = 'financial_fixture';
@@ -224,8 +224,8 @@ try {
     INSERT INTO creators (id,owner_user_id) VALUES (${id(4)},${id(1)});
     INSERT INTO pricing_config_versions (id,algorithm_version,currency,base_amount_minor,minimum_amount_minor,maximum_amount_minor,dynamic_takeover_limit,takeover_step_size,step_amount_minor,decay_interval_seconds,decay_amount_minor,decay_floor_amount_minor,guaranteed_visibility_seconds,created_by_user_id)
       VALUES (${id(5)},'takeover_ladder_v1','RUB',65000,10000,100000,3,1,1000,60,100,10000,0,${id(1)});
-    INSERT INTO walls (id,creator_id,pricing_config_id,status,slot_count) VALUES (${id(6)},${id(4)},${id(5)},'live',1);
-    INSERT INTO slots (id,wall_id,position) VALUES (${id(7)},${id(6)},0);
+    INSERT INTO walls (id,creator_id,pricing_config_id,status,slot_count) VALUES (${id(6)},${id(4)},${id(5)},'live',10);
+    UPDATE slots SET id=${id(7)} WHERE wall_id=${id(6)} AND position=0;
     INSERT INTO autographs (id,user_id,source,status) VALUES (${id(8)},${id(2)},'canvas','ready');
     INSERT INTO placements (id,slot_id,user_id,source,started_at,ended_at,end_reason)
       VALUES (${id(9)},${id(7)},${id(3)},'free_claim',now()-interval '10 minutes',now()-interval '1 minute','takeover');

@@ -20,6 +20,7 @@ import {
   userFixture,
   wallFixture,
 } from './fixtures';
+import { slotForWall } from './fixtures';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 if (
@@ -64,9 +65,7 @@ async function makeWorld() {
   const wall = required(
     await db.insert(walls).values(wallFixture(creator.id, 1)).returning(),
   );
-  const slot = required(
-    await db.insert(slots).values(slotFixture(wall.id, 1)).returning(),
-  );
+  const slot = await slotForWall(database, wall.id);
   return { user, creator, wall, slot };
 }
 
@@ -315,15 +314,15 @@ describe('domain schema constraints', () => {
     const secondWall = required(
       await db.insert(walls).values(wallFixture(creator.id, 2)).returning(),
     );
-    const firstSlot = required(
-      await db.insert(slots).values(slotFixture(firstWall.id, 1)).returning(),
-    );
+    const firstSlot = await slotForWall(database, firstWall.id);
     expect(firstSlot.wallId).toBe(firstWall.id);
     await expectPgError(
       db.insert(slots).values(slotFixture(firstWall.id, 2)),
       '23505',
     );
-    await db.insert(slots).values(slotFixture(secondWall.id, 3));
+    expect((await slotForWall(database, secondWall.id)).wallId).toBe(
+      secondWall.id,
+    );
     await expectPgError(
       db.insert(slots).values(slotFixture(fixtureId(999), 4)),
       '23503',
@@ -352,7 +351,7 @@ describe('domain schema constraints', () => {
     const ended = required(
       await db
         .update(placements)
-        .set({ endedAt: new Date(), endReason: 'takeover' })
+        .set({ endedAt: sql`clock_timestamp()`, endReason: 'takeover' })
         .where(eq(placements.id, first.id))
         .returning(),
     );
@@ -360,12 +359,7 @@ describe('domain schema constraints', () => {
     await db
       .insert(placements)
       .values(placementFixture(slot.id, secondUser.id, 2));
-    const otherSlot = required(
-      await db
-        .insert(slots)
-        .values(slotFixture(wall.id, 2, 1))
-        .returning(),
-    );
+    const otherSlot = await slotForWall(database, wall.id, 1);
     await db
       .insert(placements)
       .values(placementFixture(otherSlot.id, user.id, 3));
@@ -425,7 +419,7 @@ describe('domain schema constraints', () => {
       '23503',
     );
     await expectPgError(db.delete(walls).where(eq(walls.id, wall.id)), '23503');
-    await expectPgError(db.delete(slots).where(eq(slots.id, slot.id)), '23503');
+    await expectPgError(db.delete(slots).where(eq(slots.id, slot.id)), '23514');
   });
 
   it('allows exactly one of two concurrent active placement inserts', async () => {

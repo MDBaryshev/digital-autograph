@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { distinctWallOwner } from './fixtures';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   buildAcceptedApi as buildApi,
@@ -90,6 +91,7 @@ async function wallFixture(
     count?: number;
   } = {},
 ) {
+  ownerId = await distinctWallOwner(database, ownerId);
   const creatorId = randomUUID();
   const wallId = randomUUID();
   await database.pool.query(
@@ -100,7 +102,7 @@ async function wallFixture(
     'INSERT INTO creator_profiles (creator_id, slug, display_name) VALUES ($1::uuid, $2, $3)',
     [creatorId, `creator-${creatorId}`, 'Creator'],
   );
-  const count = options.count ?? 2;
+  const count = 10;
   await database.pool.query(
     `INSERT INTO walls (id, creator_id, status, start_at, end_at, slot_count)
      VALUES ($1::uuid, $2::uuid, $3::wall_status, $4::timestamptz, $5::timestamptz, $6::integer)`,
@@ -116,7 +118,7 @@ async function wallFixture(
   const slotIds = Array.from({ length: count }, () => randomUUID());
   for (const [position, slotId] of slotIds.entries()) {
     await database.pool.query(
-      'INSERT INTO slots (id, wall_id, position) VALUES ($1::uuid, $2::uuid, $3::integer)',
+      'UPDATE slots SET id=$1::uuid WHERE wall_id=$2::uuid AND position=$3::integer',
       [slotId, wallId, position],
     );
   }
@@ -642,7 +644,10 @@ describe('Free Claim and atomic Placement', () => {
         request(wall.wallId, slotId, autographId, owner.token),
       ),
     );
-    expect(results.map((r) => r.statusCode).sort()).toEqual([201, 409]);
+    expect(results.map((r) => r.statusCode).sort()).toEqual([
+      201,
+      ...Array(9).fill(409),
+    ]);
     expect(results.find((r) => r.statusCode === 409)?.json()).toEqual({
       error: { code: 'FREE_CLAIM_ALREADY_USED' },
     });
@@ -677,7 +682,7 @@ describe('Free Claim and atomic Placement', () => {
         }),
       ),
     );
-    expect(arrivals).toBe(2);
+    expect(arrivals).toBe(10);
     expect(outcomes.filter((item) => item.status === 'fulfilled')).toHaveLength(
       1,
     );

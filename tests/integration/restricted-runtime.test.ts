@@ -465,13 +465,15 @@ it('runs identity → private upload → worker → approval → moderation → 
   );
   const walls = new WallService(createPgWallRepository(api));
   const createdWall = await walls.createWall(user, creator, {
-    slotCount: 1,
+    slotCount: 10,
     startAt: null,
     endAt: null,
   });
-  await walls.updateWall(user, createdWall.id, { slotCount: 2 });
+  await expect(
+    walls.updateWall(user, createdWall.id, { slotCount: 2 }),
+  ).rejects.toThrow();
   const resized = await walls.updateWall(user, createdWall.id, {
-    slotCount: 1,
+    slotCount: 10,
   });
   await walls.transitionWall(user, createdWall.id, 'publish');
   const wall = createdWall.id,

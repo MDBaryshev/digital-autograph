@@ -1,5 +1,12 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.':
+    'На аккаунте может быть одна стена — ровно 10 мест. Сначала она появится как приватный черновик.',
+  'Your account already has its Wall with 10 places.':
+    'Твоя единственная стена с 10 местами уже создана.',
+  'Gold place': 'Золотое место',
+  'Silver place': 'Серебряное место',
+  'Bronze place': 'Бронзовое место',
   'Places: {count}': 'Мест: {count}',
   'Preview expired. Open it again.':
     'Срок предпросмотра истёк. Открой его ещё раз.',
