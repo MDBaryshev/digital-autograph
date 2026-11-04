@@ -8,6 +8,11 @@ authoritative. Neither this document nor a valid request approves UGC policy.
 
 ## Preconditions and phases
 
+The [EGO-105 policy proposal](../product/ugc-safety-policy-proposal.md),
+[moderator playbook](../operations/moderation-playbook.md) and
+[open owner decisions](../operations/moderation-owner-decisions.md) prepare
+these choices; none is an approved policy or an implemented operational process.
+
 EGO-105 must resolve moderation actions, urgent/normal SLA, escalation, appeals,
 creator conflicts and evidence retention in coordination with EGO-110 privacy.
 Existing pre-publication reason codes can be reused as initial report categories;
