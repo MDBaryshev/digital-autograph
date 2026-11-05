@@ -12,6 +12,18 @@ Moving files to a different backend is not part of this update. Web, API, Worker
 PostgreSQL and Caddy continue on the same VM. Existing storage/snapshot charges
 continue; no additional fixed monthly resource is introduced.
 
+## EGO-185 paid-protection compatibility
+
+The 0027 migration adds the new 2700-second checkout evidence guard. Before any
+new payment admission, replace every API/worker binary and apply the reviewed
+`postgres-runtime.sql`: the notification worker now needs SELECT only on
+`payment_orders(id,placement_id)` and
+`checkout_confirmations(order_id,guaranteed_visibility_seconds)`. It receives no
+financial-column read or payment write privilege. Existing checkout evidence and
+legacy protection durations remain unchanged. Migration alone does not grant
+these operator-managed runtime privileges. Keep payment admission closed until
+the coordinated migration, runtime grants and binary replacement are verified.
+
 ## Before the owner authorizes a server change
 
 1. Merge one independently reviewed PR through existing protected checks. Keep

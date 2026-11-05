@@ -17,6 +17,7 @@ import {
   fingerprint,
   sha256,
   fileHash,
+  validateManifest,
 } from '../../../deploy/manual-deploy.mjs';
 const toolFiles = [
   'manual-deploy.mjs',
@@ -493,6 +494,33 @@ it('retains the exact previous env only as private evidence while removing all p
         readFileSync(path.join(target, 'api.env'), 'utf8'),
       ),
     ).toBe(false);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
+// Every reviewed migration, including paid protection 0027, must be deployable.
+it('accepts the 28-migration release and rejects unreviewed counts', () => {
+  const f = fixture();
+  try {
+    const m = {
+      ...f.m,
+      migrations: Array.from({ length: 28 }, (_, i) => ({
+        hash: 'a'.repeat(64),
+        created_at: i,
+      })),
+    };
+    expect(() => validateManifest(m)).not.toThrow();
+    for (const count of [23, 29])
+      expect(() =>
+        validateManifest({
+          ...m,
+          migrations: Array.from({ length: count }, (_, i) => ({
+            hash: 'a'.repeat(64),
+            created_at: i,
+          })),
+        }),
+      ).toThrow('Proof/tool/migration hashes required');
   } finally {
     rmSync(f.dir, { recursive: true, force: true });
   }
