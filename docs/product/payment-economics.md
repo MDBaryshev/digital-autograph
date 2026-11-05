@@ -25,7 +25,7 @@ file, not as extra JSON keys (unknown keys are rejected to catch typos).
 ## Approved product ladder — 27.10.2026
 
 The owner approved 89 RUB base/minimum, +100 RUB for each successful Wall takeover,
-4989 RUB cap,900-second protection and 50% creator remuneration **rate**. See
+4989 RUB cap,2700-second protection (owner revision 05.11.2026) and 50% creator remuneration **rate**. See
 [Pricing Spec v1](pricing-spec-v1.md) and run `pnpm pricing:plan` for the exact
 no-decay ladder GMV matrix. The average ticket is derived from the actual sequence,
 not the final price or number of Slots. Current method fees remain unfilled.

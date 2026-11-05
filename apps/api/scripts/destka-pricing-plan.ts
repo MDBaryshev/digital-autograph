@@ -2,7 +2,7 @@
 import process from 'node:process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import policy from '../../../docs/product/destka-pricing-2026-10-27-v1.json';
+import policy from '../../../docs/product/destka-pricing-2026-11-05-v2.json';
 import {
   calculateTakeoverPrice,
   type PricingConfiguration,

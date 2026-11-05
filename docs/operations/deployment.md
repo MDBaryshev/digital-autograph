@@ -297,7 +297,7 @@ sets the corresponding private values; Web uses the approved API origin.
 
 Website/Merchant acceptance remains open until actual privacy/OAuth/mobile/legal
 checks. Keep unapproved legal documents unpublished and all paid operations off.
-Prices stay89RUB minimum,+100 per successful takeover,cap4989,900s protection,
+Prices stay89RUB minimum,+100 per successful takeover,cap4989,2700s protection,
 creator50%. No YooKassa activation or merchant submission is included.
 
 Preserve the paid recovery snapshot and root-only historical runner evidence.

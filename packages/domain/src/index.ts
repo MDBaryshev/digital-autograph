@@ -73,6 +73,7 @@ export type AutographAssetStatus = (typeof autographAssetStatuses)[number];
 export {
   takeoverAlgorithmVersion,
   pricingCurrency,
+  paidTakeoverProtectionSeconds,
   maximumPricingAmountMinor,
   validatePricingConfiguration,
   calculateTakeoverPrice,

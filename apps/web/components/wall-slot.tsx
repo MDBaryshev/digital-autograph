@@ -1,7 +1,8 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { remainingPaymentTime } from '../lib/slot-time';
 import { frontendCapabilities } from '../lib/frontend-capabilities';
 import { placementSourceLabel } from '../lib/placement-history-api';
 import type { PublicWall } from '../lib/public-wall-api';
@@ -15,8 +16,12 @@ export function WallSlot({
   actionLabel,
   actionDisabled = false,
   onAction,
+  now = Date.now(),
+  paidAction,
 }: {
   slot: Slot;
+  now?: number;
+  paidAction?: ReactNode;
   apiOrigin: string;
   actionLabel?: string;
   actionDisabled?: boolean;
@@ -30,6 +35,9 @@ export function WallSlot({
   const podiumLabel = ['Gold place', 'Silver place', 'Bronze place'][
     slot.position
   ];
+  const reserved = Boolean(slot.reservationExpiresAt);
+  const protectedUntil =
+    slot.takeoverAvailableAt && Date.parse(slot.takeoverAvailableAt) > now;
   const mediaPath = slot.currentPlacement?.mediaPath;
   const showMedia = Boolean(mediaPath && failedPath !== mediaPath);
 
@@ -39,6 +47,7 @@ export function WallSlot({
       tabIndex={-1}
       className={styles.slot}
       data-podium={podium}
+      data-reserved={reserved || undefined}
       aria-label={t(`Slot ${number}`)}
     >
       <span className={styles.slotNumber}>
@@ -99,6 +108,19 @@ export function WallSlot({
               ? ` · ${t(placementSourceLabel(slot.currentPlacement.source))}`
               : ''}
           </p>
+          {protectedUntil && !reserved && (
+            <p>
+              {t('Protected from takeover for')}{' '}
+              <span role="timer" aria-live="off">
+                {remainingPaymentTime(slot.takeoverAvailableAt!, now)}
+              </span>
+            </p>
+          )}
+          {frontendCapabilities.paidTakeover && (
+            <div className={reserved ? styles.reservationAction : undefined}>
+              {paidAction}
+            </div>
+          )}
           {!frontendCapabilities.paidTakeover && (
             <div>
               <button
@@ -124,12 +146,27 @@ export function WallSlot({
             <button
               id={`slot-action-${slot.id}`}
               type="button"
-              disabled={actionDisabled}
+              disabled={actionDisabled || reserved}
               onClick={onAction}
             >
               {t(actionLabel)}
             </button>
           )}
+        </div>
+      )}
+      {reserved && (
+        <div className={styles.reservationOverlay}>
+          <strong>{t('Reserved for payment')}</strong>
+          <span role="timer" aria-live="off">
+            {Date.parse(slot.reservationExpiresAt!) > now
+              ? remainingPaymentTime(slot.reservationExpiresAt!, now)
+              : t('Checking availability…')}
+          </span>
+          <small>
+            {t(
+              'The buyer has 5 minutes to pay. Availability is confirmed by the server.',
+            )}
+          </small>
         </div>
       )}
     </li>

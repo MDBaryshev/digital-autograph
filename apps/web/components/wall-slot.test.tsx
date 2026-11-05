@@ -127,3 +127,54 @@ it('offers a retry when SSR media failed before hydration attached its error han
   expect(screen.queryByRole('button', { name: 'Claim this slot' })).toBeNull();
   expect(onAction).not.toHaveBeenCalled();
 });
+
+it('dims a reserved slot, shows server deadline and waits for confirmed release at zero', () => {
+  const slot = {
+    id: 'held-slot',
+    position: 3,
+    occupied: true,
+    currentPlacement: {
+      id: 'placement',
+      source: 'takeover' as const,
+      startedAt: '2026-11-05T11:00:00Z',
+      mediaPath: null,
+    },
+    reservationExpiresAt: '2026-11-05T12:05:00Z',
+  };
+  const view = render(
+    <ul>
+      <WallSlot
+        slot={slot}
+        apiOrigin="https://api.example.test"
+        now={Date.parse('2026-11-05T12:00:00Z')}
+      />
+    </ul>,
+  );
+  expect(screen.getByRole('listitem').getAttribute('data-reserved')).toBe(
+    'true',
+  );
+  expect(screen.getByRole('timer').textContent).toBe('05:00');
+  view.rerender(
+    <ul>
+      <WallSlot
+        slot={slot}
+        apiOrigin="https://api.example.test"
+        now={Date.parse('2026-11-05T12:05:00Z')}
+      />
+    </ul>,
+  );
+  expect(screen.getByText('Checking availability…')).toBeTruthy();
+  expect(screen.getByRole('listitem').getAttribute('data-reserved')).toBe(
+    'true',
+  );
+  view.rerender(
+    <ul>
+      <WallSlot
+        slot={{ ...slot, reservationExpiresAt: null }}
+        apiOrigin="https://api.example.test"
+        now={Date.parse('2026-11-05T12:05:00Z')}
+      />
+    </ul>,
+  );
+  expect(screen.queryByText('Reserved for payment')).toBeNull();
+});

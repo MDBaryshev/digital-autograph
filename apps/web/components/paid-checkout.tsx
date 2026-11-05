@@ -310,8 +310,13 @@ export function PaidCheckout({
             </dd>
             <dt>{t('Гарантированный период видимости после замещения')}</dt>
             <dd>
-              {summary.guaranteedVisibilitySeconds}
-              {t(' секунд')}
+              {summary.guaranteedVisibilitySeconds % 60 === 0
+                ? summary.guaranteedVisibilitySeconds === 60
+                  ? t('1 minute')
+                  : t('{minutes} minutes', {
+                      minutes: summary.guaranteedVisibilitySeconds / 60,
+                    })
+                : `${summary.guaranteedVisibilitySeconds}${t(' секунд')}`}
             </dd>
             <dt>{t('Бронирование действует до')}</dt>
             <dd>

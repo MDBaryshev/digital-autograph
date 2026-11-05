@@ -1,3 +1,5 @@
+// New paid Orders pin this duration in immutable checkout evidence.
+export const paidTakeoverProtectionSeconds = 2700;
 export const takeoverAlgorithmVersion = 'takeover_ladder_v1' as const;
 export const pricingCurrency = 'RUB' as const;
 export const maximumPricingAmountMinor = 100_000_000_000n;

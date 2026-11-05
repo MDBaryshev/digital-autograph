@@ -19,9 +19,23 @@ describe('owner-approved Destka pricing preparation', () => {
       stepAmountMinor: '10000',
       takeoverStepSize: 1,
       dynamicTakeoverLimit: 49,
-      guaranteedVisibilitySeconds: 900,
+      guaranteedVisibilitySeconds: 2700,
     });
     expect(approvedDestkaPolicy.creatorShareBps).toBe(5000);
+    expect(approvedDestkaPolicy.reservationTtlSeconds).toBe(300);
+    const configured = noDecaySimulationConfig();
+    expect(
+      createPricingConfigBody.parse({
+        ...configured,
+        baseAmountMinor: '8900',
+        minimumAmountMinor: '8900',
+        maximumAmountMinor: '498900',
+        stepAmountMinor: '10000',
+        decayAmountMinor: '0',
+        decayFloorAmountMinor: '8900',
+        guaranteedVisibilitySeconds: undefined,
+      }).guaranteedVisibilitySeconds,
+    ).toBe(2700);
     expect(
       Object.values(approvedDestkaPolicy.pendingDecisions).every(
         (x) => x === null,
