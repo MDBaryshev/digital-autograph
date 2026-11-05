@@ -194,10 +194,13 @@ try {
   const legalValues = hasLegalSnapshot
     ? ", 'synthetic-v1',repeat('c',64),'synthetic-v1',repeat('d',64),'synthetic-v1',repeat('e',64)"
     : '';
+  const hasPaidProtection = journal.entries.some(
+    (entry) => entry.tag === '0027_paid_protection_45_minutes',
+  );
   const checkoutEvidence = hasCheckoutConfirmation
     ? `INSERT INTO checkout_confirmations
       (order_id,user_id,reservation_id,autograph_id,amount_minor,currency,guaranteed_visibility_seconds,reservation_expires_at,target_placement_id,pricing_config_id,offer_version,offer_hash,content_rules_version,content_rules_hash,refund_policy_version,refund_policy_hash)
-      SELECT o.id,o.user_id,o.reservation_id,o.autograph_id,o.amount_minor,o.currency,p.guaranteed_visibility_seconds,r.expires_at,o.target_placement_id,o.pricing_config_id,o.offer_version,o.offer_hash,o.content_rules_version,o.content_rules_hash,o.refund_policy_version,o.refund_policy_hash
+      SELECT o.id,o.user_id,o.reservation_id,o.autograph_id,o.amount_minor,o.currency,${hasPaidProtection ? 2700 : 'p.guaranteed_visibility_seconds'},r.expires_at,o.target_placement_id,o.pricing_config_id,o.offer_version,o.offer_hash,o.content_rules_version,o.content_rules_hash,o.refund_policy_version,o.refund_policy_hash
       FROM payment_orders o JOIN takeover_reservations r ON r.id=o.reservation_id
       JOIN pricing_config_versions p ON p.id=o.pricing_config_id WHERE o.id=${id(12)};`
     : '';
@@ -351,6 +354,15 @@ try {
       `UPDATE payment_orders SET offer_hash=repeat('f',64) WHERE id=${id(12)}`,
       '23514',
     );
+  if (hasPaidProtection)
+    assert.equal(
+      sql(
+        target,
+        `SELECT cc.guaranteed_visibility_seconds FROM checkout_confirmations cc JOIN payment_orders o ON o.id=cc.order_id JOIN pricing_config_versions pc ON pc.id=o.pricing_config_id WHERE cc.order_id=${id(12)} AND pc.guaranteed_visibility_seconds=0`,
+      ),
+      '2700',
+      'Paid protection must survive restore independently of the old Wall policy',
+    );
   if (hasCheckoutConfirmation)
     rejected(
       `UPDATE checkout_confirmations SET amount_minor=1 WHERE order_id=${id(12)}`,
@@ -387,6 +399,7 @@ try {
   console.log(
     JSON.stringify({
       event: 'SYNTHETIC_RECOVERY_DRILL_PASS',
+      paidProtectionChecked: hasPaidProtection,
       archiveBytes: archive.length,
       dumpMilliseconds,
       restoreAndVerifyMilliseconds: Math.round(
