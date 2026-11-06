@@ -1,0 +1,87 @@
+name: Deploy prepared staging release
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Root-approved prepared operation ID (MIGRATED receipt required)
+        required: true
+        type: string
+      manifest_sha256:
+        description: SHA256 of the exact prepared manifest provided by the operator
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepared-staging-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Request and verify prepared activation
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.repository_id == '1447358020' &&
+      github.repository_owner_id == '118826513'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      deployments: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OPERATION: ${{ inputs.operation }}
+      MANIFEST_SHA256: ${{ inputs.manifest_sha256 }}
+    steps:
+      # No source checkout, cloud/SSH secrets, Docker socket, remote shell or
+      # privileged runner. The server independently validates every claim.
+      - name: Send the bounded activation request
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ "$OPERATION" =~ ^[a-z0-9][a-z0-9-]{7,63}$ ]]
+          [[ "$MANIFEST_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          [[ "$GITHUB_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$GITHUB_RUN_ID" =~ ^[1-9][0-9]{0,19}$ ]]
+          response=$(curl --fail --silent --show-error --max-time 20 \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https%3A%2F%2Fstaging.destka.online%2Fprepared-deployment%2F${OPERATION}%2F${MANIFEST_SHA256}")
+          proof=$(jq -er '.value' <<<"$response")
+          echo "::add-mask::$proof"
+          unset response
+          request_file=$(mktemp)
+          trap 'rm -f "$request_file"' EXIT
+          jq -n --arg ref "$GITHUB_SHA" --arg operation "$OPERATION" \
+            --arg manifest "$MANIFEST_SHA256" --arg run "$GITHUB_RUN_ID" --arg proof "$proof" \
+            '{ref:$ref,task:"deploy:prepared-staging",environment:"staging",auto_merge:false,production_environment:false,transient_environment:false,required_contexts:[],description:("Prepared activation "+$operation),payload:{schemaVersion:1,operation:$operation,manifestSha256:$manifest,runId:$run,oidcProof:$proof}}' > "$request_file"
+          unset proof
+          deployment_id=$(gh api --method POST "repos/$GITHUB_REPOSITORY/deployments" --input "$request_file" --jq .id)
+          [[ "$deployment_id" =~ ^[1-9][0-9]{0,19}$ ]]
+          echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
+          echo "Activation requested. The server must validate the exact prepared release."
+
+      - name: Wait for server health confirmation
+        shell: bash
+        env:
+          DEPLOYMENT_ID: ${{ steps.request.outputs.deployment_id }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            state=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses?per_page=100" --jq '[.[] | select(.creator.id == 118826513)][0].state // "pending"')
+            case "$state" in
+              success) echo 'Server confirmed the prepared release is healthy.'; exit 0 ;;
+              failure|error|inactive) echo 'Activation stopped; operator inspection is required.' >&2; exit 1 ;;
+              pending|queued|in_progress) ;;
+              *) echo 'Unexpected deployment status.' >&2; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo 'No confirmed result. Do not replay; inspect server receipt first.' >&2
+          exit 1
