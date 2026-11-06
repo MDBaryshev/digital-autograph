@@ -399,7 +399,25 @@ export async function handleDeployment(deployment, approval, options) {
     environment: 'staging',
   });
   try {
+    if ((await api('GET', '/commits/main')).sha !== approval.sourceSha)
+      refuse();
     await verifyActiveRun(api, String(request.runId), proof, approval);
+    // GitHub evidence reads may be slow. Expiration is enforced at execution,
+    // not merely when the request first entered the queue.
+    validateRequest(deployment, approval, Date.now());
+    verifyProof(
+      request.oidcProof,
+      jwks,
+      {
+        sourceSha: approval.sourceSha,
+        runId: String(request.runId),
+        allowedActors: approval.allowedActorIds,
+        operation: approval.operation,
+        manifestSha256: approval.manifestSha256,
+        approvedAt: approval.approvedAt,
+      },
+      Date.now() / 1000,
+    );
     const result = await launch(manifestFile);
     const receipt = privateJson(
       path.join(stateRoot, approval.operation, 'state.json'),
@@ -539,7 +557,8 @@ export async function runOnce(configFile) {
     refuse();
   // Missing approval is the normal idle state. It never freezes a running site.
   if (!(await import('node:fs')).existsSync(config.approvalFile)) return 'IDLE';
-  const approval = privateJson(config.approvalFile, 0).value;
+  const approvedFile = privateJson(config.approvalFile, 0);
+  const approval = approvedFile.value;
   if (
     operation.test(approval.operation) &&
     approval.expiresAt <= Date.now() &&
@@ -567,6 +586,11 @@ export async function runOnce(configFile) {
   );
   mkdirSync(config.receiptDir, { recursive: true, mode: 0o700 });
   const launch = (manifestFile) => {
+    if (
+      digest(privateJson(config.approvalFile, 0).bytes) !==
+      digest(approvedFile.bytes)
+    )
+      refuse();
     const tool = '/opt/digital-autograph/manual-deploy.mjs';
     privatePath(tool, false, 0, false);
     if (digest(readFileSync(tool)) !== approval.manualToolSha256) refuse();

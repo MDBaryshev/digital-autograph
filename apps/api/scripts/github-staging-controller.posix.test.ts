@@ -340,6 +340,17 @@ it('never launches twice after a repeated button request', async () => {
   ).resolves.toBe('RECONCILED');
   expect(f.launch).toHaveBeenCalledTimes(1);
 });
+
+it('admits at most one of two concurrent activation requests', async () => {
+  const f = fixture();
+  const outcomes = await Promise.allSettled([
+    handleDeployment(f.deployment, f.approval, f.options),
+    handleDeployment({ ...f.deployment, id: 18 }, f.approval, f.options),
+  ]);
+  expect(outcomes.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
+  expect(outcomes.filter((x) => x.status === 'rejected')).toHaveLength(1);
+  expect(f.launch).toHaveBeenCalledTimes(1);
+});
 it('reconciles a lost GitHub success response without repeating start', async () => {
   const f = fixture();
   const original = f.api.getMockImplementation()!;
@@ -409,6 +420,30 @@ it('never starts after the dispatch was cancelled', async () => {
   ).resolves.toBe('INSPECTION_REQUIRED');
   expect(f.launch).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  'rechecks approval/proof expiry at launch after slow evidence reads (proof=%s)',
+  async (proofExpires) => {
+    const f = fixture();
+    const original = f.api.getMockImplementation()!;
+    if (proofExpires) f.approval.expiresAt = f.options.now + 14 * 60 * 1000;
+    const clock = vi.spyOn(Date, 'now');
+    f.api.mockImplementation(async (method, route, body) => {
+      const result = await original(method, route, body);
+      if (route.startsWith('/actions/runs/'))
+        clock.mockReturnValue(f.options.now + (proofExpires ? 297000 : 120000));
+      return result;
+    });
+    try {
+      await expect(
+        processQueue([f.deployment], f.approval, f.options),
+      ).resolves.toBe('INSPECTION_REQUIRED');
+      expect(f.launch).not.toHaveBeenCalled();
+    } finally {
+      clock.mockRestore();
+    }
+  },
+);
 it('treats a crash before recording completion as inspection-required', async () => {
   const f = fixture();
   writeFileSync(
