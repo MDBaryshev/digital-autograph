@@ -56,3 +56,5 @@ API/network evidence, validation limits and outstanding owner actions.
 
 [PR Policy activation](pr-policy-activation.md) records the November 2026 Actions
 event-policy prerequisite, live-test gate and two-maintainer review tradeoff.
+
+For the proposed GitHub button that activates only an operator-prepared staging release, see [GitHub prepared activation](github-staging-button.md). This is not unattended migration or the historical Release runner.
