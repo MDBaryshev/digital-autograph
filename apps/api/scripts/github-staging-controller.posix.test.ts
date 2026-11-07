@@ -440,7 +440,7 @@ it('never starts after the dispatch was cancelled', async () => {
   const f = fixture();
   const original = f.api.getMockImplementation()!;
   f.api.mockImplementation(async (method, route, body) =>
-    route.startsWith('/actions/runs/')
+    route === '/actions/runs/123'
       ? { status: 'completed', conclusion: 'cancelled' }
       : original(method, route, body),
   );
@@ -459,7 +459,7 @@ it.each([false, true])(
     const clock = vi.spyOn(Date, 'now');
     f.api.mockImplementation(async (method, route, body) => {
       const result = await original(method, route, body);
-      if (route.startsWith('/actions/runs/'))
+      if (route === '/actions/runs/123')
         clock.mockReturnValue(f.options.now + (proofExpires ? 297000 : 120000));
       return result;
     });
