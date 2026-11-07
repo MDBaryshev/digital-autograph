@@ -145,25 +145,54 @@ function fixture() {
         run_attempt: 1,
       };
     if (route === '/commits/main') return { sha: sourceSha };
-    if (route.includes('/check-runs'))
+    if (route.startsWith('/actions/runs?')) {
+      const head = route.includes('c'.repeat(40));
       return {
-        check_runs: [
+        workflow_runs: ['ci.yml', 'secret-scan.yml', 'pr-policy.yml'].map(
+          (file, i) => ({
+            id: (head ? 200 : 100) + i,
+            path: `.github/workflows/${file}`,
+            event:
+              file === 'pr-policy.yml'
+                ? 'pull_request_target'
+                : head
+                  ? 'pull_request'
+                  : 'push',
+            head_branch: head ? 'feature' : 'main',
+            head_sha: head ? 'c'.repeat(40) : sourceSha,
+            head_repository: { id: 1447358020 },
+            run_attempt: 1,
+            status: 'completed',
+            conclusion: 'success',
+          }),
+        ),
+      };
+    }
+    if (route.includes('/jobs?')) {
+      const runId = Number(route.split('/')[3]);
+      const names = [
+        [
           'checks',
           'windows-unit',
           'windows-integration-runner',
           'macos-integration-runner',
           'e2e',
-          'secrets',
-          'policy',
-        ].map((name, i) => ({
+        ],
+        ['secrets'],
+        ['policy'],
+      ][runId % 100];
+      return {
+        jobs: names.map((name, i) => ({
           id: i + 1,
+          run_id: runId,
+          run_attempt: 1,
           name,
-          head_sha: route.includes('c'.repeat(40)) ? 'c'.repeat(40) : sourceSha,
-          app: { slug: 'github-actions' },
+          head_sha: runId >= 200 ? 'c'.repeat(40) : sourceSha,
           status: 'completed',
           conclusion: 'success',
         })),
       };
+    }
     if (route.includes('/pulls?'))
       return [
         {
