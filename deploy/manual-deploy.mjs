@@ -862,16 +862,31 @@ export function deploy(
     for (const [host, route] of [
       [m.domains.api, '/health/ready'],
       [m.domains.web, '/'],
-    ])
-      run('curl', [
-        '--fail',
-        '--silent',
-        '--output',
-        '/dev/null',
-        '--max-time',
-        '15',
-        `https://${host}${route}`,
-      ]);
+    ]) {
+      // Recreating Caddy can briefly return a connection error/502 while the
+      // already-validated API is starting. Retry only safe health GETs, bounded
+      // to six 5-second requests plus five 2-second waits per endpoint. Runtime
+      // identity/image checks, DDL and startup are never retried here.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          run('curl', [
+            '--fail',
+            '--silent',
+            '--output',
+            '/dev/null',
+            '--connect-timeout',
+            '3',
+            '--max-time',
+            '5',
+            `https://${host}${route}`,
+          ]);
+          break;
+        } catch {
+          if (attempt === 5) throw Error('HTTPS readiness did not stabilize');
+          wait(2000);
+        }
+      }
+    }
     mark('HEALTHY');
     return record;
   } catch {

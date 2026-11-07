@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "repository": "MDBaryshev/digital-autograph",
+  "root": "/opt/digital-autograph",
+  "stateRoot": "/var/lib/digital-autograph/manual",
+  "receiptDir": "/var/lib/digital-autograph/github-controller",
+  "approvalFile": "/etc/digital-autograph/github-approved-operation.json",
+  "tokenFile": "/etc/digital-autograph/github-deployment-token"
+}

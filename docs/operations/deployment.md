@@ -12,6 +12,10 @@ Moving files to a different backend is not part of this update. Web, API, Worker
 PostgreSQL and Caddy continue on the same VM. Existing storage/snapshot charges
 continue; no additional fixed monthly resource is introduced.
 
+The proposed [GitHub prepared-release button](github-staging-button.md) transports
+only the final owner-approved `start` phase. Package/backup/restore/migration gates
+below remain mandatory; it does not enable the historical Release.
+
 ## Before the owner authorizes a server change
 
 1. Merge one independently reviewed PR through existing protected checks. Keep
