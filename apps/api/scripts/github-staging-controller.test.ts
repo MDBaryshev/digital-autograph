@@ -315,6 +315,43 @@ describe('accepted main and review evidence', () => {
       api.mock.calls.some(([, route]) => route.includes('/jobs?filter=latest')),
     ).toBe(true);
   });
+  it('refuses a newer failed workflow run on a later page', async () => {
+    const base = sourceApi();
+    const api = async (method: string, route: string) => {
+      if (route.startsWith('/actions/runs?')) {
+        const response = await base(method, route);
+        const runs = (response as { workflow_runs: Record<string, unknown>[] })
+          .workflow_runs;
+        return {
+          workflow_runs: route.endsWith('page=1')
+            ? [
+                ...runs,
+                ...Array.from({ length: 97 }, (_, id) => ({
+                  id,
+                  path: '.github/workflows/unrelated.yml',
+                })),
+              ]
+            : [{ ...runs[0], id: 999, conclusion: 'failure' }],
+        };
+      }
+      return base(method, route);
+    };
+    await expect(verifySource(api, sourceSha)).rejects.toThrow();
+  });
+  it('finds required jobs on later pages of the same run attempt', async () => {
+    const base = sourceApi();
+    const api = async (method: string, route: string) => {
+      if (route.includes('/jobs?') && route.endsWith('page=1'))
+        return {
+          jobs: Array.from({ length: 100 }, (_, id) => ({
+            id,
+            name: 'unrelated',
+          })),
+        };
+      return base(method, route);
+    };
+    await expect(verifySource(api, sourceSha)).resolves.toBeUndefined();
+  });
 });
 
 it('rejects invalid deployment time and expired/wrong approval before launch', () => {
