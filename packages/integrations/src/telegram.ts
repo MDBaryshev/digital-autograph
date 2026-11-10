@@ -2,6 +2,13 @@ import * as oidc from 'openid-client';
 
 const telegramIssuer = 'https://oauth.telegram.org';
 
+export type TelegramProfileClaims = {
+  name?: string;
+  username?: string;
+  picture?: string;
+  issuedAt?: number;
+};
+
 export interface TelegramOidcClient {
   authorizationUrl(input: {
     state: string;
@@ -13,7 +20,7 @@ export interface TelegramOidcClient {
     state: string;
     nonce: string;
     codeVerifier: string;
-  }): Promise<{ subject: string; picture?: string }>;
+  }): Promise<{ subject: string } & TelegramProfileClaims>;
 }
 
 export type TelegramOidcConfig = {
@@ -77,16 +84,21 @@ export function createTelegramOidcClient(
         },
         { client_id: config.clientId },
       );
-      const subject = tokens.claims()?.sub;
+      const claims = tokens.claims();
+      const subject = claims?.sub;
       if (typeof subject !== 'string' || !subject) {
         throw new Error('Telegram identity subject is missing');
       }
-      const picture = tokens.claims()?.picture;
+      if (!config.includeProfile) return { subject };
+      const { name, preferred_username, picture, iat } = claims!;
       return {
         subject,
-        ...(config.includeProfile && typeof picture === 'string'
-          ? { picture }
-          : {}),
+        ...(typeof name === 'string' && { name }),
+        ...(typeof preferred_username === 'string' && {
+          username: preferred_username,
+        }),
+        ...(typeof picture === 'string' && { picture }),
+        ...(typeof iat === 'number' && { issuedAt: iat }),
       };
     },
   };

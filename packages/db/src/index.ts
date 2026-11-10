@@ -107,3 +107,13 @@ export {
   type WallAppearance,
   type PrivateAppearance,
 } from './appearance-repository';
+export {
+  createPgProfileModerationRepository,
+  ProfileModerationError,
+  type ProfileModerationRepository,
+} from './profile-moderation-repository';
+export {
+  createPgTelegramProfileRepository,
+  type TelegramProfileRepository,
+  type TelegramProfileSnapshot,
+} from './telegram-profile-repository';

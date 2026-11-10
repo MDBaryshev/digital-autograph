@@ -64,7 +64,8 @@ export async function importProviderAvatar(
     const url = new URL(input);
     const allowed: Record<string, RegExp> = {
       google: /^(?:[a-z0-9-]+\.)*googleusercontent\.com$/,
-      telegram: /^(?:t\.me|(?:[a-z0-9-]+\.)*telegram\.org)$/,
+      telegram:
+        /^(?:t\.me|(?:[a-z0-9-]+\.)*telegram\.org|cdn[0-9]+\.telesco\.pe)$/,
       yandex: /^avatars\.yandex\.net$/,
       vk_id: /^(?:[a-z0-9-]+\.)*(?:userapi\.com|vkuserphoto\.ru|vk\.com)$/,
     };

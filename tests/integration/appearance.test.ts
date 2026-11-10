@@ -4,6 +4,7 @@ import {
   createDatabase,
   createPgAppearanceRepository,
   createPgWallRepository,
+  createPgProfileModerationRepository,
 } from '../../packages/db/src/index';
 import { SessionService } from '../../packages/auth/src/index';
 import { createPgSessionRepository } from '../../packages/db/src/index';
@@ -51,19 +52,31 @@ beforeAll(async () => {
 beforeEach(async () => {
   await db.pool.query('TRUNCATE users CASCADE');
   await db.db.insert(users).values([userFixture(1), userFixture(2)]);
+  await db.pool.query(
+    "INSERT INTO user_roles(user_id,role) VALUES($1,'moderator')",
+    [other],
+  );
   token = (await sessions.createSession(owner)).token;
 });
 afterAll(async () => {
   await app.close();
   await db.close();
 });
-const save = (body: Record<string, unknown>) =>
-  app.inject({
+const save = async (body: Record<string, unknown>) => {
+  const response = await app.inject({
     method: 'PUT',
     url: '/me/appearance',
     headers: { cookie: 'da_session=' + token, origin: 'http://127.0.0.1:3000' },
     payload: body,
   });
+  if (response.statusCode === 200)
+    await createPgProfileModerationRepository(db.pool).decide(
+      other,
+      response.json().submissionId,
+      { decision: 'approved' },
+    );
+  return response;
+};
 const input = () => ({
   title: 'Моя десятка',
   description: 'Только десять мест',

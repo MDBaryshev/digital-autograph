@@ -7,8 +7,8 @@ session hashes or signed media URLs. Private previews use the existing owner-
 checked endpoint on explicit request. Mutation endpoints still authorize on the
 server; hiding a navigation item grants no authority.
 
-`PUT /me/profile` creates or edits the first owned creator profile. The name and
-username are public on the creator page; changing the username changes its URL.
+`PUT /me/profile` submits the display name and username of the first owned creator
+profile for review. Approval updates the creator page and its public URL.
 Public profile writes are disabled by default. The trusted server setting
 `CREATOR_PROFILE_PUBLICATION_APPROVED=true` may be set only after a separate
 owner/legal decision covering creator admission, public name/username use and
@@ -20,16 +20,13 @@ shows a read-only profile while disabled and PUT returns
 readable. No consent/evidence is fabricated and no existing legal registry entry
 is made ready. The existing opt-in first-use gate also applies to profile writes
 when enforcement is enabled; it is separate from publication approval.
-The avatar is an initial, with no external image request or new personal-data
-storage. A user-row lock serializes initial creation. Slug uniqueness is enforced
-by PostgreSQL; collisions roll back the whole transaction, including the creator.
+A user-row lock serializes initial creation and changes. PostgreSQL rechecks slug
+uniqueness when a moderator approves the submitted version. A conflicting slug
+leaves the submission pending and returns `SLUG_TAKEN` to the moderator.
 
-No schema migration or automatic user/content backfill is needed. The reviewed
-runtime allowlist adds INSERT on creators/creator_profiles and UPDATE on only
-slug/display_name/updated_at of creator_profiles to da_api. Worker grants do not
-change. Apply those permissions only in a separately authorized deployment of
-the accepted source, before enabling the new Web/API pair. The previous staging
-operation/receipt must not be replayed. Source changes alone do not update a VM.
+Deploy the approved migration chain before starting the matching Web/API release.
+The runtime allowlist grants the API access to the profile submission and decision
+tables. The worker uses its existing privileges. [Profile moderation architecture](../architecture/account-content-moderation.md#ручная-проверка-профилей)
 
 Walls start as drafts via the existing owner API; publication is a separate
 explicit action. No pricing, payment, reservation or takeover rules change.

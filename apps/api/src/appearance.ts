@@ -1,5 +1,9 @@
 import type { FastifyInstance } from 'fastify';
-import type { AppearanceRepository } from '@digital-autograph/db';
+import {
+  ProfileModerationError,
+  type AppearanceRepository,
+} from '@digital-autograph/db';
+import { profileSubmissionMetadata } from '@digital-autograph/contracts';
 import { normalizeAppearanceImage } from '@digital-autograph/integrations';
 import { z } from 'zod';
 import { authenticatedSession, requireAuthenticatedUser } from './auth/http';
@@ -16,6 +20,11 @@ const text = (max: number) =>
       }),
     );
 const body = z.strictObject({
+  ...profileSubmissionMetadata,
+  providerAvatarHash: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .optional(),
   title: text(100),
   description: text(500),
   avatarSource: z.enum(['provider', 'upload', 'none']),
@@ -62,7 +71,7 @@ export function registerAppearance(
         const coverDataUrl = p.coverDataUrl
           ? await normalizeAppearanceImage(p.coverDataUrl, 'cover')
           : null;
-        await repo.save(
+        return await repo.save(
           authenticatedSession(request).user.id,
           {
             title: p.title,
@@ -71,9 +80,19 @@ export function registerAppearance(
             coverDataUrl,
           },
           p.avatarSource,
+          p,
         );
-        return { saved: true };
       } catch (e) {
+        if (e instanceof ProfileModerationError)
+          return reply
+            .code(
+              e.code === 'FORBIDDEN'
+                ? 403
+                : e.code === 'SUBMISSION_LIMIT'
+                  ? 429
+                  : 409,
+            )
+            .send({ error: { code: e.code } });
         if (e instanceof Error && e.message === 'INVALID_APPEARANCE_IMAGE')
           return reply
             .code(400)

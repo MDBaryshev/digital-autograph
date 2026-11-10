@@ -1,7 +1,16 @@
-import { createPgAppearanceRepository } from '@digital-autograph/db';
+import {
+  createPgAppearanceRepository,
+  createPgTelegramProfileRepository,
+} from '@digital-autograph/db';
 import { importProviderAvatar } from '@digital-autograph/integrations';
 import { registerAppearance } from './appearance';
+import { registerProfileModeration } from './profile-moderation';
+import { createPgProfileModerationRepository } from '@digital-autograph/db';
 import { registerAiAutographs } from './ai-autographs';
+import {
+  captureTelegramProfile,
+  registerTelegramProfileScreening,
+} from './telegram-profile-screening';
 import { registerAccountWorkspace } from './account-workspace';
 import { loadApiStartupConfig } from './startup-config';
 import type { LegalHttp } from './legal-http';
@@ -85,6 +94,7 @@ export async function startApi(
     notificationTelegram,
     enableTestAuthSeam,
     openRouter,
+    telegramModeration,
   } = loadApiStartupConfig(legalDocuments);
   if (
     syntheticPayment &&
@@ -116,6 +126,7 @@ export async function startApi(
     createPgProviderIdentityRepository(database.pool),
   );
   const appearance = createPgAppearanceRepository(database.pool);
+  const telegramProfiles = createPgTelegramProfileRepository(database.pool);
   const storeAvatar = async (
     provider: string,
     userId: string,
@@ -143,11 +154,17 @@ export async function startApi(
       clientId: config.TELEGRAM_CLIENT_ID,
       clientSecret: config.TELEGRAM_CLIENT_SECRET,
       redirectUri: config.TELEGRAM_REDIRECT_URI,
-      includeProfile: config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+      includeProfile:
+        !!telegramModeration || config.CREATOR_PROFILE_PUBLICATION_APPROVED,
     }),
     identities,
     sessions,
-    (userId, picture) => storeAvatar('telegram', userId, picture),
+    telegramModeration
+      ? captureTelegramProfile(telegramProfiles)
+      : async (userId, profile) => {
+          if (profile.picture)
+            await storeAvatar('telegram', userId, profile.picture);
+        },
   );
   const payments =
     paymentConfig || syntheticPayment
@@ -288,7 +305,14 @@ export async function startApi(
     appearance,
     config.CREATOR_PROFILE_PUBLICATION_APPROVED,
   );
+  registerProfileModeration(
+    app,
+    createPgProfileModerationRepository(database.pool),
+    config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+  );
   registerAiAutographs(app, database.pool, storage, openRouter);
+  if (telegramModeration)
+    registerTelegramProfileScreening(app, telegramProfiles, telegramModeration);
   let closing = false;
 
   const shutdown = async (): Promise<void> => {

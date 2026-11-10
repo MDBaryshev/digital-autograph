@@ -1332,3 +1332,158 @@ export const accountAppearance = pgTable(
     ),
   ],
 );
+
+export const profileSubmissions = pgTable(
+  'profile_submissions',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    kind: varchar('kind', { length: 16 }).notNull(),
+    version: integer('version').notNull(),
+    status: varchar('status', { length: 16 }).notNull().default('pending'),
+    operationKey: uuid('operation_key').notNull().defaultRandom(),
+    requestHash: varchar('request_hash', { length: 64 }).notNull(),
+    creatorId: uuid('creator_id').references(() => creators.id),
+    slug: varchar('slug', { length: 128 }),
+    displayName: varchar('display_name', { length: 200 }),
+    title: varchar('title', { length: 100 }),
+    description: varchar('description', { length: 500 }),
+    avatarSource: varchar('avatar_source', { length: 16 }),
+    avatarDataUrl: text('avatar_data_url'),
+    coverDataUrl: text('cover_data_url'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('profile_submissions_operation_uidx').on(
+      t.userId,
+      t.operationKey,
+    ),
+    uniqueIndex('profile_submissions_version_uidx').on(
+      t.userId,
+      t.kind,
+      t.version,
+    ),
+    uniqueIndex('profile_submissions_pending_uidx')
+      .on(t.userId, t.kind)
+      .where(sql`${t.status} = 'pending'`),
+    index('profile_submissions_queue_idx').on(t.status, t.createdAt, t.id),
+    check('profile_submission_version', sql`${t.version} > 0`),
+    check(
+      'profile_submission_state',
+      sql`${t.status} IN ('pending','approved','rejected','superseded')`,
+    ),
+    check('profile_submission_hash', sql`${t.requestHash} ~ '^[a-f0-9]{64}$'`),
+    check(
+      'profile_submission_fields',
+      sql`(
+      ${t.kind} = 'profile' AND ${t.slug} IS NOT NULL
+      AND ${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND length(btrim(${t.displayName})) > 0
+      AND ${t.displayName} IS NOT NULL AND ${t.title} IS NULL AND ${t.description} IS NULL
+      AND ${t.avatarSource} IS NULL AND ${t.avatarDataUrl} IS NULL AND ${t.coverDataUrl} IS NULL
+    ) OR (
+      ${t.kind} = 'appearance' AND ${t.creatorId} IS NULL AND ${t.slug} IS NULL AND ${t.displayName} IS NULL
+      AND ${t.title} IS NOT NULL AND ${t.description} IS NOT NULL AND ${t.avatarSource} IS NOT NULL
+      AND ${t.avatarSource} IN ('provider','upload','none') AND (${t.avatarSource} <> 'none' OR ${t.avatarDataUrl} IS NULL)
+    ) OR (
+      ${t.kind} = 'telegram' AND ${t.creatorId} IS NULL AND ${t.title} IS NULL
+      AND ${t.description} IS NULL AND ${t.avatarSource} IS NULL AND ${t.coverDataUrl} IS NULL
+      AND (${t.slug} IS NULL OR ${t.slug} ~ '^[A-Za-z0-9_]{1,64}$')
+      AND (${t.displayName} IS NOT NULL OR ${t.slug} IS NOT NULL OR ${t.avatarDataUrl} IS NOT NULL)
+    )`,
+    ),
+    check(
+      'profile_submission_avatar_bounded',
+      sql`${t.avatarDataUrl} IS NULL OR (length(${t.avatarDataUrl}) BETWEEN 24 AND 350000 AND ${t.avatarDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+    check(
+      'profile_submission_cover_bounded',
+      sql`${t.coverDataUrl} IS NULL OR (length(${t.coverDataUrl}) BETWEEN 24 AND 350000 AND ${t.coverDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+  ],
+);
+
+export const profileModerationDecisions = pgTable(
+  'profile_moderation_decisions',
+  {
+    id: id(),
+    submissionId: uuid('submission_id')
+      .notNull()
+      .unique()
+      .references(() => profileSubmissions.id),
+    moderatorUserId: uuid('moderator_user_id')
+      .notNull()
+      .references(() => users.id),
+    decision: autographModerationDecision('decision').notNull(),
+    reasonCode: autographModerationReason('reason_code'),
+    policyVersion: varchar('policy_version', { length: 64 }).notNull(),
+    decidedAt: timestamp('decided_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    check(
+      'profile_moderation_reason',
+      sql`(${t.decision} = 'approved' AND ${t.reasonCode} IS NULL) OR (${t.decision} = 'rejected' AND ${t.reasonCode} IS NOT NULL AND ${t.reasonCode} <> 'NOT_AN_AUTOGRAPH')`,
+    ),
+  ],
+);
+
+export const telegramProfileChecks = pgTable(
+  'telegram_profile_checks',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    version: integer('version').notNull(),
+    fingerprint: varchar('fingerprint', { length: 64 }).notNull(),
+    observedAt: timestamp('observed_at', { withTimezone: true }).notNull(),
+    status: varchar('status', { length: 16 }).notNull().default('queued'),
+    displayName: varchar('display_name', { length: 200 }),
+    username: varchar('username', { length: 64 }),
+    avatarDataUrl: text('avatar_data_url'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    leaseId: uuid('lease_id'),
+    leaseUntil: timestamp('lease_until', { withTimezone: true }),
+    model: varchar('model', { length: 200 }),
+    assessment: varchar('assessment', { length: 16 }),
+    reasonCode: autographModerationReason('reason_code'),
+    submissionId: uuid('submission_id')
+      .unique()
+      .references(() => profileSubmissions.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('telegram_profile_checks_version_uidx').on(t.userId, t.version),
+    index('telegram_profile_checks_queue_idx').on(t.status, t.createdAt),
+    index('telegram_profile_checks_started_idx')
+      .on(t.startedAt)
+      .where(sql`${t.startedAt} IS NOT NULL`),
+    check(
+      'telegram_profile_check_fingerprint',
+      sql`${t.fingerprint} ~ '^[a-f0-9]{64}$' AND ${t.version} > 0`,
+    ),
+    check(
+      'telegram_profile_check_avatar',
+      sql`${t.avatarDataUrl} IS NULL OR (length(${t.avatarDataUrl}) BETWEEN 24 AND 350000 AND ${t.avatarDataUrl} ~ ('^data:image/jpeg' || chr(59) || 'base64,[A-Za-z0-9+/]+={0,2}$'))`,
+    ),
+    check(
+      'telegram_profile_check_state',
+      sql`
+      (${t.status} IN ('queued','running') AND (${t.displayName} IS NOT NULL OR ${t.username} IS NOT NULL OR ${t.avatarDataUrl} IS NOT NULL)
+        AND ${t.assessment} IS NULL AND ${t.submissionId} IS NULL)
+      OR (${t.status} IN ('cleared','review','superseded') AND ${t.displayName} IS NULL AND ${t.username} IS NULL AND ${t.avatarDataUrl} IS NULL
+        AND ((${t.status} = 'review' AND ${t.submissionId} IS NOT NULL AND ${t.assessment} IN ('flagged','uncertain','unavailable','quota'))
+          OR (${t.status} = 'cleared' AND ${t.submissionId} IS NULL AND ${t.assessment} = 'clear')
+          OR (${t.status} = 'superseded' AND ${t.submissionId} IS NULL AND ${t.assessment} IS NULL)))`,
+    ),
+    check(
+      'telegram_profile_check_lease',
+      sql`
+      (${t.status} = 'running' AND ${t.leaseId} IS NOT NULL AND ${t.leaseUntil} IS NOT NULL AND ${t.startedAt} IS NOT NULL)
+      OR (${t.status} <> 'running' AND ${t.leaseId} IS NULL AND ${t.leaseUntil} IS NULL)`,
+    ),
+  ],
+);

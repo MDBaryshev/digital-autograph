@@ -1,5 +1,12 @@
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
+import type { ProfileReview, RejectionReason } from '../lib/moderation-api';
 export type Workspace = {
+  profileSubmission?: ProfileReview | null;
+  telegramReview?: {
+    status:
+      'queued' | 'running' | 'cleared' | 'pending' | 'approved' | 'rejected';
+    reasonCode: RejectionReason | null;
+  } | null;
   profile: {
     id: string;
     slug: string;

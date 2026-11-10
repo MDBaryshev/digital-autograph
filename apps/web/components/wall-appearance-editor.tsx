@@ -4,8 +4,16 @@ import { useLocale } from './locale-provider';
 import { workspaceRequest } from './workspace-api';
 import styles from './workspace.module.css';
 import { FirstUseActionNotice } from './first-use-action-notice';
+import { reasonLabels, type RejectionReason } from '../lib/moderation-api';
 
 type Appearance = {
+  providerAvatarHash?: string | null;
+  selectedProviderAvatarHash?: string | null;
+  moderation?: {
+    id: string;
+    status: string;
+    reasonCode: RejectionReason | null;
+  } | null;
   title: string;
   description: string;
   avatarDataUrl: string | null;
@@ -87,16 +95,21 @@ export function WallAppearanceEditor({
   }, [apiOrigin, version]);
   const avatar =
     source === 'provider'
-      ? value?.providerAvatarDataUrl
+      ? ((value?.avatarSource === 'provider' ? value.avatarDataUrl : null) ??
+        value?.providerAvatarDataUrl)
       : source === 'upload'
         ? value?.avatarDataUrl
         : null;
+  const providerAvatarHash =
+    (value?.avatarSource === 'provider'
+      ? value.selectedProviderAvatarHash
+      : null) ?? value?.providerAvatarHash;
   return (
     <section className={styles.card}>
       <h2>{t('Wall appearance')}</h2>
       <p>
         {t(
-          'Choose a name, avatar and cover. Saving publishes this appearance on your Wall.',
+          'Submit your Wall appearance for review. Approved changes appear on your Wall.',
         )}
       </p>
       {error === 'FIRST_USE_REQUIRED' ? (
@@ -104,7 +117,23 @@ export function WallAppearanceEditor({
       ) : (
         error && <p role="alert">{t(error)}</p>
       )}
-      {saved && <p role="status">{t('Wall appearance saved.')}</p>}
+      {saved && (
+        <p role="status">{t('Wall appearance submitted for moderation.')}</p>
+      )}
+      {!saved && value?.moderation && (
+        <p role="status">
+          {t(
+            value.moderation.status === 'pending'
+              ? 'Wall appearance is awaiting moderation.'
+              : value.moderation.status === 'rejected'
+                ? 'Wall appearance needs correction.'
+                : 'Wall appearance approved.',
+          )}
+          {value.moderation.reasonCode && (
+            <> {t(reasonLabels[value.moderation.reasonCode])}</>
+          )}
+        </p>
+      )}
       {!value ? (
         <button type="button" onClick={() => setVersion((v) => v + 1)}>
           {t('Retry')}
@@ -119,7 +148,7 @@ export function WallAppearanceEditor({
             setPending(true);
             setError('');
             setSaved(false);
-            void workspaceRequest(
+            void workspaceRequest<{ submissionId: string; status: string }>(
               apiOrigin,
               '/me/appearance',
               controller.current!.signal,
@@ -129,10 +158,27 @@ export function WallAppearanceEditor({
                 avatarSource: source,
                 avatarDataUrl: value.avatarDataUrl,
                 coverDataUrl: value.coverDataUrl,
+                operationKey: crypto.randomUUID(),
+                expectedSubmissionId: value.moderation?.id ?? null,
+                ...(source === 'provider' && providerAvatarHash
+                  ? { providerAvatarHash }
+                  : {}),
               },
               'PUT',
             )
-              .then(() => {
+              .then((result) => {
+                setValue((current) =>
+                  current
+                    ? {
+                        ...current,
+                        moderation: {
+                          id: result.submissionId,
+                          status: result.status,
+                          reasonCode: null,
+                        },
+                      }
+                    : current,
+                );
                 setSaved(true);
                 window.dispatchEvent(new Event('destka-workspace-updated'));
               })
@@ -145,7 +191,15 @@ export function WallAppearanceEditor({
                       'LEGAL_DOCUMENT_CHANGED',
                     ].includes(e.message)
                     ? 'FIRST_USE_REQUIRED'
-                    : 'Could not save Wall appearance.',
+                    : e instanceof Error &&
+                        [
+                          'SUBMISSION_CHANGED',
+                          'PROVIDER_AVATAR_CHANGED',
+                        ].includes(e.message)
+                      ? 'This form is out of date. Reload it before submitting again.'
+                      : e instanceof Error && e.message === 'SUBMISSION_LIMIT'
+                        ? 'Daily submission limit reached. Try again later.'
+                        : 'Could not save Wall appearance.',
                 ),
               )
               .finally(() => {
@@ -180,7 +234,9 @@ export function WallAppearanceEditor({
                 onChange={(e) => setSource(e.target.value as typeof source)}
               >
                 <option value="none">{t('Initials only')}</option>
-                {value.providerAvatarDataUrl && (
+                {(value.providerAvatarDataUrl ||
+                  (value.avatarSource === 'provider' &&
+                    value.avatarDataUrl)) && (
                   <option value="provider">
                     {t('Photo from sign-in account')}
                   </option>
@@ -188,6 +244,23 @@ export function WallAppearanceEditor({
                 <option value="upload">{t('My uploaded photo')}</option>
               </select>
             </label>
+            {source === 'provider' &&
+              value.providerAvatarDataUrl &&
+              avatar !== value.providerAvatarDataUrl && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setValue({
+                      ...value,
+                      avatarSource: 'provider',
+                      avatarDataUrl: value.providerAvatarDataUrl,
+                      selectedProviderAvatarHash: value.providerAvatarHash,
+                    })
+                  }
+                >
+                  {t('Use latest sign-in photo')}
+                </button>
+              )}
             {avatar && (
               <img
                 className={styles.profileAvatar}

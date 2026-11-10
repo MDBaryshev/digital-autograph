@@ -1,4 +1,10 @@
 import type { Pool } from 'pg';
+import {
+  createPgProfileModerationRepository,
+  profileContentHash,
+  savePrivateProviderAvatar,
+  type SubmissionMetadata,
+} from './profile-moderation-repository';
 
 export type WallAppearance = {
   title: string;
@@ -19,63 +25,70 @@ const empty: PrivateAppearance = {
   avatarSource: null,
 };
 export function createPgAppearanceRepository(pool: Pool) {
+  const moderation = createPgProfileModerationRepository(pool);
   return {
-    async read(userId: string): Promise<PrivateAppearance> {
+    async read(userId: string) {
       const r = await pool.query(
         `SELECT title,description,avatar_source AS "avatarSource",avatar_data_url AS "avatarDataUrl",cover_data_url AS "coverDataUrl",provider_avatar_data_url AS "providerAvatarDataUrl" FROM account_appearance WHERE user_id=$1`,
         [userId],
       );
-      return r.rows[0] ?? { ...empty };
+      const published: PrivateAppearance = r.rows[0] ?? { ...empty };
+      const submission = await moderation.latest(userId, 'appearance');
+      const selected = submission
+        ? {
+            title: submission.title!,
+            description: submission.description!,
+            avatarSource: submission.avatarSource,
+            avatarDataUrl: submission.avatarDataUrl,
+            coverDataUrl: submission.coverDataUrl,
+          }
+        : published;
+      return {
+        ...published,
+        ...selected,
+        providerAvatarHash: published.providerAvatarDataUrl
+          ? profileContentHash(published.providerAvatarDataUrl)
+          : null,
+        selectedProviderAvatarHash:
+          selected.avatarSource === 'provider' && selected.avatarDataUrl
+            ? profileContentHash(selected.avatarDataUrl)
+            : null,
+        moderation: submission
+          ? {
+              id: submission.id,
+              status: submission.status,
+              reasonCode: submission.reasonCode,
+            }
+          : null,
+      };
     },
     async save(
       userId: string,
       input: WallAppearance,
       avatarSource: 'provider' | 'upload' | 'none',
+      metadata: SubmissionMetadata & { providerAvatarHash?: string } = {},
     ) {
-      const c = await pool.connect();
-      try {
-        await c.query('BEGIN');
-        const active = await c.query(
-          "SELECT id FROM users WHERE id=$1 AND status='active' FOR UPDATE",
-          [userId],
-        );
-        if (active.rowCount !== 1) throw Error('FORBIDDEN');
-        await c.query(
-          `INSERT INTO account_appearance(user_id,title,description,avatar_data_url,cover_data_url,avatar_source)
-          VALUES($1,$2,$3,$4,$5,$7) ON CONFLICT(user_id) DO UPDATE SET title=excluded.title,description=excluded.description,
-          avatar_data_url=CASE WHEN $6 THEN account_appearance.provider_avatar_data_url ELSE excluded.avatar_data_url END,
-          cover_data_url=excluded.cover_data_url,avatar_source=excluded.avatar_source,updated_at=clock_timestamp()`,
-          [
-            userId,
-            input.title,
-            input.description,
-            input.avatarDataUrl,
-            input.coverDataUrl,
-            avatarSource === 'provider',
-            avatarSource,
-          ],
-        );
-        if (avatarSource === 'provider')
-          await c.query(
-            'UPDATE account_appearance SET avatar_data_url=provider_avatar_data_url WHERE user_id=$1',
-            [userId],
-          );
-        await c.query('COMMIT');
-      } catch (e) {
-        await c.query('ROLLBACK');
-        throw e;
-      } finally {
-        c.release();
-      }
+      const submission = await moderation.submit(
+        userId,
+        {
+          kind: 'appearance',
+          ...input,
+          avatarSource,
+          ...(metadata.providerAvatarHash
+            ? { providerAvatarHash: metadata.providerAvatarHash }
+            : {}),
+        },
+        metadata,
+      );
+      return {
+        saved: true,
+        submissionId: submission.id,
+        status: submission.status,
+      };
     },
     async saveProviderAvatar(userId: string, dataUrl: string) {
       // Private candidate only: login never replaces a published/custom avatar.
-      await pool.query(
-        `INSERT INTO account_appearance(user_id,provider_avatar_data_url)
-        SELECT id,$2 FROM users WHERE id=$1 AND status='active'
-        ON CONFLICT(user_id) DO UPDATE SET provider_avatar_data_url=excluded.provider_avatar_data_url,updated_at=clock_timestamp()`,
-        [userId, dataUrl],
-      );
+      await savePrivateProviderAvatar(pool, userId, dataUrl);
     },
   };
 }

@@ -21,6 +21,10 @@ GRANT INSERT ON users,social_identities,sessions,oauth_login_attempts,walls,slot
  platform_pricing_default,takeover_quotes,takeover_reservations,payment_orders,payments,payment_event_receipts,
  creator_earnings,notification_events,notification_subscriptions,share_links,share_interactions TO da_api;
 GRANT SELECT,INSERT,UPDATE ON account_appearance TO da_api;
+GRANT SELECT,INSERT ON profile_submissions,profile_moderation_decisions TO da_api;
+GRANT UPDATE(status) ON profile_submissions TO da_api;
+GRANT SELECT,INSERT ON telegram_profile_checks TO da_api;
+GRANT UPDATE(observed_at,status,display_name,username,avatar_data_url,started_at,lease_id,lease_until,model,assessment,reason_code,submission_id) ON telegram_profile_checks TO da_api;
 GRANT SELECT,INSERT ON ai_autograph_requests TO da_api;
 GRANT UPDATE(state,result,finished_at) ON ai_autograph_requests TO da_api;
 GRANT INSERT ON creators,creator_profiles TO da_api;

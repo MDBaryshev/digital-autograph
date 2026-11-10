@@ -9,6 +9,7 @@ export {
   createTelegramOidcClient,
   type TelegramOidcClient,
   type TelegramOidcConfig,
+  type TelegramProfileClaims,
 } from './telegram';
 export { createYookassaProvider } from './yookassa';
 export { createTelegramNotificationSender } from './telegram-notifications';
