@@ -3,6 +3,7 @@ import { useLocale } from './locale-provider';
 
 import { YandexSignIn } from './yandex-sign-in';
 import { VkIdSignIn } from './vk-id-sign-in';
+import { EmailSignIn } from './email-sign-in';
 
 import { useEffect, useRef, useState } from 'react';
 import { wallClaimApi } from '../lib/wall-claim-api';
@@ -103,6 +104,7 @@ export function AccountSession({
           </a>
           <YandexSignIn apiOrigin={apiOrigin} returnTo="/me" />
           <VkIdSignIn apiOrigin={apiOrigin} returnTo="/me" />
+          <EmailSignIn apiOrigin={apiOrigin} returnTo="/me" />
         </div>
         <p>
           {t(

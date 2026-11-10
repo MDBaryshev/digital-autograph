@@ -4,6 +4,7 @@ import { safeErrorDetails } from '@digital-autograph/observability';
 
 export { eq, sql } from 'drizzle-orm';
 export { createPgSessionRepository } from './session-repository';
+export { createPgEmailAuthRepository } from './email-auth-repository';
 export { createPgOAuthAttemptRepository } from './oauth-attempt-repository';
 export { createPgOAuthAttemptCleanup } from './oauth-attempt-cleanup';
 export { createPgProviderIdentityRepository } from './provider-identity-repository';

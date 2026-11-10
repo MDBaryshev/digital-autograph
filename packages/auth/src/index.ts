@@ -1,4 +1,11 @@
 import { createHash, randomBytes } from 'node:crypto';
+export {
+  EmailAuthService,
+  type EmailAuthRepository,
+  type AuthEmailSender,
+  type EmailPurpose,
+} from './email';
+export { validNewPassword, PasswordBusyError } from './password';
 
 export {
   IdentityNotAllowedError,

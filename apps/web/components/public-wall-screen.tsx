@@ -3,6 +3,7 @@ import { useLocale } from './locale-provider';
 
 import { YandexSignIn } from './yandex-sign-in';
 import { VkIdSignIn } from './vk-id-sign-in';
+import { EmailSignIn } from './email-sign-in';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -537,6 +538,7 @@ export function PublicWallScreen({
               returnTo={`/walls/${wall.id}`}
             />
             <VkIdSignIn apiOrigin={apiOrigin} returnTo={`/walls/${wall.id}`} />
+            <EmailSignIn apiOrigin={apiOrigin} returnTo={`/walls/${wall.id}`} />
           </div>
         </section>
       )}
