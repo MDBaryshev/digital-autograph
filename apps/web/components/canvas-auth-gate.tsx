@@ -3,6 +3,7 @@ import { useLocale } from './locale-provider';
 
 import { YandexSignIn } from './yandex-sign-in';
 import { VkIdSignIn } from './vk-id-sign-in';
+import { EmailSignIn } from './email-sign-in';
 
 import { useEffect, useState } from 'react';
 import { FirstUseGate } from './first-use-gate';
@@ -57,6 +58,7 @@ export function CanvasAuthGate({ apiOrigin }: { apiOrigin: string }) {
           </a>
           <YandexSignIn apiOrigin={apiOrigin} returnTo="/autograph/create" />
           <VkIdSignIn apiOrigin={apiOrigin} returnTo="/autograph/create" />
+          <EmailSignIn apiOrigin={apiOrigin} returnTo="/autograph/create" />
         </div>
         <p>
           {t(

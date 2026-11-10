@@ -12,6 +12,7 @@ export {
   type TelegramProfileClaims,
 } from './telegram';
 export { createYookassaProvider } from './yookassa';
+export { createAuthEmailSender } from './auth-email';
 export { createTelegramNotificationSender } from './telegram-notifications';
 
 export {

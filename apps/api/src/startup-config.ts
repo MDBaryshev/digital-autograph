@@ -6,6 +6,7 @@ import type { LegalHttp } from './legal-http';
 import { assertFirstUseActivation } from './first-use';
 import {
   loadApiConfig,
+  loadEmailAuthConfig,
   loadPaymentConfig,
   loadYandexAuthConfig,
   loadVkIdAuthConfig,
@@ -34,6 +35,7 @@ export function loadApiStartupConfig(
     );
   return {
     config,
+    emailConfig: loadEmailAuthConfig(environment),
     openRouter: loadOpenRouterConfig(environment),
     telegramModeration: loadTelegramModerationConfig(environment),
     paymentConfig,

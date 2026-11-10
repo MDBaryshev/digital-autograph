@@ -204,6 +204,13 @@
       "when": 1794350070276,
       "tag": "0028_telegram_profile_moderation",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794351090421,
+      "tag": "0029_email_auth",
+      "breakpoints": true
     }
   ]
 }

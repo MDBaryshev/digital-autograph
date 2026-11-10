@@ -1,5 +1,36 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Use 15–128 characters. Spaces and password managers are supported.':
+    'Используйте от 15 до 128 символов. Можно использовать пробелы и менеджер паролей.',
+  'We will send a confirmation link. You will create your password after confirming your email.':
+    'Мы отправим ссылку для подтверждения. Вы создадите пароль после подтверждения почты.',
+  'If this address can be used, an email with a link will arrive shortly. Check your spam folder too.':
+    'Если адрес подходит, скоро придёт письмо со ссылкой. Проверьте также папку «Спам».',
+  'Your password is saved. Sign in with your email and password.':
+    'Пароль сохранён. Войдите с почтой и паролем.',
+  'This link is invalid or has expired. Request a new email.':
+    'Ссылка недействительна или устарела. Запросите новое письмо.',
+  'Could not complete the request. Please try again.':
+    'Не удалось выполнить запрос. Попробуйте ещё раз.',
+  'Email or password is incorrect.': 'Неверная почта или пароль.',
+  'Too many attempts. Please try again later.':
+    'Слишком много попыток. Повторите позже.',
+  'Passwords do not match.': 'Пароли не совпадают.',
+  'Other sign-in options': 'Другие способы входа',
+  'Forgot password?': 'Забыли пароль?',
+  'Sign-in options': 'Способы входа',
+  'Send email': 'Отправить письмо',
+  'Save password': 'Сохранить пароль',
+  'Sign in': 'Войти',
+  'Please wait…': 'Подождите…',
+  'Repeat password': 'Повторите пароль',
+  Password: 'Пароль',
+  Email: 'Электронная почта',
+  'Set your password': 'Задайте пароль',
+  'Reset password': 'Восстановить пароль',
+  'Create an account': 'Создать аккаунт',
+  'Sign in with email': 'Войти по почте',
+  'Continue with email': 'Продолжить с почтой',
   'Content moderation': 'Модерация контента',
   'Telegram profile': 'Профиль Telegram',
   'Automated check flagged this profile.':

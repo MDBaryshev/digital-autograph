@@ -1,9 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { buildApi } from '../../apps/api/src/app';
 import { beforeAll, afterAll, it, expect } from 'vitest';
-import { SessionService } from '../../packages/auth/src/index';
+import {
+  EmailAuthService,
+  SessionService,
+} from '../../packages/auth/src/index';
 import {
   createPgSessionRepository,
+  createPgEmailAuthRepository,
   createPgAccountWorkspaceRepository,
   createDatabase,
   createPgProfileModerationRepository,
@@ -443,4 +447,28 @@ it('preserves PostgreSQL Unicode name limits and rejects invalid names before SQ
     (await app.inject({ url: '/me/workspace', headers: headers(id) })).json()
       .profile.displayName,
   ).toBe(name);
+});
+
+it('registers, confirms and signs in with the restricted API database role', async () => {
+  let token: string | undefined;
+  const service = new EmailAuthService(
+    createPgEmailAuthRepository(db.pool),
+    {
+      async send(mail) {
+        token = mail.token;
+      },
+    },
+    3600,
+  );
+  const email = 'restricted-email@example.test';
+  const password = 'an isolated test password';
+  await service.request(email, 'register');
+  expect(token).toBeTruthy();
+  expect(await service.complete(token!, password)).toBe(true);
+  expect(await service.login(email, password)).toMatch(/^da_s1_/);
+  await service.request(email, 'reset');
+  expect(await service.complete(token!, 'the replacement test password')).toBe(
+    true,
+  );
+  expect(await service.login(email, password)).toBeNull();
 });

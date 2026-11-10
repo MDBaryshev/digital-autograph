@@ -1,5 +1,7 @@
 # Architecture boundaries
 
+[Email authentication](email-authentication.md) covers mailbox confirmation, password recovery and UniSender Go setup.
+
 [Account, profile and autograph moderation](account-content-moderation.md)
 proposes how Telegram profile checks and public profile review fit into the
 existing autograph queue and post-publication workflow.

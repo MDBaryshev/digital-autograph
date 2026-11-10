@@ -3,6 +3,7 @@ import { useLocale } from './locale-provider';
 
 import { YandexSignIn } from './yandex-sign-in';
 import { VkIdSignIn } from './vk-id-sign-in';
+import { EmailSignIn } from './email-sign-in';
 
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -199,6 +200,7 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
         </a>
         <YandexSignIn apiOrigin={apiOrigin} returnTo="/moderation" />
         <VkIdSignIn apiOrigin={apiOrigin} returnTo="/moderation" />
+        <EmailSignIn apiOrigin={apiOrigin} returnTo="/moderation" />
       </section>
     );
   }
