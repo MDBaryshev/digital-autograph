@@ -24,6 +24,50 @@ const imageResponse = (bytes: Buffer, media_type = 'image/png') =>
 const response = (message: unknown, finish_reason = 'stop') =>
   new Response(JSON.stringify({ choices: [{ message, finish_reason }] }));
 
+it('sends only the captured Telegram fields through zero-retention routing and rejects remote image URLs', async () => {
+  const verdict = {
+    decision: 'rejected',
+    reasonCode: 'SEXUAL_CONTENT',
+    confidence: 0.96,
+  };
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(response({ content: JSON.stringify(verdict) }));
+  const router = createOpenRouter('synthetic-private-test-key', fetcher);
+  const avatarDataUrl = 'data:image/jpeg;base64,' + jpeg.toString('base64');
+  await expect(
+    router.moderateTelegramProfile('synthetic/vision', {
+      name: 'Synthetic sample',
+      username: 'example_42',
+      avatarDataUrl,
+    }),
+  ).resolves.toEqual(verdict);
+  const [url, options] = fetcher.mock.calls[0]!;
+  expect(url).toBe('https://openrouter.ai/api/v1/chat/completions');
+  const request = JSON.parse(String(options?.body));
+  expect(request.provider).toEqual({
+    data_collection: 'deny',
+    zdr: true,
+    allow_fallbacks: false,
+    require_parameters: true,
+  });
+  expect(request.messages[1].content).toEqual([
+    {
+      type: 'text',
+      text: '{"name":"Synthetic sample","username":"example_42"}',
+    },
+    { type: 'image_url', image_url: { url: avatarDataUrl } },
+  ]);
+  await expect(
+    router.moderateTelegramProfile('synthetic/vision', {
+      name: null,
+      username: null,
+      avatarDataUrl: 'https://cdn4.telesco.pe/file/sample',
+    }),
+  ).rejects.toThrow('AI_IMAGE_INVALID');
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
 it('makes three sequential Images API calls for simple youthful styles and returns normalized PNG choices', async () => {
   let active = 0,
     peak = 0;

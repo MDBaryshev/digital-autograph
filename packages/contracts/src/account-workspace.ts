@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { creatorSlugParams } from './wall';
+import { profileSubmissionMetadata } from './profile-moderation';
 // Preserve the existing public creator URL and database name ranges.
 export const accountProfileBody = z.strictObject({
+  ...profileSubmissionMetadata,
   displayName: z
     .string()
     .trim()

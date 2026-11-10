@@ -4,7 +4,10 @@ import {
   OAuthAttemptService,
   SessionService,
 } from '@digital-autograph/auth';
-import type { TelegramOidcClient } from '@digital-autograph/integrations';
+import type {
+  TelegramOidcClient,
+  TelegramProfileClaims,
+} from '@digital-autograph/integrations';
 
 export const telegramLoginAttemptTtlSeconds = 600;
 
@@ -18,9 +21,9 @@ export class TelegramLoginService {
     private readonly telegram: TelegramOidcClient,
     private readonly identities: IdentityService,
     private readonly sessions: Pick<SessionService, 'createSession'>,
-    private readonly storeAvatar?: (
+    private readonly captureProfile?: (
       userId: string,
-      picture: string,
+      profile: TelegramProfileClaims,
     ) => Promise<void>,
   ) {}
 
@@ -69,7 +72,7 @@ export class TelegramLoginService {
         return { kind: 'failed' };
       }
       if (!input.state || !codeVerifier || !nonce) return { kind: 'failed' };
-      const verified = await this.telegram.verifyCode({
+      const { subject, ...profile } = await this.telegram.verifyCode({
         code: input.code,
         state: input.state,
         nonce,
@@ -77,12 +80,16 @@ export class TelegramLoginService {
       });
       const userId = await this.identities.resolveOrCreateUser(
         'telegram',
-        verified.subject,
+        subject,
       );
       const session = await this.sessions.createSession(userId);
       // Optional profile data cannot fail authentication or overwrite a custom image.
-      if (verified.picture && this.storeAvatar)
-        await this.storeAvatar(userId, verified.picture).catch(() => {});
+      if (
+        this.captureProfile &&
+        (profile.name || profile.username || profile.picture)
+      ) {
+        await this.captureProfile(userId, profile).catch(() => {});
+      }
       return {
         kind: 'success',
         token: session.token,

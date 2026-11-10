@@ -1,5 +1,22 @@
 import { z } from 'zod';
 
+const key = z.string().min(16);
+const model = z.string().min(1).max(200);
+
+export function loadTelegramModerationConfig(env = process.env) {
+  const enabled = env.AI_TELEGRAM_PROFILE_MODERATION_ENABLED;
+  if (enabled === undefined || enabled === 'false') return null;
+  if (enabled !== 'true') throw Error('Invalid AI feature configuration');
+  try {
+    return {
+      key: key.parse(env.OPENROUTER_API_KEY),
+      model: model.parse(env.OPENROUTER_TELEGRAM_MODERATION_MODEL),
+    };
+  } catch {
+    throw Error('Invalid Telegram moderation configuration (values redacted)');
+  }
+}
+
 export function loadOpenRouterConfig(env = process.env) {
   const generation = env.AI_AUTOGRAPH_GENERATION_ENABLED === 'true';
   const moderation = env.AI_AUTOGRAPH_MODERATION_ENABLED === 'true';
@@ -11,9 +28,8 @@ export function loadOpenRouterConfig(env = process.env) {
       throw Error('Invalid AI feature configuration');
   if (!generation && !moderation) return null;
   try {
-    const model = z.string().min(1).max(200);
     return {
-      key: z.string().min(16).parse(env.OPENROUTER_API_KEY),
+      key: key.parse(env.OPENROUTER_API_KEY),
       generationModel: generation
         ? model.parse(env.OPENROUTER_IMAGE_MODEL)
         : null,

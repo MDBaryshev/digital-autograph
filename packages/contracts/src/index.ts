@@ -7,6 +7,7 @@ export * from './wall';
 export * from './account-workspace';
 export * from './autograph';
 export * from './moderation';
+export * from './profile-moderation';
 export * from './post-publication-moderation';
 export * from './pricing';
 export * from './reservation';

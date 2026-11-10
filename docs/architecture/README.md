@@ -1,5 +1,9 @@
 # Architecture boundaries
 
+[Account, profile and autograph moderation](account-content-moderation.md)
+proposes how Telegram profile checks and public profile review fit into the
+existing autograph queue and post-publication workflow.
+
 [Proposed post-publication moderation](post-publication-moderation.md) defines
 future report/appeal request boundaries and the transaction/privacy/test plan;
 reporting, actions and persistence are not implemented by those contracts.

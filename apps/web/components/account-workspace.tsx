@@ -9,6 +9,7 @@ import { ThemeSwitcher } from './theme-switcher';
 import { LanguageSwitcher } from './language-switcher';
 import { workspaceRequest, type Workspace } from './workspace-api';
 import { autographApi } from '../lib/autograph-api';
+import { reasonLabels } from '../lib/moderation-api';
 import { CleanedAutographReview } from './cleaned-autograph-review';
 import { FirstUseActionNotice } from './first-use-action-notice';
 import styles from './workspace.module.css';
@@ -105,7 +106,11 @@ export function AccountWorkspace({
                 ? 'This username is already taken.'
                 : e instanceof Error && e.message === 'WALL_ALREADY_EXISTS'
                   ? 'Your account already has its Wall with 10 places.'
-                  : 'Could not save changes. Refresh before retrying.',
+                  : e instanceof Error && e.message === 'SUBMISSION_CHANGED'
+                    ? 'This form is out of date. Reload it before submitting again.'
+                    : e instanceof Error && e.message === 'SUBMISSION_LIMIT'
+                      ? 'Daily submission limit reached. Try again later.'
+                      : 'Could not save changes. Refresh before retrying.',
         );
     } finally {
       busy.current = false;
@@ -145,6 +150,7 @@ export function AccountWorkspace({
       </section>
     );
   const profile = data.profile;
+  const profileDraft = data.profileSubmission ?? profile;
   const date = (s: string) =>
     new Date(s).toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-GB');
   return (
@@ -383,6 +389,20 @@ export function AccountWorkspace({
         <>
           <section className={styles.card}>
             <h2>{t('Public profile')}</h2>
+            {data.profileSubmission && (
+              <p role="status">
+                {t(
+                  data.profileSubmission.status === 'pending'
+                    ? 'Profile changes are awaiting moderation.'
+                    : data.profileSubmission.status === 'rejected'
+                      ? 'Profile changes need correction.'
+                      : 'Profile changes approved.',
+                )}
+                {data.profileSubmission.reasonCode && (
+                  <> {t(reasonLabels[data.profileSubmission.reasonCode])}</>
+                )}
+              </p>
+            )}
             {!data.canEditProfile && (
               <p role="status">
                 {t('Profile changes are temporarily unavailable.')}
@@ -394,7 +414,7 @@ export function AccountWorkspace({
               )}
             </p>
             <form
-              key={profile?.slug ?? 'new'}
+              key={data.profileSubmission?.id ?? profile?.slug ?? 'new'}
               className={styles.form}
               onSubmit={(e) => {
                 e.preventDefault();
@@ -404,7 +424,12 @@ export function AccountWorkspace({
                     apiOrigin,
                     '/me/profile',
                     signal,
-                    { displayName: f.get('displayName'), slug: f.get('slug') },
+                    {
+                      displayName: f.get('displayName'),
+                      slug: f.get('slug'),
+                      operationKey: crypto.randomUUID(),
+                      expectedSubmissionId: data.profileSubmission?.id ?? null,
+                    },
                     'PUT',
                   ),
                 );
@@ -423,7 +448,7 @@ export function AccountWorkspace({
                         : '',
                     )
                   }
-                  defaultValue={profile?.displayName ?? ''}
+                  defaultValue={profileDraft?.displayName ?? ''}
                   required
                   autoComplete="nickname"
                 />
@@ -436,7 +461,7 @@ export function AccountWorkspace({
                   minLength={1}
                   maxLength={128}
                   pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                  defaultValue={profile?.slug ?? ''}
+                  defaultValue={profileDraft?.slug ?? ''}
                   required
                   aria-describedby="username-help"
                 />
@@ -460,6 +485,25 @@ export function AccountWorkspace({
             apiOrigin={apiOrigin}
             canEdit={data.canEditProfile}
           />
+          {data.telegramReview && (
+            <section className={styles.card}>
+              <h2>{t('Telegram profile')}</h2>
+              <p role="status">
+                {t(
+                  data.telegramReview.status === 'rejected'
+                    ? 'Update your Telegram profile and sign in again to request a new check.'
+                    : ['approved', 'cleared'].includes(
+                          data.telegramReview.status,
+                        )
+                      ? 'Telegram profile review complete.'
+                      : 'Your Telegram profile is being checked.',
+                )}
+                {data.telegramReview.reasonCode && (
+                  <> {t(reasonLabels[data.telegramReview.reasonCode])}</>
+                )}
+              </p>
+            </section>
+          )}
           {preferences}
           <section className={styles.card}>
             <h2>{t('Session')}</h2>

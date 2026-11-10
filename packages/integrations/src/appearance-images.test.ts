@@ -85,3 +85,35 @@ it('only fetches verified-provider HTTPS hosts and refuses redirects, oversized 
     ),
   ).toBeNull();
 });
+
+it('imports the Telegram Login avatar CDN only for Telegram identities', async () => {
+  const fetcher = vi.fn<typeof fetch>();
+  const picture = 'https://cdn4.telesco.pe/file/example';
+  expect(await importProviderAvatar('google', picture, fetcher)).toBeNull();
+  for (const url of [
+    'http://cdn4.telesco.pe/file/example',
+    'https://cdn4.telesco.pe.evil.test/file/example',
+    'https://other.telesco.pe/file/example',
+    'https://user:pass@cdn4.telesco.pe/file/example',
+    'https://cdn4.telesco.pe:444/file/example',
+  ]) {
+    expect(await importProviderAvatar('telegram', url, fetcher)).toBeNull();
+  }
+  expect(fetcher).not.toHaveBeenCalled();
+
+  const jpeg = await sharp({
+    create: { width: 20, height: 20, channels: 3, background: '#fff' },
+  })
+    .jpeg()
+    .toBuffer();
+  fetcher.mockResolvedValueOnce(
+    new Response(jpeg, { headers: { 'Content-Type': 'image/jpeg' } }),
+  );
+  expect(await importProviderAvatar('telegram', picture, fetcher)).toMatch(
+    /^data:image\/jpeg;base64,/,
+  );
+  expect(fetcher).toHaveBeenCalledExactlyOnceWith(
+    new URL(picture),
+    expect.objectContaining({ redirect: 'error' }),
+  );
+});

@@ -1,6 +1,6 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(14rem, 20rem) 1fr;
+  grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
 }
@@ -44,12 +44,38 @@
 .actions select {
   padding: 0.6rem;
 }
+.profileReview .actions label {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+}
+.profileReview .actions select {
+  width: 100%;
+  min-width: 0;
+}
+.refresh {
+  margin-top: 1rem;
+}
+nav.actions button[aria-pressed='true'],
+.queue button[aria-pressed='true'] {
+  background: var(--brand-color-primarySoft);
+  color: var(--color-link);
+}
 .error {
   color: var(--brand-color-danger);
 }
+.profileFields dd {
+  margin: 0.3rem 0 1.25rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.profileFields dt {
+  color: var(--brand-color-muted);
+}
 @media (max-width: 45rem) {
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

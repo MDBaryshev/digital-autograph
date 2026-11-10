@@ -6,6 +6,8 @@ import {
   createPgSessionRepository,
   createPgAccountWorkspaceRepository,
   createDatabase,
+  createPgProfileModerationRepository,
+  createPgTelegramProfileRepository,
   migrate,
 } from '../../packages/db/src/index';
 import { registerAccountWorkspace } from '../../apps/api/src/account-workspace';
@@ -26,6 +28,7 @@ let created = false,
   rolesOwned = false;
 const id = randomUUID(),
   other = randomUUID(),
+  moderator = randomUUID(),
   slug = 'account-' + randomUUID();
 const runtimeUrl = new URL(isolatedUrl);
 runtimeUrl.username = 'da_api';
@@ -58,7 +61,15 @@ beforeAll(async () => {
   await control.pool.query(`CREATE DATABASE ${name}`);
   created = true;
   await migrate(admin.db, { migrationsFolder: 'packages/db/drizzle' });
-  await admin.pool.query(`INSERT INTO users(id) VALUES ($1),($2)`, [id, other]);
+  await admin.pool.query(`INSERT INTO users(id) VALUES ($1),($2),($3)`, [
+    id,
+    other,
+    moderator,
+  ]);
+  await admin.pool.query(
+    "INSERT INTO user_roles(user_id,role) VALUES($1,'moderator')",
+    [moderator],
+  );
   await admin.pool.query(
     `INSERT INTO autographs(user_id,source) VALUES ($1,'canvas'),($2,'photo')`,
     [id, other],
@@ -121,6 +132,36 @@ it('denies anonymous access and lists only the authenticated owner, with no priv
   expect(r.json().autographs[0].source).toBe('canvas');
   expect(r.body).not.toMatch(/storage_key|secret_hash|provider_user_id/);
 });
+it('screens Telegram snapshots with the restricted runtime role', async () => {
+  const repository = createPgTelegramProfileRepository(db.pool);
+  await repository.enqueue(
+    id,
+    { name: 'Synthetic name', username: 'sample', avatarDataUrl: null },
+    new Date(),
+  );
+  const job = (await repository.claim())!;
+  await repository.finish(job, {
+    kind: 'flagged',
+    model: 'synthetic/vision',
+    reason: 'SEXUAL_CONTENT',
+  });
+  const profiles = createPgProfileModerationRepository(db.pool);
+  const item = (await profiles.list(moderator, 1)).items[0]!;
+  expect(await profiles.preview(moderator, item.id)).toMatchObject({
+    kind: 'telegram',
+    suggestedReason: 'SEXUAL_CONTENT',
+  });
+  await profiles.decide(
+    moderator,
+    item.id,
+    { decision: 'rejected', reasonCode: 'SEXUAL_CONTENT' },
+    false,
+  );
+  expect(await repository.status(id)).toEqual({
+    status: 'rejected',
+    reasonCode: 'SEXUAL_CONTENT',
+  });
+});
 it('serializes concurrent profile creation with restricted credentials; collisions roll back', async () => {
   const results = await Promise.all(
     Array.from({ length: 4 }, () =>
@@ -133,6 +174,11 @@ it('serializes concurrent profile creation with restricted credentials; collisio
     ),
   );
   expect(results.map((r) => r.statusCode)).toEqual([200, 200, 200, 200]);
+  await createPgProfileModerationRepository(db.pool).decide(
+    moderator,
+    results[0]!.json().submissionId,
+    { decision: 'approved' },
+  );
   expect(
     (
       await admin.pool.query(
@@ -187,6 +233,11 @@ it('updates the display name on the server and exposes only owned Walls', async 
     payload: { displayName: 'New name', slug },
   });
   expect(r.statusCode).toBe(200);
+  await createPgProfileModerationRepository(db.pool).decide(
+    moderator,
+    r.json().submissionId,
+    { decision: 'approved' },
+  );
   const summary = await app.inject({
     url: '/me/workspace',
     headers: headers(id),
@@ -203,6 +254,16 @@ it('never returns another owner’s private draft Wall', async () => {
     payload: { displayName: 'Other creator', slug: 'other-' + slug },
   });
   expect(p.statusCode).toBe(200);
+  await createPgProfileModerationRepository(db.pool).decide(
+    moderator,
+    p.json().submissionId,
+    { decision: 'approved' },
+  );
+  const otherCreator = (
+    await admin.pool.query('SELECT id FROM creators WHERE owner_user_id=$1', [
+      other,
+    ])
+  ).rows[0].id;
   const ownCreator = (
     await admin.pool.query('SELECT id FROM creators WHERE owner_user_id=$1', [
       id,
@@ -217,7 +278,7 @@ it('never returns another owner’s private draft Wall', async () => {
   const foreign = (
     await admin.pool.query(
       'INSERT INTO walls(creator_id,slot_count) VALUES ($1,10) RETURNING id',
-      [p.json().id],
+      [otherCreator],
     )
   ).rows[0].id;
   const result = await app.inject({
@@ -363,6 +424,11 @@ it('preserves PostgreSQL Unicode name limits and rejects invalid names before SQ
   });
   expect(result.statusCode).toBe(200);
   expect(result.json().displayName).toBe(name);
+  await createPgProfileModerationRepository(db.pool).decide(
+    moderator,
+    result.json().submissionId,
+    { decision: 'approved' },
+  );
   for (const displayName of ['x\u0000y', '\uD800', '😀'.repeat(201)]) {
     const invalid = await app.inject({
       method: 'PUT',

@@ -29,6 +29,7 @@ const ownerId = userFixture(2).id!;
 type Scenario = {
   database: ReturnType<typeof createDatabase>;
   actorContext(userId: string): Promise<BrowserContext>;
+  approveProfileSubmission(id: string): Promise<void>;
   ownerId: string;
 };
 
@@ -84,28 +85,48 @@ export const test = base.extend<{ scenario: Scenario; uiLocale: 'en' | 'ru' }>({
           createPgSessionRepository(database.pool),
           1209600,
         );
+        const actorContext = async (userId: string) => {
+          const issued = await acceptedSession(sessions, database, userId);
+          const context = await browser.newContext();
+          contexts.push(context);
+          await context.addCookies([
+            {
+              name: 'destka-locale',
+              value: uiLocale,
+              url: process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000',
+            },
+            {
+              name: 'da_session',
+              value: issued.token,
+              url: process.env.API_PUBLIC_ORIGIN ?? 'http://127.0.0.1:4000',
+              httpOnly: true,
+              sameSite: 'Lax',
+            },
+          ]);
+          return context;
+        };
         await use({
           database,
           ownerId,
-          async actorContext(userId) {
-            const issued = await acceptedSession(sessions, database, userId);
-            const context = await browser.newContext();
-            contexts.push(context);
-            await context.addCookies([
-              {
-                name: 'destka-locale',
-                value: uiLocale,
-                url: process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000',
-              },
-              {
-                name: 'da_session',
-                value: issued.token,
-                url: process.env.API_PUBLIC_ORIGIN ?? 'http://127.0.0.1:4000',
-                httpOnly: true,
-                sameSite: 'Lax',
-              },
-            ]);
-            return context;
+          actorContext,
+          async approveProfileSubmission(id) {
+            const moderator = await actorContext(ownerId);
+            try {
+              const api =
+                process.env.API_PUBLIC_ORIGIN ?? 'http://127.0.0.1:4000';
+              const result = await moderator.request.post(
+                `${api}/moderation/profiles/${id}/decision`,
+                {
+                  headers: {
+                    origin: process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000',
+                  },
+                  data: { decision: 'approved' },
+                },
+              );
+              expect(result.status()).toBe(200);
+            } finally {
+              await moderator.close();
+            }
           },
         });
       } finally {
