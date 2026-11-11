@@ -6,6 +6,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "analytics:report": "tsx scripts/product-analytics-report.mts",
     "pricing:plan": "tsx apps/api/scripts/destka-pricing-plan.ts",
     "benchmark:images": "tsx apps/worker/src/image-benchmark-cli.ts",
     "test:recovery-drill": "vitest run --config vitest.recovery.config.ts",

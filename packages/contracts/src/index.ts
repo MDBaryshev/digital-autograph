@@ -15,3 +15,4 @@ export * from './notifications';
 export { firstUseStateSchema, type FirstUseState } from './first-use';
 
 export * from './checkout';
+export * from './product-analytics';
