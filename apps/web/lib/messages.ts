@@ -1,5 +1,14 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Returning from checkout does not confirm payment. Refresh the payment status to request a new check.':
+    'Возврат со страницы оплаты не подтверждает платёж. Обнови статус оплаты, чтобы запросить новую проверку.',
+  'Payment received. Placement is not confirmed yet.':
+    'Платёж получен. Размещение ещё не подтверждено.',
+  'Payment is unavailable for this account.':
+    'Платёж недоступен для этого аккаунта.',
+  'Unable to confirm payment status. Check its saved status before retrying.':
+    'Не удалось подтвердить статус платежа. Проверь сохранённый статус перед повторной попыткой.',
+  'Check saved payment status': 'Проверить сохранённый статус платежа',
   'Invite to this Wall': 'Приглашение на стену',
   'Invite your people': 'Позови своих',
   'One Wall. Ten places. Send the link to someone who should be here.':
