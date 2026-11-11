@@ -51,15 +51,18 @@ export function createPgTelegramProfileRepository(pool: Pool) {
             Pick<
               Check,
               'id' | 'fingerprint' | 'version' | 'observed_at' | 'status'
-            >
+            > & { has_open_photo: boolean }
           >(
-            'SELECT id,fingerprint,version,observed_at,status FROM telegram_profile_checks WHERE user_id=$1 ORDER BY version DESC LIMIT 1',
+            `SELECT c.id,c.fingerprint,c.version,c.observed_at,c.status,
+               (c.avatar_data_url IS NOT NULL OR
+                (s.status IS NOT DISTINCT FROM 'pending' AND s.avatar_data_url IS NOT NULL)) AS has_open_photo
+             FROM telegram_profile_checks c LEFT JOIN profile_submissions s ON s.id=c.submission_id
+             WHERE c.user_id=$1 ORDER BY c.version DESC LIMIT 1`,
             [userId],
           )
         ).rows[0];
         if (latest && latest.observed_at > observedAt) return;
-        if (latest && latest.status !== 'superseded' && photoUnavailable)
-          return;
+        if (photoUnavailable && latest?.has_open_photo) return;
         if (
           latest?.fingerprint === fingerprint &&
           latest.status !== 'superseded'
