@@ -1,0 +1,21 @@
+[Unit]
+Description=Verify GitHub requests for an operator-prepared staging release
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/node /opt/digital-autograph/github-staging-controller.mjs /etc/digital-autograph/github-controller.json
+TimeoutStartSec=600
+UMask=0077
+LimitCORE=0
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/digital-autograph /opt/digital-autograph/incoming
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+StandardOutput=journal
+StandardError=journal

@@ -12,6 +12,10 @@ Moving files to a different backend is not part of this update. Web, API, Worker
 PostgreSQL and Caddy continue on the same VM. Existing storage/snapshot charges
 continue; no additional fixed monthly resource is introduced.
 
+The proposed [GitHub prepared-release button](github-staging-button.md) transports
+only the final owner-approved `start` phase. Package/backup/restore/migration gates
+below remain mandatory; it does not enable the historical Release.
+
 ## EGO-185 paid-protection compatibility
 
 The 0027 migration adds the new 2700-second checkout evidence guard. Before any

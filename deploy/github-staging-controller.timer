@@ -1,0 +1,11 @@
+[Unit]
+Description=Poll for an explicitly approved prepared staging activation
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=30
+RandomizedDelaySec=5
+Unit=github-staging-controller.service
+
+[Install]
+WantedBy=timers.target

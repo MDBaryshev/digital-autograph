@@ -157,6 +157,7 @@ function fixture(failure = '') {
   let dataVersion = 'a';
   let epoch = 0;
   let hba = '';
+  let healthAttempts = 0;
   const legacy = ['api', 'worker'].map((app) => ({
     Id: app + '-container',
     Image: id,
@@ -256,6 +257,8 @@ function fixture(failure = '') {
       });
     if (command.includes('curl') && failure === 'health')
       throw Error('synthetic');
+    if (program === 'curl' && failure === 'warming' && ++healthAttempts <= 2)
+      throw Error('synthetic transient Caddy warmup');
     if (command.includes('node --input-type'))
       return JSON.stringify({
         name: 'da_' + args[args.indexOf('-T') + 1],
@@ -447,6 +450,45 @@ it.each(['checkpointId', 'manifestHash', 'fenceHash'])(
     }
   },
 );
+it.each(['warming', 'health'])(
+  'bounds Caddy readiness retries without rerunning startup or migrations (%s)',
+  (failure) => {
+    const f = fixture(failure);
+    try {
+      deploy(f.m, 'prepare', f.options);
+      f.recovery();
+      deploy(f.m, 'apply', f.options);
+      if (failure === 'warming')
+        expect(deploy(f.m, 'start', f.options).stage).toBe('HEALTHY');
+      else {
+        expect(() => deploy(f.m, 'start', f.options)).toThrow();
+        expect(f.record().stage).toBe('STOPPED');
+      }
+      const requests = f.commands.filter((x) => x.startsWith('curl '));
+      expect(requests).toHaveLength(failure === 'warming' ? 4 : 6);
+      expect(
+        requests.every(
+          (x) =>
+            x.includes('--max-time 5') && x.includes('--connect-timeout 3'),
+        ),
+      ).toBe(true);
+      expect(
+        f.commands.filter(
+          (x) => x.includes('run --rm') && x.endsWith(' migration'),
+        ),
+      ).toHaveLength(1);
+      expect(
+        f.commands.filter(
+          (x) =>
+            x.includes('--wait-timeout 120') && x.endsWith('api worker web'),
+        ),
+      ).toHaveLength(1);
+    } finally {
+      rmSync(f.dir, { recursive: true, force: true });
+    }
+  },
+);
+
 it('runs actual image config validation before freeze, and never masks config failure with payment shutdown', () => {
   const f = fixture();
   try {
