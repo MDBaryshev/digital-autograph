@@ -51,36 +51,28 @@
   font-size: 0.75rem;
 }
 .wallSummary {
-  padding: 1.5rem;
-  border-radius: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 1rem;
   background: var(--ui-stage);
   color: var(--ui-stage-ink);
-  text-align: center;
 }
-.wallSummary > svg {
-  width: 9rem;
-  height: 7rem;
-}
-.wallSummary > p {
+
+.wallSummary p {
+  margin: 0 0 0.3rem;
   color: inherit;
-  font-size: 0.85rem;
 }
-.wallSummary > div {
-  display: flex;
-  gap: 1rem;
-  justify-content: space-around;
-  border-top: 1px solid currentColor;
-  padding-top: 1.25rem;
-}
+
 .wallSummary strong {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
+
 .wallSummary span {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 650;
 }
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
@@ -160,7 +152,11 @@
   line-height: 1.5;
   margin: 0.5rem 0 0;
 }
+.slot:has(.emptyMark) {
+  min-height: 0;
+}
 .slotContent:has(.emptyMark) {
+  min-height: 7.5rem;
   border: 1px dashed var(--brand-color-border);
   border-radius: 0.65rem;
   background: var(--ui-surface-subtle);
@@ -277,7 +273,11 @@
     gap: 2rem;
   }
   .wallSummary {
-    display: none;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
   }
 }
 @media (max-width: 40rem) {
@@ -296,7 +296,7 @@
     padding: 0.5rem 0.25rem;
   }
   .slotContent button {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     padding-inline: 0.5rem;
   }
   .autograph {
@@ -360,4 +360,10 @@
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+}
+
+.slotIntro {
+  max-width: 62ch;
+  color: var(--color-muted);
+  margin: 0.5rem 0 1.25rem;
 }

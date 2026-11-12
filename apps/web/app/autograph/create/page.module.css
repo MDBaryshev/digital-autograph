@@ -1,81 +1,45 @@
 .page {
-  max-width: 68rem;
-  margin: 2.5rem auto 5rem;
-  padding: 0 var(--space-page);
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4rem) var(--space-page) clamp(3rem, 7vw, 6rem);
 }
+
 .page h1 {
-  font-size: clamp(2.25rem, 4.2vw, 3.5rem);
-  margin: 0 0 1.25rem;
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  line-height: 1.12;
+  margin: 0 0 0.8rem;
+  text-wrap: balance;
 }
+
 .intro {
-  color: var(--brand-color-muted);
-  font-size: 1.05rem;
-  max-width: 65ch;
+  color: var(--color-muted);
+  font-size: 1rem;
+  max-width: 56ch;
+  margin: 0 0 1.35rem;
 }
+
 .warning {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  border: 1px solid var(--brand-color-border);
-  background: var(--ui-surface-subtle);
-  padding: 1rem 1.25rem;
-  border-radius: 0.85rem;
-  margin: 1.5rem 0;
-  line-height: 1.7;
-  font-size: 0.8rem;
-  color: var(--brand-color-muted);
+  gap: 0.6rem;
+  max-width: 72ch;
+  margin: 1.25rem 0 1.65rem;
+  padding-block: 0.7rem;
+  border-block: 1px solid var(--color-border);
+  line-height: 1.55;
+  font-size: 0.875rem;
+  color: var(--color-muted);
 }
+
 .warning svg {
-  flex-shrink: 0;
-  margin-top: 0.2rem;
+  flex: none;
+  margin-top: 0.15rem;
 }
-.auth {
-  padding: clamp(1.5rem, 4vw, 3rem);
-  background: var(--brand-color-surface);
-  border: 1px solid var(--brand-color-border);
-  border-radius: 1.5rem;
-}
-.auth h2 {
-  margin-top: 0;
-}
-.auth p {
-  color: var(--brand-color-muted);
-  max-width: 60ch;
-  font-size: 0.9rem;
-}
-.links {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-block: 1.75rem;
-  max-width: 40rem;
-}
-.links a,
-.links button {
-  min-height: 50px;
-  display: flex;
+
+.back {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.8rem 1rem;
-  color: var(--brand-color-ink);
-  background: var(--brand-color-surface);
-  border: 1px solid var(--brand-color-control);
-  border-radius: 0.75rem;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-.links a:hover,
-.links button:hover:not(:disabled) {
-  background: var(--brand-color-primarySoft);
-  border-color: var(--brand-color-primary);
-}
-@media (max-width: 40rem) {
-  .page {
-    margin-top: 2rem;
-  }
-  .links {
-    grid-template-columns: 1fr;
-  }
+  min-height: 44px;
+  margin-bottom: 0.4rem;
+  text-underline-offset: 0.2em;
 }

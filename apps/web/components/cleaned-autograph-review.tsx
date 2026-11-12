@@ -44,11 +44,15 @@ export function CleanedAutographReview({
   autographId,
   initialPreview,
   onStartOver,
+  studioPath = '/autograph/create',
+  wallId,
 }: {
   api: ReviewApi;
   autographId: string;
   initialPreview: Preview;
   onStartOver: () => void;
+  studioPath?: string;
+  wallId?: string;
 }) {
   const { t } = useLocale();
 
@@ -151,13 +155,24 @@ export function CleanedAutographReview({
       />
       {refreshError && <p role="alert">{t(refreshError)}</p>}
       {phase.kind === 'submitted_for_moderation' ? (
-        <div role="status" className={styles.status}>
-          <h3>{t('Submitted for moderation')}</h3>
-          <p>
-            {t(
-              'Your approval is recorded. No public placement has occurred yet.',
-            )}
-          </p>
+        <div className={styles.status}>
+          <div role="status">
+            <h3>{t('Submitted for moderation')}</h3>
+            <p>
+              {t(
+                'Follow the decision in My autographs. You can place this autograph once it is approved.',
+              )}
+            </p>
+          </div>
+          <div className={styles.actions}>
+            <a
+              className="primaryLink"
+              href={wallId ? `/me/autographs?wall=${wallId}` : '/me/autographs'}
+            >
+              {t('Check moderation status')}
+            </a>
+            {wallId && <a href={`/walls/${wallId}`}>{t('Back to the Wall')}</a>}
+          </div>
         </div>
       ) : (
         <div className={styles.approval}>
@@ -174,7 +189,7 @@ export function CleanedAutographReview({
           {phase.kind === 'approval_error' && (
             <div role="alert">
               {phase.legalRequired ? (
-                <FirstUseActionNotice returnTo="/autograph/create" />
+                <FirstUseActionNotice returnTo={studioPath} />
               ) : (
                 <p>{t(phase.message)}</p>
               )}

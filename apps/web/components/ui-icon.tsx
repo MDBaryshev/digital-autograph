@@ -8,6 +8,8 @@ const paths = {
   history: 'M3 11a9 9 0 1 1 2 7M3 5v6h6m3-4v5l3 2',
   bell: 'M6 8a6 6 0 0 1 12 0c0 8 3 8 3 9H3c0-1 3-1 3-9Zm4 12h4',
   user: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',
+  menu: 'M4 6h16M4 12h16M4 18h16',
+  close: 'm6 6 12 12M18 6 6 18',
   check: 'm5 12 4 4L19 6',
 } as const;
 

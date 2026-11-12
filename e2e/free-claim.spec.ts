@@ -45,11 +45,11 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   test.setTimeout(120_000);
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Your mark. Their world.' }),
+    page.getByRole('heading', { name: 'Autograph walls' }),
   ).toBeVisible();
   await responsive(
     page,
-    page.getByRole('link', { name: 'Create a digital autograph', exact: true }),
+    page.getByRole('link', { name: 'Create autograph', exact: true }),
   );
   await page.keyboard.press('Tab');
   await expect(
@@ -63,7 +63,8 @@ test('new user uploads, reviews, claims and reads only their persistent history'
     [e2eUserId],
   );
   expect(initial.rowCount).toBe(0);
-  await page.goto('/autograph/create');
+  const studioPath = `/autograph/create?wall=${e2eWallId}`;
+  await page.goto(studioPath);
   await expect(
     page.getByRole('heading', { name: 'Sign in to continue' }),
   ).toBeVisible();
@@ -72,9 +73,9 @@ test('new user uploads, reviews, claims and reads only their persistent history'
     page.getByRole('link', { name: 'Continue with Google' }),
   );
   await page.goto(
-    `${apiUrl}/auth/test/start?returnTo=${encodeURIComponent('/autograph/create')}`,
+    `${apiUrl}/auth/test/start?returnTo=${encodeURIComponent(studioPath)}`,
   );
-  await expect(page).toHaveURL(`${webUrl}/autograph/create`);
+  await expect(page).toHaveURL(`${webUrl}${studioPath}`);
   await page.getByLabel('I am at least 18 years old.').check();
   await page.getByLabel('I accept the Terms of use.').check();
   await page.getByLabel('I accept the Content rules.').check();
@@ -110,6 +111,14 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await page.getByLabel('Crop preview').focus();
   await page.keyboard.press('ArrowRight');
   await page.getByRole('button', { name: 'Draw', exact: true }).click();
+  await page.getByRole('button', { name: 'Keep editing', exact: true }).click();
+  await expect(
+    page.getByRole('img', { name: 'Edited autograph photo preview' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Draw', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Switch method and clear', exact: true })
+    .click();
   await canvas.focus();
   await canvas.press('Space');
   for (const key of [
@@ -198,6 +207,14 @@ test('new user uploads, reviews, claims and reads only their persistent history'
     { headers: { Origin: webUrl }, data: { decision: 'approved' } },
   );
   expect(decision.status()).toBe(200);
+  await page
+    .getByRole('link', { name: 'Check moderation status', exact: true })
+    .click();
+  await expect(page).toHaveURL(`${webUrl}/me/autographs?wall=${e2eWallId}`);
+  await page
+    .getByRole('link', { name: 'Back to the Wall', exact: true })
+    .click();
+  await expect(page).toHaveURL(`${webUrl}/walls/${e2eWallId}`);
 
   await page.goto('/creators/e2e-creator');
   await expect(
@@ -253,9 +270,12 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   ).toBeVisible();
   await expect(history.getByText('Free Claim', { exact: true })).toBeVisible();
   await expect(history.getByRole('heading', { name: 'Slot 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Paid takeover' })).toHaveCount(
+    0,
+  );
   await expect(
-    page.getByRole('button', { name: 'Paid takeover' }),
-  ).toBeDisabled();
+    page.getByText('Paid takeover is not available yet.', { exact: true }),
+  ).toBeVisible();
   await responsive(
     page,
     page.getByRole('button', { name: 'Refresh Wall', exact: true }),
@@ -346,9 +366,10 @@ test('new user uploads, reviews, claims and reads only their persistent history'
     page.getByRole('heading', { name: 'Sign in to continue' }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await page
-    .getByRole('link', { name: 'Placement history', exact: true })
-    .click();
+  await expect(
+    page.getByRole('link', { name: 'Placement history', exact: true }),
+  ).toHaveCount(0);
+  await page.goto('/me/placements');
   await expect(
     page.getByText('Sign in to view your placement history.'),
   ).toBeVisible();

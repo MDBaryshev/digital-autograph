@@ -50,7 +50,13 @@ function errorMessage(error: unknown): string {
     : 'Something went wrong. Please retry.';
 }
 
-export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
+export function CanvasCreateScreen({
+  apiOrigin,
+  wallId,
+}: {
+  apiOrigin: string;
+  wallId?: string;
+}) {
   const { t } = useLocale();
 
   const api = useRef(autographApi(apiOrigin));
@@ -59,7 +65,12 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
   const autographId = useRef<string | undefined>(undefined);
   const controller = useRef<AbortController | null>(null);
   const busy = useRef(false);
+  const methods = useRef<Partial<Record<CreationMode, HTMLButtonElement>>>({});
   const [mode, setMode] = useState<CreationMode>('draw');
+  const [pendingMode, setPendingMode] = useState<CreationMode | null>(null);
+  const studioPath = wallId
+    ? `/autograph/create?wall=${wallId}`
+    : '/autograph/create';
   const [aiCapabilities, setAiCapabilities] = useState({
     generation: false,
     moderation: false,
@@ -84,6 +95,7 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
   }, [apiOrigin]);
   const [hasMarks, setHasMarks] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
+  const [hasPhotoDraft, setHasPhotoDraft] = useState(false);
   const [state, setState] = useState<ScreenState>({ kind: 'editing' });
   const [editorKey, setEditorKey] = useState(0);
 
@@ -152,13 +164,14 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
   }, [mode]);
 
   useEffect(() => {
-    if ((!hasMarks && !hasPhoto) || state.kind === 'preview') return;
+    if ((!hasMarks && !hasPhoto && !hasPhotoDraft) || state.kind === 'preview')
+      return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [hasMarks, hasPhoto, state.kind]);
+  }, [hasMarks, hasPhoto, hasPhotoDraft, state.kind]);
 
   const startOver = () => {
     if (busy.current) return;
@@ -167,19 +180,29 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
     autographId.current = undefined;
     setHasMarks(false);
     setHasPhoto(false);
+    setHasPhotoDraft(false);
     setEditorKey((key) => key + 1);
+    setState({ kind: 'editing' });
+  };
+
+  const changeMode = (nextMode: CreationMode) => {
+    if (busy.current || autographId.current || mode === nextMode) return;
+    setPendingMode(null);
+    methods.current[nextMode]?.focus();
+    strokes.current = [];
+    image.current = null;
+    setHasMarks(false);
+    setHasPhoto(false);
+    setHasPhotoDraft(false);
+    setEditorKey((key) => key + 1);
+    setMode(nextMode);
     setState({ kind: 'editing' });
   };
 
   const selectMode = (nextMode: CreationMode) => {
     if (busy.current || autographId.current || mode === nextMode) return;
-    strokes.current = [];
-    image.current = null;
-    setHasMarks(false);
-    setHasPhoto(false);
-    setEditorKey((key) => key + 1);
-    setMode(nextMode);
-    setState({ kind: 'editing' });
+    if (hasMarks || hasPhoto || hasPhotoDraft) setPendingMode(nextMode);
+    else changeMode(nextMode);
   };
 
   const refreshPreview = async () => {
@@ -230,6 +253,9 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           <button
             className={mode === 'draw' ? styles.activeTab : styles.tab}
             type="button"
+            ref={(button) => {
+              if (button) methods.current.draw = button;
+            }}
             aria-pressed={mode === 'draw'}
             disabled={state.kind === 'working' || Boolean(autographId.current)}
             onClick={() => selectMode('draw')}
@@ -239,6 +265,9 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           <button
             className={mode === 'photo' ? styles.activeTab : styles.tab}
             type="button"
+            ref={(button) => {
+              if (button) methods.current.photo = button;
+            }}
             aria-pressed={mode === 'photo'}
             disabled={state.kind === 'working' || Boolean(autographId.current)}
             onClick={() => selectMode('photo')}
@@ -248,6 +277,9 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           <button
             type="button"
             className={mode === 'ai' ? styles.activeTab : styles.tab}
+            ref={(button) => {
+              if (button) methods.current.ai = button;
+            }}
             aria-pressed={mode === 'ai'}
             disabled={state.kind === 'working' || Boolean(autographId.current)}
             onClick={() => selectMode('ai')}
@@ -255,6 +287,27 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           >
             {t('AI autograph suggestions')}
           </button>
+        </div>
+      )}
+      {pendingMode && state.kind === 'editing' && (
+        <div className={styles.status}>
+          <p role="status">
+            {t('Switching methods will clear your current work.')}
+          </p>
+          <div className={styles.actions}>
+            <button type="button" onClick={() => changeMode(pendingMode)}>
+              {t('Switch method and clear')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingMode(null);
+                methods.current[mode]?.focus();
+              }}
+            >
+              {t('Keep editing')}
+            </button>
+          </div>
         </div>
       )}
       {state.kind !== 'preview' &&
@@ -282,6 +335,7 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           <PhotoUploadEditor
             key={editorKey}
             onPhotoChange={onPhotoChange}
+            onDraftChange={setHasPhotoDraft}
             disabled={state.kind === 'working' || Boolean(autographId.current)}
           />
         ))}
@@ -290,7 +344,9 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           className={styles.primary}
           type="button"
           onClick={run}
-          disabled={mode === 'draw' ? !hasMarks : !hasPhoto}
+          disabled={
+            Boolean(pendingMode) || (mode === 'draw' ? !hasMarks : !hasPhoto)
+          }
         >
           {t('Create private preview')}
         </button>
@@ -310,7 +366,7 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
       {state.kind === 'error' && (
         <div className={styles.error} role="alert">
           {state.legalRequired ? (
-            <FirstUseActionNotice returnTo="/autograph/create" />
+            <FirstUseActionNotice returnTo={studioPath} />
           ) : (
             <p>{t(state.message)}</p>
           )}
@@ -339,6 +395,8 @@ export function CanvasCreateScreen({ apiOrigin }: { apiOrigin: string }) {
           autographId={autographId.current!}
           initialPreview={state}
           onStartOver={startOver}
+          studioPath={studioPath}
+          wallId={wallId}
         />
       )}
     </div>

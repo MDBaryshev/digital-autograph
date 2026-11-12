@@ -1,5 +1,55 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Public profile setup is temporarily unavailable.':
+    'Настройка публичного профиля временно недоступна.',
+  'Wall creation is temporarily unavailable':
+    'Создание стены временно недоступно',
+  'A public profile is required to create a Wall. You can still create an autograph.':
+    'Для своей стены нужен публичный профиль. Создать автограф можно уже сейчас.',
+  'Sign in': 'Войти',
+  'Autograph walls': 'Стены с автографами',
+  'Make an autograph and leave it on a creator’s Wall. Walls open from an invitation link.':
+    'Создай автограф и оставь его на стене автора. Стену открывают по ссылке из приглашения.',
+  'Example Wall': 'Пример стены',
+  '10 places': '10 мест',
+  Signed: 'Место занято',
+  'Empty place': 'Свободно',
+  'From drawing to Wall': 'Как разместить автограф',
+  'With an approved autograph, you can use one free placement on each Wall that has room.':
+    'На каждой стене можно один раз бесплатно разместить одобренный автограф, если есть свободное место.',
+  'Make an autograph': 'Создай автограф',
+  'Draw by hand or upload a photo. Your original upload stays private.':
+    'Нарисуй автограф от руки или загрузи фото. Оригинал останется приватным.',
+  'Review and submit': 'Отправь на проверку',
+  'Check the cleaned preview and send it for moderation. Follow the decision in My autographs.':
+    'Проверь предпросмотр и отправь его на модерацию. Решение появится в разделе «Мои автографы».',
+  'Choose a place': 'Выбери место',
+  'Open the Wall from your invitation and choose an empty place once your autograph is approved.':
+    'Когда автограф одобрят, открой стену по ссылке из приглашения и выбери свободное место.',
+  'A Wall of your own': 'Своя стена',
+  'With a public profile, you can prepare a private draft and publish your Wall when it’s ready to share.':
+    'После настройки публичного профиля можно создать черновик стены. Когда она готова, опубликуй её и поделись ссылкой.',
+  'Autograph studio': 'Студия автографа',
+  'Trouble signing in?': 'Не получается войти?',
+  'Back to the Wall': 'Вернуться на стену',
+  'Draw an autograph or upload a photo, then check the private preview before sending it for moderation.':
+    'Нарисуй автограф или загрузи фото. Проверь приватный предпросмотр перед отправкой на модерацию.',
+  'The approved autograph can become public when you place it on a Wall. Do not use a bank, legal or other sensitive signature.':
+    'Одобренный автограф может стать публичным после размещения на стене. Не используй банковскую, юридическую или другую конфиденциальную подпись.',
+  'Switching methods will clear your current work.':
+    'При смене способа текущий набросок или фото пропадут.',
+  'Switch method and clear': 'Сменить способ и очистить',
+  'Keep editing': 'Продолжить редактирование',
+  'Follow the decision in My autographs. You can place this autograph once it is approved.':
+    'Решение появится в разделе «Мои автографы». После одобрения автограф можно разместить на стене.',
+  'Check moderation status': 'Проверить статус модерации',
+  'Places occupied': 'Занято мест',
+  'of {total}': 'из {total}',
+  'Choose an empty place to sign in. You’ll need an approved autograph to place it for free.':
+    'Выбери свободное место, чтобы войти. Для бесплатного размещения нужен одобренный автограф.',
+  'Back to sign-in': 'Вернуться ко входу',
+  'Return to sign-in and try again or choose another sign-in method.':
+    'Вернись ко входу и повтори попытку или выбери другой способ.',
   'Manage this Wall': 'Управление стеной',
   'Return Wall to draft': 'Вернуть стену в черновик',
   'Pause Wall': 'Приостановить стену',

@@ -1,8 +1,8 @@
 'use client';
 import { useLocale } from './locale-provider';
+import { frontendCapabilities } from '../lib/frontend-capabilities';
 
-import { YandexSignIn } from './yandex-sign-in';
-import { VkIdSignIn } from './vk-id-sign-in';
+import { SignInOptions } from './sign-in-options';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -26,7 +26,6 @@ import { WallSlot } from './wall-slot';
 import { WallInvite } from './wall-invite';
 import { WallCountdown } from './wall-countdown';
 import { ShareControls } from './share-controls';
-import { SignatureArt } from './signature-art';
 import styles from '../app/walls/[id]/page.module.css';
 
 type AuthState = 'checking' | 'anonymous' | 'authenticated' | 'unavailable';
@@ -244,7 +243,9 @@ export function PublicWallScreen({
     potentiallyClaimable(wall, now) && !claimsUnavailable && !claimUsed;
   const selected = ready?.find((item) => item.id === selectedId);
   const target = wall.slots.find((slot) => slot.id === targetSlotId);
-  const returnTo = encodeURIComponent(`/walls/${wall.id}`);
+  const wallPath = `/walls/${wall.id}`;
+  const studioPath = `/autograph/create?wall=${wall.id}`;
+  const occupiedCount = wall.slots.filter((slot) => slot.occupied).length;
 
   return (
     <main className={styles.page}>
@@ -264,9 +265,6 @@ export function PublicWallScreen({
               alt={t('Wall owner avatar')}
             />
           )}
-          <p className="eyebrow">
-            {t('A creator. A community. Your autograph.')}
-          </p>
           <h1>
             {wall.appearance?.title ||
               t("{name}'s Wall", { name: wall.creator.displayName })}
@@ -322,58 +320,13 @@ export function PublicWallScreen({
           )}
         </div>
         <aside className={styles.wallSummary} aria-label={t('Wall overview')}>
-          <SignatureArt />
-          <p>{t('Every mark makes it personal.')}</p>
-          <div>
-            <strong>
-              {wall.slots.filter((slot) => slot.occupied).length}
-              <span>{t(' autographs')}</span>
-            </strong>
-            <strong>
-              {wall.slotCount}
-              <span>{t(' total slots')}</span>
-            </strong>
-          </div>
+          <p>{t('Places occupied')}</p>
+          <strong>
+            {occupiedCount}{' '}
+            <span>{t('of {total}', { total: String(wall.slotCount) })}</span>
+          </strong>
         </aside>
       </header>
-
-      <WallInvite
-        wallId={wall.id}
-        title={
-          wall.appearance?.title ||
-          t("{name}'s Wall", { name: wall.creator.displayName })
-        }
-        apiOrigin={apiOrigin}
-      />
-      <section aria-labelledby="slots-heading">
-        <h2 id="slots-heading">{t('Slots')}</h2>
-        <ol className={styles.grid}>
-          {wall.slots.map((slot) => {
-            const actionLabel =
-              !canClaim || slot.occupied
-                ? undefined
-                : auth === 'anonymous'
-                  ? 'Sign in to claim'
-                  : auth === 'authenticated' && ready?.length
-                    ? 'Claim this slot'
-                    : undefined;
-            return (
-              <WallSlot
-                key={slot.id}
-                slot={slot}
-                apiOrigin={apiOrigin}
-                actionLabel={actionLabel}
-                actionDisabled={phase === 'claiming' || refreshing}
-                onAction={() => {
-                  setTargetSlotId(slot.id);
-                  setPhase('idle');
-                  setMessage('');
-                }}
-              />
-            );
-          })}
-        </ol>
-      </section>
 
       {canClaim && auth === 'checking' && (
         <p role="status">{t('Checking sign-in…')}</p>
@@ -425,7 +378,14 @@ export function PublicWallScreen({
               'You need a moderated, ready digital autograph to claim a Slot.',
             )}
           </p>
-          <a href="/autograph/create">{t('Create your digital autograph')}</a>
+          <div className={styles.actions}>
+            <a className="primaryLink" href={studioPath}>
+              {t('Create your digital autograph')}
+            </a>
+            <a href={`/me/autographs?wall=${wall.id}`}>
+              {t('Check moderation status')}
+            </a>
+          </div>
         </section>
       )}
       {canClaim && auth === 'authenticated' && ready && ready.length > 0 && (
@@ -437,25 +397,55 @@ export function PublicWallScreen({
         />
       )}
 
+      <section aria-labelledby="slots-heading">
+        <h2 id="slots-heading">{t('Slots')}</h2>
+        {canClaim && auth === 'anonymous' && occupiedCount < wall.slotCount && (
+          <p className={styles.slotIntro}>
+            {t(
+              'Choose an empty place to sign in. You’ll need an approved autograph to place it for free.',
+            )}
+          </p>
+        )}
+        {occupiedCount > 0 && !frontendCapabilities.paidTakeover && (
+          <p className={styles.slotIntro}>
+            {t('Paid takeover is not available yet.')}
+          </p>
+        )}
+        <ol className={styles.grid}>
+          {wall.slots.map((slot) => {
+            const actionLabel =
+              !canClaim || slot.occupied
+                ? undefined
+                : auth === 'anonymous'
+                  ? 'Sign in to claim'
+                  : auth === 'authenticated' && ready?.length
+                    ? 'Claim this slot'
+                    : undefined;
+            return (
+              <WallSlot
+                key={slot.id}
+                slot={slot}
+                apiOrigin={apiOrigin}
+                actionLabel={actionLabel}
+                actionDisabled={phase === 'claiming' || refreshing}
+                onAction={() => {
+                  setTargetSlotId(slot.id);
+                  setPhase('idle');
+                  setMessage('');
+                }}
+              />
+            );
+          })}
+        </ol>
+      </section>
+
       {canClaim && target && !target.occupied && auth === 'anonymous' && (
         <section className={styles.panel} aria-labelledby="sign-in-heading">
           <h2 id="sign-in-heading" ref={confirmationRef} tabIndex={-1}>
             {t('Sign in to claim Slot ')}
             {target.position + 1}
           </h2>
-          <div className={styles.actions}>
-            <a href={`${apiOrigin}/auth/google/start?returnTo=${returnTo}`}>
-              {t('Continue with Google')}
-            </a>
-            <a href={`${apiOrigin}/auth/telegram/start?returnTo=${returnTo}`}>
-              {t('Continue with Telegram')}
-            </a>
-            <YandexSignIn
-              apiOrigin={apiOrigin}
-              returnTo={`/walls/${wall.id}`}
-            />
-            <VkIdSignIn apiOrigin={apiOrigin} returnTo={`/walls/${wall.id}`} />
-          </div>
+          <SignInOptions apiOrigin={apiOrigin} returnTo={wallPath} />
         </section>
       )}
 
@@ -530,6 +520,14 @@ export function PublicWallScreen({
           {t(message)}
         </p>
       )}
+      <WallInvite
+        wallId={wall.id}
+        title={
+          wall.appearance?.title ||
+          t("{name}'s Wall", { name: wall.creator.displayName })
+        }
+        apiOrigin={apiOrigin}
+      />
       <WallPlacementHistory
         wallId={wall.id}
         apiOrigin={apiOrigin}
