@@ -1,5 +1,6 @@
 import {
   notificationIdParams,
+  ownerSharesQuery,
   shareCreateBody,
   shareInteractionBody,
 } from '@digital-autograph/contracts';
@@ -21,7 +22,9 @@ export function registerSharingRoutes(
         error instanceof NotificationError
           ? error.code === 'RATE_LIMITED'
             ? 429
-            : 404
+            : error.code === 'INVALID_REQUEST'
+              ? 400
+              : 404
           : error instanceof z.ZodError
             ? 400
             : 500;
@@ -42,6 +45,18 @@ export function registerSharingRoutes(
       reply.header('Cache-Control', 'no-store');
       return payload;
     });
+    app.get(
+      '/me/shares',
+      { preHandler: requireAuthenticatedUser },
+      (request) => {
+        const query = ownerSharesQuery.parse(request.query);
+        return repository.list(
+          authenticatedSession(request).user.id,
+          query.limit,
+          query.cursor,
+        );
+      },
+    );
     app.post(
       '/me/shares',
       { preHandler: requireAuthenticatedUser },

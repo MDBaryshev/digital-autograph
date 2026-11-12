@@ -123,6 +123,31 @@ export const messages: Record<string, string> = {
   'Unable to confirm payment status. Check its saved status before retrying.':
     'Не удалось подтвердить статус платежа. Проверь сохранённый статус перед повторной попыткой.',
   'Check saved payment status': 'Проверить сохранённый статус платежа',
+  'My public links': 'Мои публичные ссылки',
+  'Manage the share cards you created on Walls, including links created before this visit.':
+    'Здесь можно управлять созданными тобой карточками стен, в том числе из прошлых посещений.',
+  'Revoking a link stops it opening in Destka. Copies already saved by social networks may remain.':
+    'После отзыва ссылка перестанет открываться в Destka. Копии, уже сохранённые соцсетями, могут остаться.',
+  'Refresh links': 'Обновить ссылки',
+  'Loading public links…': 'Загружаем публичные ссылки…',
+  'No public links yet. Create a share card on a Wall to find it here.':
+    'Публичных ссылок пока нет. Создай карточку на стене, и она появится здесь.',
+  'Sign in to manage your public links.':
+    'Войди, чтобы управлять своими публичными ссылками.',
+  'Your public links are no longer available to this account.':
+    'Публичные ссылки больше недоступны этому аккаунту.',
+  'Could not load your public links. Refresh to try again.':
+    'Не удалось загрузить публичные ссылки. Обнови список, чтобы повторить попытку.',
+  'Revocation could not be confirmed. Refresh links before trying again.':
+    'Не удалось подтвердить отзыв ссылки. Обнови список перед новой попыткой.',
+  'Public link revoked.': 'Публичная ссылка отозвана.',
+  Revoked: 'Отозвана',
+  'Not revoked': 'Не отозвана',
+  'Confirm link revocation': 'Подтверждение отзыва ссылки',
+  'Revoke this public link?': 'Отозвать эту публичную ссылку?',
+  'Confirm revocation': 'Подтвердить отзыв',
+  'Cancel revocation': 'Отменить отзыв',
+  'Load more links': 'Загрузить ещё ссылки',
   'Invite to this Wall': 'Приглашение на стену',
   'Invite your people': 'Позови своих',
   'One Wall. Ten places. Send the link to someone who should be here.':

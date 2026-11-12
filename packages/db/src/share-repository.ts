@@ -1,5 +1,6 @@
 import {
   NotificationError,
+  type OwnedShare,
   type PublicShare,
   type ShareRepository,
 } from '@digital-autograph/notifications';
@@ -41,6 +42,50 @@ async function publicShare(
 export function createPgShareRepository(pool: Pool): ShareRepository {
   return {
     public: (id) => publicShare(pool, id),
+    async list(userId, limit, cursor) {
+      if (!Number.isInteger(limit) || limit < 1 || limit > 50)
+        throw new NotificationError('INVALID_REQUEST');
+      if (
+        cursor &&
+        !(
+          await pool.query(
+            'SELECT 1 FROM share_links WHERE id=$1 AND user_id=$2',
+            [cursor, userId],
+          )
+        ).rowCount
+      )
+        throw new NotificationError('INVALID_REQUEST');
+      const result = await pool.query<{
+        id: string;
+        wall_id: string;
+        position: number | null;
+        event: OwnedShare['event'];
+        public_alias: string | null;
+        created_at: Date;
+        revoked_at: Date | null;
+      }>(
+        `SELECT sh.id,sh.wall_id,s.position,sh.event,sh.public_alias,sh.created_at,sh.revoked_at
+        FROM share_links sh LEFT JOIN slots s ON s.id=sh.slot_id
+        WHERE sh.user_id=$1 AND ($2::uuid IS NULL OR (sh.created_at,sh.id) < (
+          SELECT created_at,id FROM share_links WHERE id=$2 AND user_id=$1
+        ))
+        ORDER BY sh.created_at DESC,sh.id DESC LIMIT $3`,
+        [userId, cursor ?? null, limit + 1],
+      );
+      const items = result.rows.slice(0, limit).map((row) => ({
+        id: row.id,
+        wallId: row.wall_id,
+        slotNumber: row.position === null ? null : row.position + 1,
+        event: row.event,
+        publicAlias: row.public_alias,
+        createdAt: row.created_at.toISOString(),
+        revokedAt: row.revoked_at?.toISOString() ?? null,
+      }));
+      return {
+        items,
+        nextCursor: result.rows.length > limit ? items.at(-1)!.id : null,
+      };
+    },
     async create(userId, input) {
       const db = await pool.connect();
       try {
