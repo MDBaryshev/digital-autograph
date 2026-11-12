@@ -39,7 +39,13 @@ export function AiAutographChoices({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nickname: name, requestId: id }),
       });
-      if (!response.ok)
+      // Pending/failed admission is deliberately non-retryable at the provider.
+      // Resume owner-scoped polling of that UUID after an interrupted response.
+      const resumeExisting =
+        response.status === 409 &&
+        (await response.json().catch(() => null))?.error?.code ===
+          'AI_REQUEST_UNAVAILABLE';
+      if (!response.ok && !resumeExisting)
         throw Error(
           response.status === 401
             ? 'Sign in first.'
