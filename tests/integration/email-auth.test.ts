@@ -83,6 +83,30 @@ describe('verified email/password authentication with PostgreSQL', () => {
     );
     expect(await service.login(email, password)).toMatch(/^da_s1_/);
   });
+  it('omits external URLs and checkout data from registration emails', async () => {
+    const app = appFor();
+    try {
+      const destinations = [
+        'https://example.test',
+        '//example.test',
+        '/payments/checkout?reservationId=private-reference',
+        '/legal/first-use?returnTo=%2Fpayments%2Fcheckout%3FreservationId%3Dprivate-reference',
+      ];
+      for (const [index, returnTo] of destinations.entries()) {
+        const result = await app.inject({
+          method: 'POST',
+          url: '/auth/email/register',
+          headers: { origin },
+          payload: { email: `destination-${index}@example.test`, returnTo },
+        });
+        expect(result.statusCode).toBe(202);
+      }
+      await vi.waitFor(() => expect(mails).toHaveLength(destinations.length));
+      expect(mails.every((mail) => mail.returnTo === undefined)).toBe(true);
+    } finally {
+      await app.close();
+    }
+  });
   it('allows a single concurrent challenge redemption and a single email account', async () => {
     await service.request(email, 'register');
     const token = mails[0]!.token;
@@ -167,6 +191,35 @@ describe('verified email/password authentication with PostgreSQL', () => {
     expect(await repository.takeRateLimit(authSecretHash('one-key'), 3)).toBe(
       true,
     );
+  });
+  it('counts only requests within their address limit and keeps operation limits independent', async () => {
+    const results = await Promise.all(
+      Array.from({ length: 12 }, () => service.allow('register', email)),
+    );
+    expect(results.filter(Boolean)).toHaveLength(8);
+    const registerKey = authSecretHash('email-auth:register');
+    const counter = await db.pool.query(
+      'SELECT used FROM auth_rate_limits WHERE key_hash=$1',
+      [registerKey],
+    );
+    expect(counter.rows).toEqual([{ used: 8 }]);
+    await db.pool.query(
+      'UPDATE auth_rate_limits SET used=1000 WHERE key_hash=$1',
+      [registerKey],
+    );
+    const otherEmail = 'other@example.test';
+    expect(await service.allow('register', otherEmail)).toBe(false);
+    expect(
+      (
+        await db.pool.query(
+          'SELECT 1 FROM auth_rate_limits WHERE key_hash=$1',
+          [authSecretHash(`register:${otherEmail}`)],
+        )
+      ).rowCount,
+    ).toBe(0);
+    expect(await service.allow('login', email)).toBe(true);
+    expect(await service.allow('reset', email)).toBe(true);
+    expect(await service.allow('confirm')).toBe(true);
   });
   it('checks anonymous Origin, normalizes emails, uses persistent HttpOnly cookies and preserves sessions after reopening the app', async () => {
     const app = appFor();

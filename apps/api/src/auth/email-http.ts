@@ -3,6 +3,7 @@ import {
   validNewPassword,
   type EmailAuthService,
 } from '@digital-autograph/auth';
+import { emailConfirmationReturnPath } from '@digital-autograph/contracts';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { setSessionCookie, type AuthHttpConfig } from './http';
@@ -14,7 +15,9 @@ const email = z
   .toLowerCase()
   .pipe(z.email())
   .refine((v) => /^[\x21-\x7e]+$/.test(v));
-const emailBody = z.object({ email }).strict();
+const emailBody = z
+  .object({ email, returnTo: z.string().max(512).optional() })
+  .strict();
 const loginBody = z.object({ email, password: z.string().max(512) }).strict();
 const completeBody = z
   .object({
@@ -77,8 +80,13 @@ export function registerEmailAuthRoutes(
             // Return before delivery so provider timing cannot disclose account existence.
             // Bound background deliveries and drain them on graceful shutdown.
             if (deliveries.size < 4) {
+              const input = body as z.infer<typeof emailBody>;
               const task = service
-                .request((body as z.infer<typeof emailBody>).email, operation)
+                .request(
+                  input.email,
+                  operation,
+                  emailConfirmationReturnPath(input.returnTo),
+                )
                 .catch(() => {
                   request.log.warn(
                     { event: 'AUTH_EMAIL_REQUEST_FAILED' },

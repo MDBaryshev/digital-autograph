@@ -40,11 +40,14 @@ export function createAuthEmailSender(
       email: string;
       purpose: 'register' | 'reset';
       token: string;
+      returnTo?: string;
     }) {
-      const { email, purpose, token } = input;
+      const { email, purpose, token, returnTo } = input;
       const registering = purpose === 'register';
       const link = new URL('/auth/email/confirm', config.webOrigin);
-      link.hash = new URLSearchParams({ token }).toString();
+      const fragment = new URLSearchParams({ token });
+      if (returnTo) fragment.set('returnTo', returnTo);
+      link.hash = fragment.toString();
       try {
         const response = await fetcher(sendEndpoint, {
           method: 'POST',

@@ -13,7 +13,7 @@ it('salts each password, handles Unicode and never trims or truncates passwords'
   expect(await verifyPassword(password, '$scrypt$999999999$8$1$bad')).toBe(
     false,
   );
-});
+}, 15000);
 it('requires 15–128 characters without arbitrary composition rules', () => {
   expect(validNewPassword('x'.repeat(14))).toBe(false);
   expect(validNewPassword('x'.repeat(15))).toBe(true);

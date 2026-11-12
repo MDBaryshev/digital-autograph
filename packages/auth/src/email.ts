@@ -2,8 +2,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import { hashPassword, verifyPassword } from './password';
 
 export type EmailPurpose = 'register' | 'reset';
+type EmailOperation = EmailPurpose | 'login' | 'confirm';
 export interface EmailAuthRepository {
-  takeRateLimit(keyHash: string, limit: number): Promise<boolean>;
+  takeRateLimit(
+    keyHash: string,
+    limit: number,
+    address?: { keyHash: string; limit: number },
+  ): Promise<boolean>;
   issueChallenge(
     email: string,
     purpose: EmailPurpose,
@@ -26,6 +31,7 @@ export interface AuthEmailSender {
     email: string;
     purpose: EmailPurpose;
     token: string;
+    returnTo?: string;
   }): Promise<void>;
 }
 export const authSecretHash = (value: string) =>
@@ -44,20 +50,20 @@ export class EmailAuthService {
     )
       throw new Error('Invalid session TTL');
   }
-  async allow(operation: string, email?: string): Promise<boolean> {
-    if (
-      !(await this.repository.takeRateLimit(
-        authSecretHash('email-auth-global'),
-        1000,
-      ))
-    )
-      return false;
-    return (
-      !email ||
-      this.repository.takeRateLimit(authSecretHash(`${operation}:${email}`), 8)
+  async allow(operation: EmailOperation, email?: string): Promise<boolean> {
+    return this.repository.takeRateLimit(
+      authSecretHash(`email-auth:${operation}`),
+      1000,
+      email
+        ? { keyHash: authSecretHash(`${operation}:${email}`), limit: 8 }
+        : undefined,
     );
   }
-  async request(email: string, purpose: EmailPurpose): Promise<void> {
+  async request(
+    email: string,
+    purpose: EmailPurpose,
+    returnTo?: string,
+  ): Promise<void> {
     const token = randomBytes(32).toString('base64url');
     if (
       await this.repository.issueChallenge(
@@ -66,7 +72,12 @@ export class EmailAuthService {
         authSecretHash(token),
       )
     )
-      await this.sender.send({ email, purpose, token });
+      await this.sender.send({
+        email,
+        purpose,
+        token,
+        ...(returnTo ? { returnTo } : {}),
+      });
   }
   async complete(token: string, password: string): Promise<boolean> {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return false;

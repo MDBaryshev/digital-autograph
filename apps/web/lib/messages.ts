@@ -671,8 +671,8 @@ export const messages: Record<string, string> = {
     'Опубликованные документы представлены в оригинале на русском языке. Переключение языка интерфейса не переводит юридический текст.',
   'Before your first action': 'Перед первым действием',
   'Confirmations for Destka': 'Подтверждения для Destka',
-  'Confirm your age and read the service terms before creating an autograph or placing it on a Wall. Signing in with Google or Telegram does not mean accepting the terms.':
-    'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход через Google или Telegram не означает принятия условий.',
+  'Confirm your age and read the service terms before creating or placing an autograph. Your confirmations are saved separately after sign-in.':
+    'Для создания и размещения автографа подтвердите возраст и ознакомьтесь с условиями сервиса. Подтверждения сохраняются отдельно после входа.',
   'An autograph is decorative content, not a legal signature. Do not upload a bank, official or other sensitive signature.':
     'Автограф — декоративный контент, а не юридическая подпись. Не загружайте банковскую, официальную или другую чувствительную подпись.',
   'Sign in to confirm the terms.': 'Войдите, чтобы подтвердить условия.',

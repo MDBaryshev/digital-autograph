@@ -7,12 +7,15 @@ import type { Pool, PoolClient } from 'pg';
 async function transaction<T>(
   pool: Pool,
   work: (client: PoolClient) => Promise<T>,
+  shouldCommit?: (result: T) => boolean,
 ) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const result = await work(client);
-    await client.query('COMMIT');
+    await client.query(
+      shouldCommit?.(result) === false ? 'ROLLBACK' : 'COMMIT',
+    );
     return result;
   } catch (error) {
     await client.query('ROLLBACK');
@@ -21,20 +24,36 @@ async function transaction<T>(
     client.release();
   }
 }
+
+async function updateRateLimit(
+  db: Pool | PoolClient,
+  keyHash: string,
+  limit: number,
+) {
+  const result = await db.query(
+    `INSERT INTO auth_rate_limits (key_hash, used, expires_at)
+    VALUES ($1, 1, statement_timestamp() + interval '15 minutes')
+    ON CONFLICT (key_hash) DO UPDATE SET
+      used = CASE WHEN auth_rate_limits.expires_at <= statement_timestamp() THEN 1 ELSE auth_rate_limits.used + 1 END,
+      expires_at = CASE WHEN auth_rate_limits.expires_at <= statement_timestamp() THEN statement_timestamp() + interval '15 minutes' ELSE auth_rate_limits.expires_at END
+    WHERE auth_rate_limits.expires_at <= statement_timestamp() OR auth_rate_limits.used < $2
+    RETURNING key_hash`,
+    [keyHash, limit],
+  );
+  return result.rowCount === 1;
+}
+
 export function createPgEmailAuthRepository(pool: Pool): EmailAuthRepository {
   return {
-    async takeRateLimit(keyHash, limit) {
-      const r = await pool.query(
-        `INSERT INTO auth_rate_limits (key_hash, used, expires_at)
-        VALUES ($1, 1, statement_timestamp() + interval '15 minutes')
-        ON CONFLICT (key_hash) DO UPDATE SET
-          used = CASE WHEN auth_rate_limits.expires_at <= statement_timestamp() THEN 1 ELSE auth_rate_limits.used + 1 END,
-          expires_at = CASE WHEN auth_rate_limits.expires_at <= statement_timestamp() THEN statement_timestamp() + interval '15 minutes' ELSE auth_rate_limits.expires_at END
-        WHERE auth_rate_limits.expires_at <= statement_timestamp() OR auth_rate_limits.used < $2
-        RETURNING key_hash`,
-        [keyHash, limit],
+    async takeRateLimit(keyHash, limit, address) {
+      if (!address) return updateRateLimit(pool, keyHash, limit);
+      return transaction(
+        pool,
+        async (client) =>
+          (await updateRateLimit(client, keyHash, limit)) &&
+          updateRateLimit(client, address.keyHash, address.limit),
+        Boolean,
       );
-      return r.rowCount === 1;
     },
     async findCredential(email) {
       const r = await pool.query<{ user_id: string; password_hash: string }>(

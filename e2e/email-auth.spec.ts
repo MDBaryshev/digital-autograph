@@ -5,12 +5,12 @@ import {
   createPgSessionRepository,
 } from '../packages/db/src/index';
 import { buildApi } from '../apps/api/src/app';
-import { expect, test } from './fixtures';
+import { e2eWallId, expect, test } from './fixtures';
 
 const webOrigin = process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000';
 const apiOrigin = process.env.API_PUBLIC_ORIGIN ?? 'http://127.0.0.1:4000';
 
-test('email registration proves ownership, saves a password, persists login across visits and revokes it on reset', async ({
+test('verified email grants account access, withholds the public profile until review and revokes login on reset', async ({
   page,
   scenario,
 }) => {
@@ -58,7 +58,7 @@ test('email registration proves ownership, saves a password, persists login acro
   args[20] = { write() {} };
   const app = buildApi(...args);
   const localOrigin = await app.listen({ port: 0, host: '127.0.0.1' });
-  await page.route(
+  await page.context().route(
     (url) =>
       url.origin === apiOrigin &&
       (url.pathname === '/auth/providers' ||
@@ -72,8 +72,23 @@ test('email registration proves ownership, saves a password, persists login acro
     },
   );
   try {
-    await page.goto('/me');
-    await page.getByRole('link', { name: 'Continue with email' }).click();
+    const firstUse = `/legal/first-use?returnTo=${encodeURIComponent(`/walls/${e2eWallId}`)}`;
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(firstUse);
+    const emailSignIn = page.getByRole('link', { name: 'Continue with email' });
+    await expect(emailSignIn).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      caret: 'initial',
+      path: test.info().outputPath('first-use-email-mobile.png'),
+      fullPage: true,
+    });
+    await emailSignIn.click();
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.screenshot({
       caret: 'initial',
       path: test.info().outputPath('email-sign-in-desktop.png'),
@@ -104,6 +119,9 @@ test('email registration proves ownership, saves a password, persists login acro
       'an email with a link',
     );
     await expect.poll(() => mails.length).toBe(1);
+    const confirmationPage = await page.context().newPage();
+    await page.close();
+    page = confirmationPage;
     await page.goto(mails[0]!.href);
     await expect(page).toHaveURL(/\/auth\/email\/confirm$/);
     await page.getByLabel('Password', { exact: true }).fill(password);
@@ -117,13 +135,42 @@ test('email registration proves ownership, saves a password, persists login acro
     await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page).toHaveURL(/\/me$/);
+    await expect(page).toHaveURL(new URL(firstUse, webOrigin).href);
+    const checkboxes = page.getByRole('checkbox');
+    await expect(checkboxes).toHaveCount(3);
+    for (const checkbox of await checkboxes.all()) await checkbox.check();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(page.getByText('You can continue.')).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Return to your action' }),
+    ).toHaveAttribute('href', `/walls/${e2eWallId}`);
     const cookie = (await page.context().cookies(apiOrigin)).find(
       (c) => c.name === 'da_session',
     );
     expect(cookie?.httpOnly).toBe(true);
     expect(cookie!.expires).toBeGreaterThan(Date.now() / 1000 + 13 * 86400);
-    await page.goto('/auth/email');
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/me/settings');
+    await page.getByLabel('Display name', { exact: true }).fill('Email Artist');
+    await page.getByLabel('Username', { exact: true }).fill('email-artist');
+    await page
+      .getByRole('button', { name: 'Save profile', exact: true })
+      .click();
+    await expect(
+      page.getByText('Profile changes are awaiting moderation.'),
+    ).toBeVisible();
+    const publicProfile = `${apiOrigin}/creators/email-artist`;
+    expect((await page.request.get(publicProfile)).status()).toBe(404);
+    const workspace = await page.request.get(`${apiOrigin}/me/workspace`);
+    expect(workspace.ok()).toBe(true);
+    const { profileSubmission } = await workspace.json();
+    await scenario.approveProfileSubmission(profileSubmission.id);
+    expect(await (await page.request.get(publicProfile)).json()).toMatchObject({
+      displayName: 'Email Artist',
+    });
+
+    await page.goto('/auth/email?returnTo=%2Fme%2Fsettings');
     await page.reload();
     expect((await page.request.get(`${apiOrigin}/auth/me`)).status()).toBe(200);
     await page
@@ -152,6 +199,11 @@ test('email registration proves ownership, saves a password, persists login acro
     await expect(page.getByRole('main').getByRole('alert')).toHaveText(
       'Email or password is incorrect.',
     );
+    await page
+      .getByLabel('Password', { exact: true })
+      .fill('a different secure browser password');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(page).toHaveURL(new URL('/me/settings', webOrigin).href);
   } finally {
     await app.close();
     await scenario.database.pool.query(
