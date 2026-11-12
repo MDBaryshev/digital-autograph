@@ -524,6 +524,13 @@ export const messages: Record<string, string> = {
     'Подключить Telegram и разрешить уведомления',
   'Disconnect Telegram': 'Отключить Telegram',
   'Save preferences': 'Сохранить настройки',
+  'Refresh notifications': 'Обновить уведомления',
+  'Could not load notifications. Refresh to try again.':
+    'Не удалось загрузить уведомления. Обнови их, чтобы повторить попытку.',
+  'Changes could not be confirmed. Refresh notifications before trying again.':
+    'Не удалось подтвердить изменения. Обнови уведомления перед новой попыткой.',
+  'Notification access is no longer available to this account.':
+    'Уведомления больше недоступны этому аккаунту.',
   'You can turn off all channels or individual events. Telegram also accepts /stop. Ordinary notices of the same type are limited to one per Wall in 10 minutes. Financial notices are not combined by that short window. All channels remain limited to 20 notices per hour.':
     'Можно отключить все каналы или отдельные события. В Telegram также доступна команда /stop. Обычные уведомления одного типа приходят не чаще одного раза на стену за 10 минут. Финансовые уведомления не объединяются по этому правилу. Общий лимит — 20 уведомлений в час.',
   Inbox: 'Входящие',
