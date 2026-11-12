@@ -134,6 +134,51 @@
 .muted {
   color: var(--color-muted);
 }
+.wallControls {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  min-width: 0;
+}
+.wallControls p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.wallControls button,
+.wallConfirmation legend {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.wallConfirmation {
+  min-width: 0;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+}
+.wallConfirmation .actions {
+  margin-top: 1rem;
+}
+@media (max-width: 480px) {
+  /* Keep nested spacing from consuming the viewport when text is enlarged. */
+  .page.wallsPage {
+    padding-inline: clamp(12px, 4vw, 24px);
+  }
+  .wallsPage .card {
+    padding: clamp(12px, 3vw, 20px);
+  }
+  .wallsPage .wallConfirmation {
+    padding: 12px;
+  }
+  .wallsPage .wallControls button {
+    padding-inline: 12px;
+  }
+  .wallsPage .tabs a {
+    padding-inline: 8px;
+  }
+}
 @media (max-width: 480px) {
   .accountLink > span:last-child {
     max-width: 9rem;
