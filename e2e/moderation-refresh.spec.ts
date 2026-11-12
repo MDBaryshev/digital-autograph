@@ -14,6 +14,10 @@ test('moderator refresh finds a newly submitted autograph without a page reload'
   });
   await page.goto(web + '/moderation');
   await expect(page.getByText('No submissions in this page.')).toBeVisible();
+  // Next dev may perform an aborted StrictMode mount read before the successful
+  // initial read. The explicit refresh must add exactly one GET in either mode.
+  const initialReads = requests.length;
+  expect(initialReads).toBeGreaterThan(0);
 
   // Isolated PG fixture: real pending row and owner-approval evidence, not mocked queue HTTP.
   const autograph = (
@@ -40,7 +44,7 @@ test('moderator refresh finds a newly submitted autograph without a page reload'
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: /canvas ·/ })).toBeVisible();
   await expect(refresh).toBeFocused();
-  expect(requests).toHaveLength(2);
+  expect(requests).toHaveLength(initialReads + 1);
   for (const request of requests) {
     expect(request.method).toBe('GET');
     expect(new URL(request.url).searchParams.has('cursor')).toBe(false);
