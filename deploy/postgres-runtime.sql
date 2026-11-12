@@ -21,6 +21,11 @@ GRANT INSERT ON users,social_identities,sessions,oauth_login_attempts,walls,slot
  platform_pricing_default,takeover_quotes,takeover_reservations,payment_orders,payments,payment_event_receipts,
  creator_earnings,notification_events,notification_subscriptions,share_links,share_interactions TO da_api;
 GRANT SELECT,INSERT,UPDATE ON account_appearance TO da_api;
+DO $$ BEGIN
+  IF to_regclass('public.creator_follows') IS NOT NULL THEN
+    GRANT SELECT,INSERT,DELETE ON creator_follows TO da_api;
+  END IF;
+END $$;
 GRANT SELECT,INSERT ON ai_autograph_requests TO da_api;
 GRANT UPDATE(state,result,finished_at) ON ai_autograph_requests TO da_api;
 GRANT INSERT ON creators,creator_profiles TO da_api;

@@ -2,6 +2,7 @@
 import { WallAppearanceEditor } from './wall-appearance-editor';
 import { OwnerRejectionDetails } from './owner-rejection-details';
 import { WallLifecycleControls } from './wall-lifecycle-controls';
+import { WallDiscoveryControl } from './wall-feed-controls';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
 import { isPublicWall, wallStatuses } from '@digital-autograph/domain';
 import { useEffect, useRef, useState } from 'react';
@@ -386,6 +387,9 @@ export function AccountWorkspace({
                       <a href={`/walls/${w.id}`}>{t('Open Wall')}</a>
                     )}
                   </div>
+                  {isPublicWall(w.status) && (
+                    <WallDiscoveryControl apiOrigin={apiOrigin} wallId={w.id} />
+                  )}
                   <WallLifecycleControls
                     apiOrigin={apiOrigin}
                     wall={w}

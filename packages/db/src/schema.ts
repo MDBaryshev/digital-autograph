@@ -432,6 +432,23 @@ export const creatorProfiles = pgTable(
   ],
 );
 
+export const creatorFollows = pgTable(
+  'creator_follows',
+  {
+    followerUserId: uuid('follower_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    creatorId: uuid('creator_id')
+      .notNull()
+      .references(() => creators.id, { onDelete: 'cascade' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.followerUserId, table.creatorId] }),
+    index('creator_follows_creator_idx').on(table.creatorId),
+  ],
+);
+
 export const pricingConfigVersions = pgTable(
   'pricing_config_versions',
   {
@@ -514,6 +531,7 @@ export const walls = pgTable(
       { onDelete: 'restrict' },
     ),
     status: wallStatus().notNull().default('draft'),
+    discoverable: boolean('discoverable').notNull().default(false),
     startAt: timestamp('start_at', { withTimezone: true }),
     endAt: timestamp('end_at', { withTimezone: true }),
     slotCount: integer('slot_count').notNull().default(10),
@@ -524,6 +542,11 @@ export const walls = pgTable(
     index('walls_creator_created_idx').on(table.creatorId, table.createdAt),
     uniqueIndex('walls_owner_user_uidx').on(table.ownerUserId),
     index('walls_status_start_idx').on(table.status, table.startAt),
+    index('walls_discoverable_recent_idx')
+      .on(table.updatedAt.desc(), table.id.desc())
+      .where(
+        sql`${table.discoverable} AND ${table.status} IN ('scheduled', 'live', 'paused', 'ended')`,
+      ),
     check('walls_slot_count_ten', sql`${table.slotCount} = 10`),
     check(
       'walls_end_after_start',
@@ -1312,6 +1335,7 @@ export const accountAppearance = pgTable(
     providerAvatarDataUrl: text('provider_avatar_data_url'),
     avatarSource: varchar('avatar_source', { length: 16 }),
     updatedAt: updatedAt(),
+    publicUpdatedAt: timestamp('public_updated_at', { withTimezone: true }),
   },
   (t) => [
     check(

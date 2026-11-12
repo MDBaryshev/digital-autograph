@@ -92,6 +92,14 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
               <span>{t('Home')}</span>
             </a>
             <a
+              className={styles.feedLink}
+              href="/feed"
+              aria-current={path === '/feed' ? 'page' : undefined}
+            >
+              <Icon name="grid" size={22} />
+              <span>{t('Wall feed')}</span>
+            </a>
+            <a
               className={styles.studioLink}
               href="/autograph/create"
               aria-current={path === '/autograph/create' ? 'page' : undefined}

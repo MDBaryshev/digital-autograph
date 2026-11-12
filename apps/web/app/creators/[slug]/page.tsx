@@ -6,6 +6,7 @@ import { creatorSlugParams } from '@digital-autograph/contracts';
 import { notFound } from 'next/navigation';
 import { getPublicCreator } from '../../../lib/public-creator-api';
 import { PublicWallApiError } from '../../../lib/public-wall-api';
+import { CreatorFollowControl } from '../../../components/wall-feed-controls';
 
 export const dynamic = 'force-dynamic';
 type Props = { params: Promise<{ slug: string }> };
@@ -57,6 +58,10 @@ export default async function CreatorPage({ params }: Props) {
     <main className="creatorPage">
       <p className="eyebrow">{t('Creator')}</p>
       <h1>{creator.displayName}</h1>
+      <CreatorFollowControl
+        apiOrigin={loadWebConfig().API_PUBLIC_ORIGIN}
+        slug={creator.slug}
+      />
       <h2>{t('Public Walls')}</h2>
       {creator.walls.length === 0 ? (
         <p>{t('No public Walls yet. Check back later.')}</p>

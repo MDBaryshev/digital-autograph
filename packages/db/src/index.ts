@@ -107,3 +107,8 @@ export {
   type WallAppearance,
   type PrivateAppearance,
 } from './appearance-repository';
+
+export {
+  createPgWallFeedRepository,
+  type WallFeedRepository,
+} from './wall-feed-repository';
