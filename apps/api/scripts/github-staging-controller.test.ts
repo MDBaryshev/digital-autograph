@@ -163,33 +163,78 @@ export function sourceApi(
     changes?: boolean;
     paginateChanges?: boolean;
     noPr?: boolean;
+    newerFailedRun?: boolean;
+    manualOnly?: boolean;
+    missingJob?: boolean;
+    wrongAttempt?: boolean;
+    wrongJobSha?: boolean;
+    foreignRepository?: boolean;
   } = {},
 ) {
   return async (method: string, route: string) => {
     if (route === '/commits/main')
       return { sha: options.stale ? 'b'.repeat(40) : sourceSha };
-    if (route.includes('/check-runs'))
-      return {
-        check_runs: [
+    if (route.startsWith('/actions/runs?')) {
+      const head = route.includes('c'.repeat(40));
+      const runs = ['ci.yml', 'secret-scan.yml', 'pr-policy.yml'].map(
+        (file, i) => ({
+          id: (head ? 200 : 100) + i,
+          path: `.github/workflows/${file}`,
+          event:
+            file === 'pr-policy.yml'
+              ? 'pull_request_target'
+              : options.manualOnly
+                ? 'workflow_dispatch'
+                : head
+                  ? 'pull_request'
+                  : 'push',
+          head_branch: head ? 'feature' : 'main',
+          head_sha: head ? 'c'.repeat(40) : sourceSha,
+          head_repository: { id: options.foreignRepository ? 999 : 1447358020 },
+          run_attempt: 1,
+          status: 'completed',
+          conclusion: 'success',
+        }),
+      );
+      if (options.newerFailedRun)
+        runs.push({ ...runs[0], id: 999, conclusion: 'failure' });
+      return { workflow_runs: runs };
+    }
+    if (route.includes('/jobs?')) {
+      const runId = Number(route.split('/')[3]);
+      const head = runId >= 200;
+      const names = [
+        [
           'checks',
           'windows-unit',
           'windows-integration-runner',
           'macos-integration-runner',
           'e2e',
-          'secrets',
-          'policy',
-        ].map((name, i) => ({
-          id: i + 1,
-          name,
-          head_sha: route.includes('c'.repeat(40)) ? 'c'.repeat(40) : sourceSha,
-          app: { slug: 'github-actions' },
-          status: 'completed',
-          conclusion:
-            options.cancelled && name === 'macos-integration-runner'
-              ? 'cancelled'
-              : 'success',
-        })),
+        ],
+        ['secrets'],
+        ['policy'],
+      ][runId % 100];
+      return {
+        jobs: names
+          .filter((name) => !options.missingJob || name !== 'e2e')
+          .map((name, i) => ({
+            id: i + 1,
+            run_id: runId,
+            run_attempt: options.wrongAttempt ? 2 : 1,
+            name,
+            head_sha: options.wrongJobSha
+              ? 'f'.repeat(40)
+              : head
+                ? 'c'.repeat(40)
+                : sourceSha,
+            status: 'completed',
+            conclusion:
+              options.cancelled && name === 'macos-integration-runner'
+                ? 'cancelled'
+                : 'success',
+          })),
       };
+    }
     if (route.includes('/pulls?'))
       return options.noPr
         ? []
@@ -251,8 +296,61 @@ describe('accepted main and review evidence', () => {
     { changes: true },
     { paginateChanges: true },
     { noPr: true },
+    { newerFailedRun: true },
+    { manualOnly: true },
+    { missingJob: true },
+    { wrongAttempt: true },
+    { wrongJobSha: true },
+    { foreignRepository: true },
   ])('fails closed on %j', async (options) => {
     await expect(verifySource(sourceApi(options), sourceSha)).rejects.toThrow();
+  });
+  it('reads CI evidence only through fine-grained-PAT-compatible Actions APIs', async () => {
+    const api = vi.fn(sourceApi());
+    await verifySource(api, sourceSha);
+    expect(
+      api.mock.calls.some(([, route]) => route.includes('/check-runs')),
+    ).toBe(false);
+    expect(
+      api.mock.calls.some(([, route]) => route.includes('/jobs?filter=latest')),
+    ).toBe(true);
+  });
+  it('refuses a newer failed workflow run on a later page', async () => {
+    const base = sourceApi();
+    const api = async (method: string, route: string) => {
+      if (route.startsWith('/actions/runs?')) {
+        const response = await base(method, route);
+        const runs = (response as { workflow_runs: Record<string, unknown>[] })
+          .workflow_runs;
+        return {
+          workflow_runs: route.endsWith('page=1')
+            ? [
+                ...runs,
+                ...Array.from({ length: 97 }, (_, id) => ({
+                  id,
+                  path: '.github/workflows/unrelated.yml',
+                })),
+              ]
+            : [{ ...runs[0], id: 999, conclusion: 'failure' }],
+        };
+      }
+      return base(method, route);
+    };
+    await expect(verifySource(api, sourceSha)).rejects.toThrow();
+  });
+  it('finds required jobs on later pages of the same run attempt', async () => {
+    const base = sourceApi();
+    const api = async (method: string, route: string) => {
+      if (route.includes('/jobs?') && route.endsWith('page=1'))
+        return {
+          jobs: Array.from({ length: 100 }, (_, id) => ({
+            id,
+            name: 'unrelated',
+          })),
+        };
+      return base(method, route);
+    };
+    await expect(verifySource(api, sourceSha)).resolves.toBeUndefined();
   });
 });
 

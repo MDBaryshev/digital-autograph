@@ -32,9 +32,10 @@ it. Working containers do not justify rewriting that evidence.
 4. The server verifies the GitHub RSA signature using the fixed issuer's JWKS,
    exact operation/manifest-bound audience, immutable owner/repository IDs, workflow/ref/event, SHA and
    workflow SHA, allowed actor IDs, run ID/attempt, token age and expiry. It verifies the
-   current main's six latest checks, the merged PR's seven latest head-specific
-   checks, an eligible other developer's exact-head APPROVED review and resolved
-   review threads. A newer failed/cancelled context, self-approval, stale head,
+   current main's latest push CI/Secret Scan runs and six required jobs, the merged
+   PR head's latest PR CI/Secret Scan/PR Policy runs and seven required jobs, an
+   eligible other developer's exact-head APPROVED review and resolved review
+   threads. A newer failed/cancelled required run or job, self-approval, stale head,
    direct main push without the merged reviewed PR or unresolved thread refuses
    activation. Current reviewers are MDBaryshev/s1lmn, excluding the PR author.
 5. A separate, root-only operator approval pins one operation, exact manifest
@@ -73,13 +74,22 @@ The personal repository owner performs GitHub settings; an Admin collaborator
 role is not required. Create a **fine-grained PAT**, with an expiry (for example,
 30 days), resource owner MDBaryshev and **only digital-autograph** selected:
 
-| Repository permission | Access           | Use                                          |
-| --------------------- | ---------------- | -------------------------------------------- |
-| Contents              | Read             | Exact current main                           |
-| Checks                | Read             | Final source/PR CI evidence                  |
-| Pull requests         | Read             | Merged PR, review and thread evidence        |
-| Deployments           | Read and write   | Read requests and report deployment metadata |
-| Metadata              | Read (automatic) | Repository identity                          |
+| Repository permission | Access           | Use                                           |
+| --------------------- | ---------------- | --------------------------------------------- |
+| Contents              | Read             | Exact current main                            |
+| Actions               | Read             | Exact source/PR workflow runs and latest jobs |
+| Pull requests         | Read             | Merged PR, review and thread evidence         |
+| Deployments           | Read and write   | Read requests and report deployment metadata  |
+| Metadata              | Read (automatic) | Repository identity                           |
+
+CI evidence is read from Actions workflow runs and jobs. A fine-grained PAT
+cannot use the Checks API or grant the Checks permission. Select Actions Read
+even when an older handoff archive asks for Checks Read. Main evidence requires
+push runs, PR evidence requires pull_request runs plus pull_request_target policy.
+Manual CI runs are available through Actions → CI → Run workflow and provide
+additional test evidence. The release gate separately requires the push/PR runs.
+
+See GitHub's [fine-grained PAT permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens#repository-permissions-for-actions).
 
 No source write, Actions administration, workflows write, organization, billing,
 cloud, database or SSH permission is needed. Do not send the PAT in chat, issues,
