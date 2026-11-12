@@ -1,7 +1,7 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { notificationKinds } from '@digital-autograph/domain';
 import styles from './notification-panel.module.css';
 import {
@@ -23,50 +23,107 @@ type Item = {
   readAt: string | null;
 };
 export function NotificationCenter({ apiOrigin }: { apiOrigin: string }) {
+  return <NotificationInbox key={apiOrigin} apiOrigin={apiOrigin} />;
+}
+
+function NotificationInbox({ apiOrigin }: { apiOrigin: string }) {
   const { t } = useLocale();
 
   const [preferences, setPreferences] = useState<Pref | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [version, setVersion] = useState(0);
-  useEffect(() => {
-    let active = true;
+  const [working, setWorking] = useState<'read' | 'mutation' | null>(null);
+  const operation = useRef<AbortController | null>(null);
+  const busy = working !== null;
+  const clearPrivate = () => {
     setPreferences(null);
     setItems([]);
-    setError('');
-    Promise.all([
-      request<Pref>(apiOrigin, '/me/notifications/preferences'),
-      request<Item[]>(apiOrigin, '/me/notifications'),
-    ])
-      .then(([p, i]) => {
-        if (active) {
-          setPreferences(p);
-          setItems(i);
-        }
-      })
-      .catch((e) => {
-        if (active) setError((e as Error).message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [apiOrigin, version]);
-  async function act(operation: () => Promise<unknown>) {
-    if (busy) return;
-    setBusy(true);
+  };
+  const failed = (error: unknown, fallback: string) => {
+    clearPrivate();
+    setError(
+      error instanceof NotificationApiError && [401, 403].includes(error.status)
+        ? error.message
+        : fallback,
+    );
+  };
+  async function load() {
+    if (operation.current) return;
+    const controller = new AbortController();
+    operation.current = controller;
+    setWorking('read');
+    clearPrivate();
     setError('');
     try {
-      await operation();
-      setVersion((v) => v + 1);
-    } catch (e) {
-      if (e instanceof NotificationApiError && e.status === 401) {
-        setPreferences(null);
-        setItems([]);
+      const [p, i] = await Promise.all([
+        request<Pref>(
+          apiOrigin,
+          '/me/notifications/preferences',
+          'GET',
+          undefined,
+          controller.signal,
+        ),
+        request<Item[]>(
+          apiOrigin,
+          '/me/notifications',
+          'GET',
+          undefined,
+          controller.signal,
+        ),
+      ]);
+      if (operation.current === controller) {
+        setPreferences(p);
+        setItems(i);
       }
-      setError((e as Error).message);
+    } catch (e) {
+      if (operation.current === controller)
+        failed(e, 'Could not load notifications. Refresh to try again.');
     } finally {
-      setBusy(false);
+      controller.abort();
+      if (operation.current === controller) {
+        operation.current = null;
+        setWorking(null);
+      }
+    }
+  }
+  useEffect(() => {
+    void load();
+    return () => {
+      const controller = operation.current;
+      operation.current = null;
+      controller?.abort();
+    };
+    // Changing origin remounts this keyed inbox and discards all private state.
+  }, []);
+  async function act<T>(
+    work: (signal: AbortSignal) => Promise<T>,
+    complete?: (value: T) => void,
+  ) {
+    if (operation.current || !preferences) return;
+    const controller = new AbortController();
+    operation.current = controller;
+    setWorking('mutation');
+    setError('');
+    try {
+      const value = await work(controller.signal);
+      if (operation.current !== controller) return;
+      if (complete) complete(value);
+      else {
+        operation.current = null;
+        void load();
+      }
+    } catch (e) {
+      if (operation.current === controller)
+        failed(
+          e,
+          'Changes could not be confirmed. Refresh notifications before trying again.',
+        );
+    } finally {
+      controller.abort();
+      if (operation.current === controller) {
+        operation.current = null;
+        setWorking(null);
+      }
     }
   }
   return (
@@ -75,23 +132,30 @@ export function NotificationCenter({ apiOrigin }: { apiOrigin: string }) {
       {error && <p role="alert">{t(error)}</p>}
       <button
         type="button"
-        disabled={busy}
-        onClick={() => setVersion((v) => v + 1)}
+        disabled={working === 'mutation'}
+        aria-disabled={busy}
+        onClick={() => void load()}
       >
-        {t('Refresh')}
+        {t('Refresh notifications')}
       </button>
-      {!preferences && !error && <p role="status">{t('Loading…')}</p>}
+      {working === 'read' && <p role="status">{t('Loading…')}</p>}
       {preferences && (
         <>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              void act(() =>
-                request(apiOrigin, '/me/notifications/preferences', 'PUT', {
-                  web: preferences.web,
-                  telegram: preferences.telegram,
-                  mutedKinds: preferences.mutedKinds,
-                }),
+              void act((signal) =>
+                request(
+                  apiOrigin,
+                  '/me/notifications/preferences',
+                  'PUT',
+                  {
+                    web: preferences.web,
+                    telegram: preferences.telegram,
+                    mutedKinds: preferences.mutedKinds,
+                  },
+                  signal,
+                ),
               );
             }}
           >
@@ -146,14 +210,17 @@ export function NotificationCenter({ apiOrigin }: { apiOrigin: string }) {
               type="button"
               disabled={busy}
               onClick={() =>
-                void act(async () => {
-                  const link = await request<{ url: string }>(
-                    apiOrigin,
-                    '/me/notifications/telegram/link',
-                    'POST',
-                  );
-                  window.location.assign(link.url);
-                })
+                void act(
+                  (signal) =>
+                    request<{ url: string }>(
+                      apiOrigin,
+                      '/me/notifications/telegram/link',
+                      'POST',
+                      undefined,
+                      signal,
+                    ),
+                  (link) => window.location.assign(link.url),
+                )
               }
             >
               {t('Connect Telegram and consent to notifications')}
@@ -164,8 +231,14 @@ export function NotificationCenter({ apiOrigin }: { apiOrigin: string }) {
               type="button"
               disabled={busy}
               onClick={() =>
-                void act(() =>
-                  request(apiOrigin, '/me/notifications/telegram', 'DELETE'),
+                void act((signal) =>
+                  request(
+                    apiOrigin,
+                    '/me/notifications/telegram',
+                    'DELETE',
+                    undefined,
+                    signal,
+                  ),
                 )
               }
             >
@@ -191,11 +264,13 @@ export function NotificationCenter({ apiOrigin }: { apiOrigin: string }) {
                       type="button"
                       disabled={busy}
                       onClick={() =>
-                        void act(() =>
+                        void act((signal) =>
                           request(
                             apiOrigin,
                             `/me/notifications/${item.id}/read`,
                             'POST',
+                            undefined,
+                            signal,
                           ),
                         )
                       }
