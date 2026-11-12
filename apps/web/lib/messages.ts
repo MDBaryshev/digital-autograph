@@ -575,6 +575,13 @@ export const messages: Record<string, string> = {
   'Pending autographs': 'Автографы на проверке',
   Pending: 'Ожидают проверки',
   'No submissions in this page.': 'На этой странице нет заявок.',
+  'Refresh queue': 'Обновить очередь',
+  'Refreshing queue…': 'Обновляем очередь…',
+  'Retry queue': 'Повторить загрузку очереди',
+  'Could not load the moderation queue. Retry to read its current state.':
+    'Не удалось загрузить очередь модерации. Повтори загрузку, чтобы увидеть её текущее состояние.',
+  'Decision could not be confirmed. Refresh the queue before deciding again.':
+    'Не удалось подтвердить решение. Обнови очередь перед новым решением.',
   'Load more': 'Загрузить ещё',
   'Review selected autograph': 'Проверка выбранного автографа',
   'Select a pending autograph to review.':
