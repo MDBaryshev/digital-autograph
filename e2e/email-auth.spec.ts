@@ -58,7 +58,7 @@ test('verified email grants account access, withholds the public profile until r
   args[20] = { write() {} };
   const app = buildApi(...args);
   const localOrigin = await app.listen({ port: 0, host: '127.0.0.1' });
-  await page.route(
+  await page.context().route(
     (url) =>
       url.origin === apiOrigin &&
       (url.pathname === '/auth/providers' ||
@@ -72,8 +72,23 @@ test('verified email grants account access, withholds the public profile until r
     },
   );
   try {
-    await page.goto('/me');
-    await page.getByRole('link', { name: 'Continue with email' }).click();
+    const firstUse = `/legal/first-use?returnTo=${encodeURIComponent(`/walls/${e2eWallId}`)}`;
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(firstUse);
+    const emailSignIn = page.getByRole('link', { name: 'Continue with email' });
+    await expect(emailSignIn).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      caret: 'initial',
+      path: test.info().outputPath('first-use-email-mobile.png'),
+      fullPage: true,
+    });
+    await emailSignIn.click();
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.screenshot({
       caret: 'initial',
       path: test.info().outputPath('email-sign-in-desktop.png'),
@@ -104,6 +119,9 @@ test('verified email grants account access, withholds the public profile until r
       'an email with a link',
     );
     await expect.poll(() => mails.length).toBe(1);
+    const confirmationPage = await page.context().newPage();
+    await page.close();
+    page = confirmationPage;
     await page.goto(mails[0]!.href);
     await expect(page).toHaveURL(/\/auth\/email\/confirm$/);
     await page.getByLabel('Password', { exact: true }).fill(password);
@@ -114,22 +132,6 @@ test('verified email grants account access, withholds the public profile until r
     await expect(page.getByRole('status')).toContainText(
       'Your password is saved',
     );
-    const firstUse = `/legal/first-use?returnTo=${encodeURIComponent(`/walls/${e2eWallId}`)}`;
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(firstUse);
-    const emailSignIn = page.getByRole('link', { name: 'Continue with email' });
-    await expect(emailSignIn).toBeVisible();
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth,
-      ),
-    ).toBe(true);
-    await page.screenshot({
-      caret: 'initial',
-      path: test.info().outputPath('first-use-email-mobile.png'),
-      fullPage: true,
-    });
-    await emailSignIn.click();
     await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -168,7 +170,7 @@ test('verified email grants account access, withholds the public profile until r
       displayName: 'Email Artist',
     });
 
-    await page.goto('/auth/email');
+    await page.goto('/auth/email?returnTo=%2Fme%2Fsettings');
     await page.reload();
     expect((await page.request.get(`${apiOrigin}/auth/me`)).status()).toBe(200);
     await page
@@ -197,6 +199,11 @@ test('verified email grants account access, withholds the public profile until r
     await expect(page.getByRole('main').getByRole('alert')).toHaveText(
       'Email or password is incorrect.',
     );
+    await page
+      .getByLabel('Password', { exact: true })
+      .fill('a different secure browser password');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(page).toHaveURL(new URL('/me/settings', webOrigin).href);
   } finally {
     await app.close();
     await scenario.database.pool.query(

@@ -83,6 +83,30 @@ describe('verified email/password authentication with PostgreSQL', () => {
     );
     expect(await service.login(email, password)).toMatch(/^da_s1_/);
   });
+  it('omits external URLs and checkout data from registration emails', async () => {
+    const app = appFor();
+    try {
+      const destinations = [
+        'https://example.test',
+        '//example.test',
+        '/payments/checkout?reservationId=private-reference',
+        '/legal/first-use?returnTo=%2Fpayments%2Fcheckout%3FreservationId%3Dprivate-reference',
+      ];
+      for (const [index, returnTo] of destinations.entries()) {
+        const result = await app.inject({
+          method: 'POST',
+          url: '/auth/email/register',
+          headers: { origin },
+          payload: { email: `destination-${index}@example.test`, returnTo },
+        });
+        expect(result.statusCode).toBe(202);
+      }
+      await vi.waitFor(() => expect(mails).toHaveLength(destinations.length));
+      expect(mails.every((mail) => mail.returnTo === undefined)).toBe(true);
+    } finally {
+      await app.close();
+    }
+  });
   it('allows a single concurrent challenge redemption and a single email account', async () => {
     await service.request(email, 'register');
     const token = mails[0]!.token;

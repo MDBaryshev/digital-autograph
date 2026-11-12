@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { emailConfirmationReturnPath } from '@digital-autograph/contracts';
 import { useLocale } from './locale-provider';
 import styles from './email-auth-form.module.css';
 
@@ -40,8 +41,10 @@ export function EmailAuthForm({
       new URLSearchParams(window.location.search).get('returnTo'),
     );
     if (confirm) {
-      const value =
-        new URLSearchParams(window.location.hash.slice(1)).get('token') ?? '';
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      const value = fragment.get('token') ?? '';
+      returnTo.current =
+        emailConfirmationReturnPath(fragment.get('returnTo')) ?? '/me';
       // Keep the credential out of history, referrers, query strings and browser storage.
       window.history.replaceState(null, '', window.location.pathname);
       if (/^[A-Za-z0-9_-]{43}$/.test(value)) {
@@ -90,7 +93,11 @@ export function EmailAuthForm({
             ? { token, password }
             : {
                 email: String(data.get('email') ?? ''),
-                ...(mode === 'login' ? { password } : {}),
+                ...(mode === 'login'
+                  ? { password }
+                  : {
+                      returnTo: emailConfirmationReturnPath(returnTo.current),
+                    }),
               },
         ),
       });

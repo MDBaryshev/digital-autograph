@@ -31,6 +31,7 @@ export interface AuthEmailSender {
     email: string;
     purpose: EmailPurpose;
     token: string;
+    returnTo?: string;
   }): Promise<void>;
 }
 export const authSecretHash = (value: string) =>
@@ -58,7 +59,11 @@ export class EmailAuthService {
         : undefined,
     );
   }
-  async request(email: string, purpose: EmailPurpose): Promise<void> {
+  async request(
+    email: string,
+    purpose: EmailPurpose,
+    returnTo?: string,
+  ): Promise<void> {
     const token = randomBytes(32).toString('base64url');
     if (
       await this.repository.issueChallenge(
@@ -67,7 +72,12 @@ export class EmailAuthService {
         authSecretHash(token),
       )
     )
-      await this.sender.send({ email, purpose, token });
+      await this.sender.send({
+        email,
+        purpose,
+        token,
+        ...(returnTo ? { returnTo } : {}),
+      });
   }
   async complete(token: string, password: string): Promise<boolean> {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return false;
