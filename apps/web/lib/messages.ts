@@ -485,6 +485,20 @@ export const messages: Record<string, string> = {
     'Одобрено. Автограф готов, но остаётся приватным.',
   'Rejected. The owner can see the reason code.':
     'Отклонено. Владелец видит код причины.',
+  'View rejection details': 'Посмотреть причину отклонения',
+  'Rejection details': 'Подробности отклонения',
+  'Loading rejection details…': 'Загружаем причину отклонения…',
+  'Decision date': 'Дата решения',
+  'This decision is final for this autograph. You can create a new autograph for another review.':
+    'Для этого автографа решение окончательное. Для новой проверки можно создать другой автограф.',
+  'Your session expired. Sign in to read rejection details.':
+    'Сессия истекла. Войди, чтобы посмотреть причину отклонения.',
+  'Rejection details are no longer available to this account.':
+    'Подробности отклонения больше недоступны этому аккаунту.',
+  'Rejection details could not be loaded. Try again.':
+    'Не удалось загрузить причину отклонения. Повтори попытку.',
+  'Retry rejection details': 'Загрузить причину снова',
+  'Close rejection details': 'Закрыть подробности отклонения',
   'Another moderator already made a different decision. Refresh the queue.':
     'Другой модератор уже принял другое решение. Обнови очередь.',
   'Decision could not be confirmed. Retry safely.':
