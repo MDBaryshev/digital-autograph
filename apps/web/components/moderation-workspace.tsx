@@ -12,6 +12,7 @@ import {
   type QueueItem,
   type PrivatePreview,
   type RejectionReason,
+  type QueuePage,
 } from '../lib/moderation-api';
 import styles from './moderation-workspace.module.css';
 
@@ -27,6 +28,52 @@ const reasonLabels: Record<RejectionReason, string> = {
 };
 
 export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
+  return <ModerationQueue key={apiOrigin} apiOrigin={apiOrigin} />;
+}
+
+type Operation = {
+  kind: 'queue' | 'more' | 'decision';
+  controller: AbortController;
+};
+
+async function bounded<T>(
+  controller: AbortController,
+  work: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  let rejectAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = () => reject(new Error('MODERATION_REQUEST_ABORTED'));
+    controller.signal.addEventListener('abort', rejectAbort, { once: true });
+  });
+  const timer = window.setTimeout(() => controller.abort(), 10_000);
+  try {
+    return await Promise.race([work(controller.signal), aborted]);
+  } finally {
+    window.clearTimeout(timer);
+    controller.signal.removeEventListener('abort', rejectAbort);
+  }
+}
+
+function validatePage(page: QueuePage): QueuePage {
+  if (
+    !page ||
+    !Array.isArray(page.items) ||
+    page.items.length > 20 ||
+    !(page.nextCursor === null || typeof page.nextCursor === 'string') ||
+    page.items.some(
+      (item) =>
+        !item ||
+        typeof item.id !== 'string' ||
+        !['canvas', 'photo'].includes(item.source) ||
+        !Number.isFinite(Date.parse(item.approvedAt)) ||
+        !Number.isFinite(Date.parse(item.createdAt)),
+    )
+  )
+    throw Error('INVALID_QUEUE');
+  return page;
+}
+
+function ModerationQueue({ apiOrigin }: { apiOrigin: string }) {
   const { t, locale } = useLocale();
 
   const api = useRef(moderationApi(apiOrigin));
@@ -40,36 +87,98 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [reason, setReason] = useState<RejectionReason | ''>('');
-  const [busy, setBusy] = useState(false);
+  const [working, setWorking] = useState<Operation['kind'] | null>(null);
+  const busy = working !== null;
   const [message, setMessage] = useState<string | null>(null);
-  const deciding = useRef(false);
-  const controller = useRef<AbortController | null>(null);
+  const operation = useRef<Operation | null>(null);
+  const recoveryRequired = useRef(false);
   const previewController = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    const next = new AbortController();
-    controller.current = next;
-    api.current
-      .queue(20, null, next.signal)
-      .then((page) => {
-        if (next.signal.aborted) return;
-        setItems(page.items);
-        setCursor(page.nextCursor);
-        setAccess('allowed');
-      })
-      .catch((error: unknown) => {
-        if (next.signal.aborted) return;
-        if (error instanceof ModerationApiError && error.status === 401)
-          setAccess('signin');
-        else if (error instanceof ModerationApiError && error.status === 403)
-          setAccess('forbidden');
-        else setAccess('error');
-      });
-    return () => {
-      controller.current?.abort();
-      previewController.current?.abort();
+  const clearReview = () => {
+    const previous = previewController.current;
+    previewController.current = null;
+    previous?.abort();
+    setSelected(null);
+    setPreview(null);
+    setPreviewLoaded(false);
+    setPreviewError(null);
+    setReason('');
+  };
+
+  const unavailable = (error: unknown, fallback: string) => {
+    clearReview();
+    setItems([]);
+    setCursor(null);
+    recoveryRequired.current = true;
+    if (error instanceof ModerationApiError && error.status === 401) {
+      setMessage(null);
+      setAccess('signin');
+    } else if (error instanceof ModerationApiError && error.status === 403) {
+      setMessage(null);
+      setAccess('forbidden');
+    } else {
+      setMessage(fallback);
+      setAccess('error');
+    }
+  };
+
+  const loadQueue = async (more = false) => {
+    if (operation.current?.kind === 'decision') return;
+    if (more && (operation.current || !cursor || recoveryRequired.current))
+      return;
+    if (!more && operation.current?.kind === 'queue') return;
+    const previous = operation.current;
+    const next: Operation = {
+      kind: more ? 'more' : 'queue',
+      controller: new AbortController(),
     };
-  }, [apiOrigin]);
+    operation.current = next;
+    previous?.controller.abort();
+    setWorking(next.kind);
+    setMessage(null);
+    if (!more) {
+      clearReview();
+      setItems([]);
+      setCursor(null);
+      if (access !== 'allowed') setAccess('loading');
+    }
+    try {
+      const page = validatePage(
+        await bounded(next.controller, (signal) =>
+          api.current.queue(20, more ? cursor : null, signal),
+        ),
+      );
+      if (operation.current !== next) return;
+      setItems((current) => (more ? [...current, ...page.items] : page.items));
+      setCursor(page.nextCursor);
+      recoveryRequired.current = false;
+      setAccess('allowed');
+    } catch (error) {
+      if (operation.current === next)
+        unavailable(
+          error,
+          'Could not load the moderation queue. Retry to read its current state.',
+        );
+    } finally {
+      if (operation.current === next) {
+        operation.current = null;
+        setWorking(null);
+      }
+    }
+  };
+
+  useEffect(() => {
+    void loadQueue();
+    return () => {
+      const previous = operation.current;
+      operation.current = null;
+      previous?.controller.abort();
+      const previewRequest = previewController.current;
+      previewController.current = null;
+      previewRequest?.abort();
+    };
+    // A changed API origin mounts a new keyed queue, discarding private state.
+  }, []);
 
   useEffect(() => {
     if (!preview) return;
@@ -87,6 +196,7 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
   }, [preview]);
 
   const loadPreview = async (id: string) => {
+    if (operation.current || recoveryRequired.current) return;
     previewController.current?.abort();
     const next = new AbortController();
     previewController.current = next;
@@ -96,36 +206,27 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
     setPreviewError(null);
     setReason('');
     try {
-      const value = await api.current.preview(id, next.signal);
-      if (!next.signal.aborted) setPreview(value);
+      const value = await bounded(next, (signal) =>
+        api.current.preview(id, signal),
+      );
+      if (previewController.current === next) {
+        if (
+          !value ||
+          typeof value.url !== 'string' ||
+          !Number.isFinite(Date.parse(value.expiresAt))
+        )
+          throw Error('INVALID_PREVIEW');
+        setPreview(value);
+      }
     } catch (error) {
-      if (!next.signal.aborted) {
-        if (error instanceof ModerationApiError && error.status === 403)
-          setAccess('forbidden');
+      if (previewController.current === next) {
+        if (
+          error instanceof ModerationApiError &&
+          [401, 403].includes(error.status)
+        )
+          unavailable(error, 'Private preview unavailable. Retry.');
         else setPreviewError('Private preview unavailable. Retry.');
       }
-    }
-  };
-
-  const loadMore = async () => {
-    if (!cursor || busy) return;
-    const next = new AbortController();
-    controller.current = next;
-    setBusy(true);
-    try {
-      const page = await api.current.queue(20, cursor, next.signal);
-      if (!next.signal.aborted) {
-        setItems((current) => [...current, ...page.items]);
-        setCursor(page.nextCursor);
-      }
-    } catch (error) {
-      if (!next.signal.aborted) {
-        if (error instanceof ModerationApiError && error.status === 403)
-          setAccess('forbidden');
-        else setMessage('Could not load more submissions. Retry.');
-      }
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -135,49 +236,51 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
       !previewLoaded ||
       !preview ||
       Date.now() >= new Date(preview.expiresAt).getTime() ||
-      deciding.current ||
+      operation.current ||
+      recoveryRequired.current ||
       (decision === 'rejected' && !reason)
     )
       return;
-    deciding.current = true;
-    setBusy(true);
+    const next: Operation = {
+      kind: 'decision',
+      controller: new AbortController(),
+    };
+    operation.current = next;
+    setWorking('decision');
     setMessage(null);
-    const next = new AbortController();
-    controller.current = next;
     try {
-      await api.current.decide(
-        selected,
-        decision === 'approved'
-          ? { decision }
-          : { decision, reasonCode: reason as RejectionReason },
-        next.signal,
+      await bounded(next.controller, (signal) =>
+        api.current.decide(
+          selected,
+          decision === 'approved'
+            ? { decision }
+            : { decision, reasonCode: reason as RejectionReason },
+          signal,
+        ),
       );
-      if (next.signal.aborted) return;
+      if (operation.current !== next) return;
       setItems((current) => current.filter((item) => item.id !== selected));
-      setSelected(null);
-      setPreview(null);
-      setPreviewLoaded(false);
+      clearReview();
       setMessage(
         decision === 'approved'
           ? 'Approved. The autograph is ready but remains private.'
           : 'Rejected. The owner can see the reason code.',
       );
     } catch (error) {
-      if (!next.signal.aborted) {
-        if (error instanceof ModerationApiError && error.status === 403) {
-          setAccess('forbidden');
-          return;
-        }
-        setMessage(
+      if (operation.current === next) {
+        unavailable(
+          error,
           error instanceof ModerationApiError &&
             error.code === 'MODERATION_ALREADY_DECIDED'
             ? 'Another moderator already made a different decision. Refresh the queue.'
-            : 'Decision could not be confirmed. Retry safely.',
+            : 'Decision could not be confirmed. Refresh the queue before deciding again.',
         );
       }
     } finally {
-      deciding.current = false;
-      setBusy(false);
+      if (operation.current === next) {
+        operation.current = null;
+        setWorking(null);
+      }
     }
   };
 
@@ -191,9 +294,17 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
     );
   if (access === 'error')
     return (
-      <p role="alert">
-        {t('Moderation is temporarily unavailable. Refresh the page.')}
-      </p>
+      <section>
+        <p role="alert">
+          {t(
+            message ??
+              'Could not load the moderation queue. Retry to read its current state.',
+          )}
+        </p>
+        <button type="button" onClick={() => void loadQueue()}>
+          {t('Retry queue')}
+        </button>
+      </section>
     );
   if (access === 'signin') {
     const returnTo = encodeURIComponent('/moderation');
@@ -215,9 +326,24 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
 
   return (
     <div className={styles.layout}>
-      <section className={styles.queue} aria-label={t('Pending autographs')}>
+      <section
+        className={styles.queue}
+        aria-label={t('Pending autographs')}
+        aria-busy={working === 'queue' || working === 'more'}
+      >
         <h2>{t('Pending')}</h2>
-        {items.length === 0 && <p>{t('No submissions in this page.')}</p>}
+        <button
+          type="button"
+          disabled={working === 'decision' || working === 'queue'}
+          onClick={() => void loadQueue()}
+        >
+          {working === 'queue' ? t('Refreshing queue…') : t('Refresh queue')}
+        </button>
+        {working === 'queue' ? (
+          <p role="status">{t('Refreshing queue…')}</p>
+        ) : (
+          items.length === 0 && <p>{t('No submissions in this page.')}</p>
+        )}
         <ul>
           {items.map((item) => (
             <li key={item.id}>
@@ -235,7 +361,11 @@ export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
           ))}
         </ul>
         {cursor && (
-          <button type="button" disabled={busy} onClick={() => void loadMore()}>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void loadQueue(true)}
+          >
             {t('Load more')}
           </button>
         )}
