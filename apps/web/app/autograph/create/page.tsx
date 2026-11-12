@@ -35,20 +35,22 @@ export default async function CreateAutographPage({
           {t('Back to the Wall')}
         </a>
       )}
-      <h1>{t('Create a digital autograph')}</h1>
+      <h1>{t('Autograph studio')}</h1>
       <p className={styles.intro}>
-        {t(
-          'Draw an autograph or upload a photo, then check the private preview before sending it for moderation.',
-        )}
+        {t('Draw an autograph or upload a photo.')}
       </p>
-      <aside className={styles.warning}>
-        <Icon name="lock" size={17} />
-        <span>
+      <details className={styles.warning}>
+        <summary>
+          <Icon name="lock" size={16} />
+          {t('Autograph privacy')}
+          <Icon name="down" size={15} />
+        </summary>
+        <p>
           {t(
             'The approved autograph can become public when you place it on a Wall. Do not use a bank, legal or other sensitive signature.',
           )}
-        </span>
-      </aside>
+        </p>
+      </details>
       <CanvasAuthGate apiOrigin={API_PUBLIC_ORIGIN} wallId={wallId} />
     </main>
   );

@@ -1,0 +1,243 @@
+.stage {
+  --stage-paper: #f8f9ff;
+  --stage-line: #818cc8;
+  --stage-ink: #e9edff;
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2.15rem);
+  border-radius: clamp(1.1rem, 3vw, 2rem);
+  background: #202e79;
+  color: var(--stage-ink);
+}
+
+.header,
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.header {
+  margin-bottom: clamp(0.9rem, 2vw, 1.4rem);
+}
+
+.header h2 {
+  margin: 0;
+  scroll-margin-top: 5rem;
+  color: white;
+  font-size: clamp(1.3rem, 2.65vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+}
+
+.header p,
+.footer {
+  margin: 0.4rem 0 0;
+  font-size: clamp(0.78rem, 1.25vw, 0.92rem);
+  line-height: 1.45;
+}
+
+.badge {
+  flex: none;
+  align-self: flex-start;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--stage-line);
+  border-radius: 100px;
+  color: white;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(0.35rem, 0.9vw, 0.75rem);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.sample,
+.place button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  border-radius: clamp(0.5rem, 1.1vw, 0.85rem);
+}
+
+.sample {
+  grid-column: span 4;
+  aspect-ratio: 1.35;
+  background: var(--stage-paper);
+  color: #263b96;
+}
+
+.sample:nth-child(2) {
+  background: #dbe2ff;
+  color: #202e79;
+}
+
+.sample:nth-child(3) {
+  background: #f5e9df;
+  color: #774027;
+}
+
+.sample svg {
+  width: 83%;
+  max-height: 87%;
+  margin-top: 0.55rem;
+}
+
+.number {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.place {
+  grid-column: span 3;
+}
+
+.place:nth-child(n + 8) {
+  grid-column: span 4;
+}
+
+.place button {
+  width: 100%;
+  min-height: clamp(3.05rem, 5.7vw, 5.5rem);
+  padding: 0.6rem;
+  color: var(--stage-ink);
+  background: #2a3a8e;
+  border: 1px solid var(--stage-line);
+}
+
+.place button[data-first],
+.place button:hover {
+  background: #4053b8;
+}
+
+.place button:focus-visible,
+.footer a:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.place .signed {
+  background: var(--stage-paper);
+  border-color: var(--stage-paper);
+  color: #263b96;
+}
+
+.place .signed:hover {
+  background: #dbe2ff;
+}
+
+.signed svg {
+  width: 100%;
+  height: clamp(1.8rem, 4vw, 3.25rem);
+  margin-top: 0.45rem;
+}
+
+.footer {
+  min-height: 44px;
+  margin-top: 0.35rem;
+}
+
+.footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  color: white;
+  font-weight: 800;
+}
+
+.dialog {
+  width: min(calc(100% - 2rem), 42rem);
+  max-height: calc(100dvh - 2rem);
+  padding: clamp(1rem, 3vw, 1.8rem);
+  border: 1px solid var(--color-border);
+  border-radius: 1.25rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.dialog::backdrop {
+  background: #101635b8;
+}
+
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.dialogHeader h3 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.15rem, 3vw, 1.55rem);
+  line-height: 1.2;
+}
+
+.dialogHeader p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.87rem;
+}
+
+.close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  margin-top: 1rem;
+  border-color: transparent;
+  background: var(--brand-color-primary);
+  color: var(--brand-color-onPrimary);
+  font-weight: 750;
+}
+
+.show:not(:disabled):hover {
+  background: var(--ui-primary-hover);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (max-width: 38rem) {
+  .dialog {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 1rem);
+    margin: auto 0 0;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    border-radius: 1.25rem 1.25rem 0 0;
+  }
+
+  .show {
+    width: 100%;
+  }
+}

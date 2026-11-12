@@ -8,6 +8,7 @@ import {
   needsFirstUseConfirmation,
 } from './first-use-action-notice';
 import styles from './canvas-create-screen.module.css';
+import { StudioSteps } from './studio-steps';
 
 type Preview = { assetId: string; url: string; expiresAt: string };
 type ReviewApi = {
@@ -131,6 +132,9 @@ export function CleanedAutographReview({
 
   return (
     <section className={styles.preview} aria-labelledby="preview-heading">
+      <StudioSteps
+        current={phase.kind === 'submitted_for_moderation' ? 2 : 1}
+      />
       <h2 id="preview-heading">{t('Your cleaned preview')}</h2>
       <p>
         {t(

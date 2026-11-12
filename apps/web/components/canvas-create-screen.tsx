@@ -10,6 +10,8 @@ import {
 } from '../lib/canvas-submission';
 import { exportPng, type Stroke } from '../lib/drawing';
 import { CanvasEditor } from './canvas-editor';
+import { StudioSteps } from './studio-steps';
+import { Icon } from './ui-icon';
 import { CleanedAutographReview } from './cleaned-autograph-review';
 import {
   FirstUseActionNotice,
@@ -237,6 +239,7 @@ export function CanvasCreateScreen({
 
   return (
     <div className={styles.flow}>
+      {state.kind !== 'preview' && <StudioSteps current={0} />}
       {aiCapabilities.moderation && (
         <p>
           {t(
@@ -260,7 +263,7 @@ export function CanvasCreateScreen({
             disabled={state.kind === 'working' || Boolean(autographId.current)}
             onClick={() => selectMode('draw')}
           >
-            {t('Draw')}
+            <Icon name="pen" size={18} /> {t('Draw')}
           </button>
           <button
             className={mode === 'photo' ? styles.activeTab : styles.tab}
@@ -272,7 +275,7 @@ export function CanvasCreateScreen({
             disabled={state.kind === 'working' || Boolean(autographId.current)}
             onClick={() => selectMode('photo')}
           >
-            {t('Photo')}
+            <Icon name="photo" size={18} /> {t('Photo')}
           </button>
           <button
             type="button"
@@ -348,7 +351,7 @@ export function CanvasCreateScreen({
             Boolean(pendingMode) || (mode === 'draw' ? !hasMarks : !hasPhoto)
           }
         >
-          {t('Create private preview')}
+          {t('Create private preview')} <Icon name="arrow" size={18} />
         </button>
       )}
       {state.kind === 'working' && (

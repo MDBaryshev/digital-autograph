@@ -1,6 +1,7 @@
 import { getTranslator } from '../lib/i18n-server';
 import { Icon } from '../components/ui-icon';
-import { SignatureArt } from '../components/signature-art';
+import { TryWall } from '../components/try-wall';
+import { OpenInvitation } from '../components/open-invitation';
 import styles from './page.module.css';
 
 export default async function HomePage() {
@@ -9,14 +10,17 @@ export default async function HomePage() {
     [
       'Make an autograph',
       'Draw by hand or upload a photo. Your original upload stays private.',
+      'pen',
     ],
     [
       'Review and submit',
       'Check the cleaned preview and send it for moderation. Follow the decision in My autographs.',
+      'check',
     ],
     [
       'Choose a place',
       'Open the Wall from your invitation and choose an empty place once your autograph is approved.',
+      'grid',
     ],
   ] as const;
 
@@ -24,50 +28,24 @@ export default async function HomePage() {
     <main className={styles.page}>
       <section className={styles.hero} aria-labelledby="home-heading">
         <div className={styles.heroCopy}>
-          <h1 id="home-heading">{t('Autograph walls')}</h1>
+          <h1 id="home-heading">{t('Leave your autograph.')}</h1>
           <p className={styles.description}>
             {t(
-              'Make an autograph and leave it on a creator’s Wall. Walls open from an invitation link.',
+              'Draw your autograph and leave it on someone’s Wall. Every Wall has 10 places.',
             )}
           </p>
-          <div className={styles.heroActions}>
-            <a className="primaryLink" href="/autograph/create">
-              {t('Create autograph')} <Icon name="arrow" size={18} />
-            </a>
-            <a className={styles.textAction} href="#how-it-works">
-              {t('How it works')}
-            </a>
-          </div>
         </div>
-
-        <figure className={styles.example} aria-labelledby="example-wall">
-          <figcaption className={styles.exampleHeader} id="example-wall">
-            <span>{t('Example Wall')}</span>
-            <span>{t('10 places')}</span>
-          </figcaption>
-          <ol className={styles.exampleGrid} role="list">
-            {Array.from({ length: 10 }, (_, index) => (
-              <li
-                key={index}
-                className={index < 3 ? styles.signed : styles.empty}
-              >
-                <span className={styles.placeNumber}>{index + 1}</span>
-                {index < 3 ? (
-                  <>
-                    <span className={styles.visuallyHidden}>{t('Signed')}</span>
-                    <SignatureArt variant={index} />
-                  </>
-                ) : (
-                  <span className={styles.emptyLabel}>{t('Empty place')}</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        </figure>
+        <TryWall />
+        <div className={styles.heroActions}>
+          <a className="primaryLink" href="/autograph/create">
+            <Icon name="pen" size={18} /> {t('Create autograph')}
+          </a>
+          <OpenInvitation />
+        </div>
       </section>
 
       <section className={styles.process} aria-labelledby="how-it-works">
-        <div>
+        <div className={styles.sectionHeading}>
           <h2 id="how-it-works" tabIndex={-1}>
             {t('From drawing to Wall')}
           </h2>
@@ -77,9 +55,12 @@ export default async function HomePage() {
             )}
           </p>
         </div>
-        <ol className={styles.steps}>
-          {steps.map(([title, description]) => (
+        <ol className={styles.steps} role="list">
+          {steps.map(([title, description, icon]) => (
             <li key={title}>
+              <span className={styles.stepIcon}>
+                <Icon name={icon} size={23} />
+              </span>
               <h3>{t(title)}</h3>
               <p>{t(description)}</p>
             </li>
@@ -96,7 +77,7 @@ export default async function HomePage() {
             )}
           </p>
         </div>
-        <a className={styles.textAction} href="/me/walls">
+        <a className="actionLink" href="/me/walls">
           {t('Open my Walls')} <Icon name="arrow" size={18} />
         </a>
       </section>

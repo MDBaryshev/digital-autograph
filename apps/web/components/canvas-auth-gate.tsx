@@ -57,6 +57,13 @@ export function CanvasAuthGate({
         <p>{t('Your autograph creation will start after sign-in.')}</p>
         <SignInOptions apiOrigin={apiOrigin} returnTo={returnTo} />
         <SignInHelp />
+        {!wallId && (
+          <p>
+            <a href="/#try-wall-heading">
+              {t('Try drawing without signing in')}
+            </a>
+          </p>
+        )}
       </section>
     );
   }

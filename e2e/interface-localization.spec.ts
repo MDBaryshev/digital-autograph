@@ -10,7 +10,7 @@ test('Destka language and theme persist while an unfinished autograph survives s
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'Стены с автографами',
+    'Оставь свой автограф.',
   );
   await expect(page).toHaveTitle('Destka');
   await page.goto('/me/settings');

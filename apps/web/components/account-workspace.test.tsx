@@ -64,7 +64,9 @@ it('keeps preferences out of the menu and supports closing with Escape', async (
   expect(screen.queryByRole('combobox')).toBeNull();
   expect(screen.queryByRole('link', { name: 'Moderation' })).toBeNull();
   fireEvent.keyDown(window, { key: 'Escape' });
-  expect(screen.queryByRole('navigation')).toBeNull();
+  expect(
+    screen.queryByRole('navigation', { name: 'Main navigation' }),
+  ).toBeNull();
   expect(document.activeElement).toBe(toggle);
 });
 it('shows sign-in and public links in guest navigation', async () => {

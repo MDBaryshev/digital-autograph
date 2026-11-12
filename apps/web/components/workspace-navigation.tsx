@@ -79,33 +79,54 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
           <span>Destka</span>
         </a>
         <div className={styles.actions}>
-          <a
-            className={styles.studioLink}
-            href="/autograph/create"
-            aria-current={path === '/autograph/create' ? 'page' : undefined}
+          <nav
+            className={styles.productNav}
+            aria-label={t('Product navigation')}
           >
-            {t('Autograph studio')}
-          </a>
-          <a
-            className={styles.accountLink}
-            href="/me"
-            aria-label={accountLabel}
-          >
-            {account && (
-              <span className={styles.avatar} aria-hidden="true">
-                {account.profile?.avatarDataUrl ? (
-                  <img src={account.profile.avatarDataUrl} alt="" />
-                ) : (
-                  (Array.from(
-                    account.profile?.displayName ?? '',
-                  )[0]?.toUpperCase() ?? <Icon name="user" size={18} />)
-                )}
+            <a
+              className={styles.homeLink}
+              href="/"
+              aria-current={path === '/' ? 'page' : undefined}
+            >
+              <Icon name="home" size={22} />
+              <span>{t('Home')}</span>
+            </a>
+            <a
+              className={styles.studioLink}
+              href="/autograph/create"
+              aria-current={path === '/autograph/create' ? 'page' : undefined}
+            >
+              <Icon name="pen" size={22} />
+              <span className={styles.desktopLabel}>
+                {t('Autograph studio')}
               </span>
-            )}
-            <span className={account ? styles.accountName : undefined}>
-              {accountLabel}
-            </span>
-          </a>
+              <span className={styles.dockLabel}>{t('Studio')}</span>
+            </a>
+            <a
+              className={styles.accountLink}
+              href="/me"
+              aria-current={path === '/me' ? 'page' : undefined}
+              data-section={path?.startsWith('/me/') ? 'current' : undefined}
+            >
+              {account?.profile?.avatarDataUrl ? (
+                <span className={styles.avatar}>
+                  <img src={account.profile.avatarDataUrl} alt="" />
+                </span>
+              ) : (
+                <span className={styles.accountIcon}>
+                  <Icon name="user" size={22} />
+                </span>
+              )}
+              {account?.profile?.displayName ? (
+                <>
+                  <span className={styles.desktopLabel}>{accountLabel}</span>
+                  <span className={styles.dockLabel}>{t('Your account')}</span>
+                </>
+              ) : (
+                <span>{accountLabel}</span>
+              )}
+            </a>
+          </nav>
           <button
             className={styles.toggle}
             ref={toggle}
@@ -143,13 +164,6 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
               </a>
             );
           })}
-          <a
-            className={styles.mobileStudio}
-            href="/autograph/create"
-            onClick={() => setOpen(false)}
-          >
-            <Icon name="pen" size={18} /> {t('Autograph studio')}
-          </a>
         </nav>
       </div>
     </header>

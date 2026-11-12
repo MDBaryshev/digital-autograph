@@ -25,6 +25,7 @@ import { WallPlacementHistory } from './placement-history';
 import { WallSlot } from './wall-slot';
 import { WallInvite } from './wall-invite';
 import { WallCountdown } from './wall-countdown';
+import { Icon } from './ui-icon';
 import { ShareControls } from './share-controls';
 import styles from '../app/walls/[id]/page.module.css';
 
@@ -246,6 +247,14 @@ export function PublicWallScreen({
   const wallPath = `/walls/${wall.id}`;
   const studioPath = `/autograph/create?wall=${wall.id}`;
   const occupiedCount = wall.slots.filter((slot) => slot.occupied).length;
+  const showChoosePlace =
+    canClaim &&
+    occupiedCount < wall.slotCount &&
+    (auth === 'anonymous' || Boolean(ready?.length));
+  const dismissSlot = (id: string) => {
+    setTargetSlotId(null);
+    document.getElementById(`slot-action-${id}`)?.focus();
+  };
 
   return (
     <main className={styles.page}>
@@ -274,20 +283,12 @@ export function PublicWallScreen({
             {t('Wall status: ')}
             <strong>{t(wall.status)}</strong>
           </p>
-          <p>{t(wallNotice(wall, now))}</p>
-          <p>
-            <a href={`/creators/${encodeURIComponent(wall.creator.slug)}`}>
-              {t('View creator')}
-            </a>
-          </p>
+          {!canClaim && <p>{t(wallNotice(wall, now))}</p>}
           <WallCountdown
             startAt={wall.startAt}
             endAt={wall.endAt}
             status={wall.status}
           />
-          {auth === 'authenticated' && (
-            <a href="/me/placements">{t('View your placement history')}</a>
-          )}
           {wall.startAt && (
             <p>
               {t('Starts: ')}
@@ -306,13 +307,22 @@ export function PublicWallScreen({
               ) + ' UTC'}
             </p>
           )}
-          <button
-            type="button"
-            onClick={() => void refreshWall()}
-            disabled={refreshing}
-          >
-            {refreshing ? t('Refreshing…') : t('Refresh Wall')}
-          </button>
+          <div className={styles.wallTools}>
+            <a href={`/creators/${encodeURIComponent(wall.creator.slug)}`}>
+              {t('View creator')}
+            </a>
+            {auth === 'authenticated' && (
+              <a href="/me/placements">{t('View your placement history')}</a>
+            )}
+            <button
+              type="button"
+              onClick={() => void refreshWall()}
+              disabled={refreshing}
+            >
+              <Icon name="history" size={16} />
+              {refreshing ? t('Refreshing…') : t('Refresh Wall')}
+            </button>
+          </div>
           {refreshError && (
             <p role="alert">
               {t('The Wall could not be refreshed. Try again.')}
@@ -325,6 +335,18 @@ export function PublicWallScreen({
             {occupiedCount}{' '}
             <span>{t('of {total}', { total: String(wall.slotCount) })}</span>
           </strong>
+          <meter
+            className={styles.occupancy}
+            aria-label={t('Places occupied')}
+            value={occupiedCount}
+            min={0}
+            max={wall.slotCount}
+          />
+          {showChoosePlace && (
+            <a className={styles.choose} href="#slots-heading">
+              {t('Find a place')} <Icon name="down" size={18} />
+            </a>
+          )}
         </aside>
       </header>
 
@@ -397,48 +419,6 @@ export function PublicWallScreen({
         />
       )}
 
-      <section aria-labelledby="slots-heading">
-        <h2 id="slots-heading">{t('Slots')}</h2>
-        {canClaim && auth === 'anonymous' && occupiedCount < wall.slotCount && (
-          <p className={styles.slotIntro}>
-            {t(
-              'Choose an empty place to sign in. You’ll need an approved autograph to place it for free.',
-            )}
-          </p>
-        )}
-        {occupiedCount > 0 && !frontendCapabilities.paidTakeover && (
-          <p className={styles.slotIntro}>
-            {t('Paid takeover is not available yet.')}
-          </p>
-        )}
-        <ol className={styles.grid}>
-          {wall.slots.map((slot) => {
-            const actionLabel =
-              !canClaim || slot.occupied
-                ? undefined
-                : auth === 'anonymous'
-                  ? 'Sign in to claim'
-                  : auth === 'authenticated' && ready?.length
-                    ? 'Claim this slot'
-                    : undefined;
-            return (
-              <WallSlot
-                key={slot.id}
-                slot={slot}
-                apiOrigin={apiOrigin}
-                actionLabel={actionLabel}
-                actionDisabled={phase === 'claiming' || refreshing}
-                onAction={() => {
-                  setTargetSlotId(slot.id);
-                  setPhase('idle');
-                  setMessage('');
-                }}
-              />
-            );
-          })}
-        </ol>
-      </section>
-
       {canClaim && target && !target.occupied && auth === 'anonymous' && (
         <section className={styles.panel} aria-labelledby="sign-in-heading">
           <h2 id="sign-in-heading" ref={confirmationRef} tabIndex={-1}>
@@ -446,6 +426,13 @@ export function PublicWallScreen({
             {target.position + 1}
           </h2>
           <SignInOptions apiOrigin={apiOrigin} returnTo={wallPath} />
+          <button
+            className={styles.dismiss}
+            type="button"
+            onClick={() => dismissSlot(target.id)}
+          >
+            {t('Back to places')}
+          </button>
         </section>
       )}
 
@@ -491,12 +478,7 @@ export function PublicWallScreen({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setTargetSlotId(null);
-                    document
-                      .getElementById(`slot-action-${target.id}`)
-                      ?.focus();
-                  }}
+                  onClick={() => dismissSlot(target.id)}
                   disabled={phase === 'claiming' || refreshing}
                 >
                   {t('Cancel')}
@@ -520,6 +502,51 @@ export function PublicWallScreen({
           {t(message)}
         </p>
       )}
+      <section aria-labelledby="slots-heading">
+        <h2 id="slots-heading" className={styles.placesHeading} tabIndex={-1}>
+          {t('Slots')}
+        </h2>
+        {canClaim && auth === 'anonymous' && occupiedCount < wall.slotCount && (
+          <p className={styles.slotIntro}>
+            {t(
+              'Choose an empty place to sign in. You’ll need an approved autograph to place it for free.',
+            )}
+          </p>
+        )}
+        {occupiedCount > 0 && !frontendCapabilities.paidTakeover && (
+          <p className={styles.slotIntro}>
+            {t('Paid takeover is not available yet.')}
+          </p>
+        )}
+        <ol className={styles.grid}>
+          {wall.slots.map((slot) => {
+            const actionLabel =
+              !canClaim || slot.occupied
+                ? undefined
+                : auth === 'anonymous'
+                  ? 'Sign in to claim'
+                  : auth === 'authenticated' && ready?.length
+                    ? 'Claim this slot'
+                    : undefined;
+            return (
+              <WallSlot
+                key={slot.id}
+                slot={slot}
+                apiOrigin={apiOrigin}
+                actionLabel={actionLabel}
+                selected={Boolean(target?.id === slot.id && !slot.occupied)}
+                actionDisabled={phase === 'claiming' || refreshing}
+                onAction={() => {
+                  setTargetSlotId(slot.id);
+                  setPhase('idle');
+                  setMessage('');
+                }}
+              />
+            );
+          })}
+        </ol>
+      </section>
+
       <WallInvite
         wallId={wall.id}
         title={

@@ -13,12 +13,14 @@ export function WallSlot({
   apiOrigin,
   actionLabel,
   actionDisabled = false,
+  selected = false,
   onAction,
 }: {
   slot: Slot;
   apiOrigin: string;
   actionLabel?: string;
   actionDisabled?: boolean;
+  selected?: boolean;
   onAction?: () => void;
 }) {
   const { t } = useLocale();
@@ -38,6 +40,7 @@ export function WallSlot({
       tabIndex={-1}
       className={styles.slot}
       data-podium={podium}
+      data-selected={selected ? '' : undefined}
       aria-label={t(`Slot ${number}`)}
     >
       <span className={styles.slotNumber}>
@@ -99,22 +102,26 @@ export function WallSlot({
               : ''}
           </p>
         </div>
+      ) : actionLabel ? (
+        <button
+          id={`slot-action-${slot.id}`}
+          className={styles.slotAction}
+          type="button"
+          disabled={actionDisabled}
+          aria-expanded={selected}
+          onClick={onAction}
+        >
+          <span className={styles.emptyMark} aria-hidden="true">
+            +
+          </span>
+          {t(actionLabel)}
+        </button>
       ) : (
         <div className={styles.slotContent}>
           <span className={styles.emptyMark} aria-hidden="true">
             +
           </span>
           <p>{t('Empty slot')}</p>
-          {actionLabel && (
-            <button
-              id={`slot-action-${slot.id}`}
-              type="button"
-              disabled={actionDisabled}
-              onClick={onAction}
-            >
-              {t(actionLabel)}
-            </button>
-          )}
         </div>
       )}
     </li>

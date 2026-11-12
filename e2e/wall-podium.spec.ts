@@ -37,7 +37,7 @@ test('the ten-place podium stays readable in light and dark themes on mobile and
         await expect(slots.nth(index).getByRole('img')).toHaveCount(0);
         await expect(slots.nth(index)).toHaveCSS(
           'border-top-color',
-          'rgb(23, 23, 23)',
+          theme === 'dark' ? 'rgb(52, 55, 68)' : 'rgb(223, 226, 234)',
         );
       }
       expect(

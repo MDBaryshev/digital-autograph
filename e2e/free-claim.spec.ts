@@ -45,7 +45,7 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   test.setTimeout(120_000);
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Autograph walls' }),
+    page.getByRole('heading', { name: 'Leave your autograph.' }),
   ).toBeVisible();
   await responsive(
     page,
@@ -81,6 +81,10 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await page.getByLabel('I accept the Content rules.').check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   const canvas = page.getByLabel('Autograph drawing area', { exact: true });
+  const step = page
+    .getByRole('list', { name: 'Studio progress' })
+    .locator('[aria-current="step"]');
+  await expect(step).toContainText('Create');
   await expect(
     page.getByRole('heading', { name: 'Draw your autograph' }),
   ).toBeVisible();
@@ -156,6 +160,7 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await expect(
     page.getByRole('heading', { name: 'Your cleaned preview' }),
   ).toBeVisible({ timeout: 30_000 });
+  await expect(step).toContainText('Private preview');
   // Conditional create is enforced by the backend S3 request and integration race tests.
   expect((await uploaded.request().allHeaders()).cookie).toContain(
     'da_session=',
@@ -197,6 +202,7 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await expect(
     page.getByRole('heading', { name: 'Submitted for moderation' }),
   ).toBeVisible();
+  await expect(step).toContainText('Moderation');
   await responsive(
     page,
     page.getByRole('button', { name: 'Start a new autograph' }),

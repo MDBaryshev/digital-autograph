@@ -1,0 +1,66 @@
+.invite {
+  max-width: 32rem;
+  scroll-margin-top: 5rem;
+}
+
+.invite summary {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 750;
+  list-style: none;
+}
+
+.invite summary::-webkit-details-marker {
+  display: none;
+}
+
+.invite summary:hover {
+  color: var(--color-link);
+  border-color: var(--brand-color-control);
+}
+
+.invite[open] summary svg:last-child {
+  transform: rotate(180deg);
+}
+
+.invite form {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+}
+
+.invite label,
+.invite p {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.invite p {
+  color: var(--brand-color-danger);
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.fields input {
+  flex: 1 1 11rem;
+  min-width: 0;
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+.fields button {
+  min-height: 44px;
+}

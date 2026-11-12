@@ -1,11 +1,12 @@
 .page {
   max-width: 64rem;
   margin: 0 auto;
-  padding: clamp(2rem, 5vw, 4rem) var(--space-page) clamp(3rem, 7vw, 6rem);
+  padding: clamp(1.25rem, 4vw, 3rem) var(--space-page) clamp(3rem, 7vw, 6rem);
 }
 
 .page h1 {
-  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  font-size: clamp(2.15rem, 5vw, 4rem);
+  letter-spacing: -0.06em;
   line-height: 1.12;
   margin: 0 0 0.8rem;
   text-wrap: balance;
@@ -15,25 +16,42 @@
   color: var(--color-muted);
   font-size: 1rem;
   max-width: 56ch;
-  margin: 0 0 1.35rem;
+  margin: 0 0 0.55rem;
 }
 
 .warning {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  max-width: 72ch;
-  margin: 1.25rem 0 1.65rem;
-  padding-block: 0.7rem;
-  border-block: 1px solid var(--color-border);
-  line-height: 1.55;
-  font-size: 0.875rem;
+  max-width: 62ch;
+  margin: 0 0 0.8rem;
   color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.warning summary {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 44px;
+  gap: 0.45rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+}
+
+.warning summary::-webkit-details-marker {
+  display: none;
+}
+
+.warning[open] summary svg:last-child {
+  transform: rotate(180deg);
 }
 
 .warning svg {
   flex: none;
-  margin-top: 0.15rem;
+}
+
+.warning p {
+  margin: 0 0 1rem;
+  line-height: 1.55;
 }
 
 .back {

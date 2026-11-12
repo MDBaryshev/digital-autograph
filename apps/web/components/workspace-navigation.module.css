@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  max-width: 90rem;
+  max-width: 83rem;
   margin-inline: auto;
   min-height: 4.25rem;
   padding: 0.5rem var(--space-page);
@@ -42,6 +42,20 @@
   min-width: 0;
 }
 
+.productNav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: clamp(0.4rem, 1vw, 0.95rem);
+}
+
+.homeLink,
+.dockLabel,
+.studioLink svg,
+.accountIcon {
+  display: none;
+}
+
 .studioLink,
 .accountLink,
 .toggle {
@@ -53,23 +67,37 @@
   font-size: 0.9rem;
   font-weight: 750;
   text-decoration: none;
+  border-radius: 0.65rem;
 }
 
 .studioLink:hover,
 .studioLink[aria-current],
-.accountLink:hover {
+.accountLink:hover,
+.accountLink[aria-current],
+.accountLink[data-section] {
   color: var(--color-link);
+}
+
+.studioLink,
+.accountLink {
+  min-width: 0;
+  padding-inline: 0.65rem;
+}
+
+.studioLink[aria-current],
+.accountLink[aria-current],
+.accountLink[data-section] {
+  background: var(--brand-color-primarySoft);
 }
 
 .accountLink {
   min-width: 0;
   gap: 0.55rem;
-  padding-inline: 0.25rem;
 }
 
-.accountName {
+.desktopLabel {
   overflow: hidden;
-  max-width: 15ch;
+  max-width: 22ch;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -109,7 +137,7 @@
   top: calc(100% + 0.45rem);
   right: var(--space-page);
   width: min(19rem, calc(100% - 2 * var(--space-page)));
-  max-height: calc(100dvh - 5.5rem);
+  max-height: calc(100dvh - 6rem - var(--mobile-dock-height, 0px));
   overflow: auto;
   padding: 0.45rem;
   background: var(--color-surface);
@@ -135,17 +163,66 @@
   color: var(--color-link);
 }
 
-.menu .mobileStudio {
-  display: none;
-}
-
 @media (max-width: 38rem) {
-  .studioLink,
-  .accountName {
+  .inner {
+    min-height: 3.75rem;
+    padding-block: 0.35rem;
+  }
+
+  .desktopLabel {
     display: none;
   }
 
-  .menu .mobileStudio {
+  .dockLabel,
+  .studioLink svg,
+  .accountIcon {
+    display: block;
+  }
+
+  .productNav {
+    position: fixed;
+    inset: auto 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    min-height: var(--mobile-dock-height);
+    gap: 0.35rem;
+    padding: 0.35rem 0.55rem max(0.35rem, env(safe-area-inset-bottom));
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .homeLink,
+  .studioLink,
+  .accountLink {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    gap: 0.18rem;
+    padding: 0.3rem 0.2rem;
+    color: var(--color-muted);
+    text-align: center;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.2;
+    border-radius: 0.6rem;
+  }
+
+  .productNav a[aria-current],
+  .productNav a[data-section] {
+    background: var(--brand-color-primarySoft);
+    color: var(--color-link);
+  }
+
+  .accountIcon {
+    line-height: 0;
+  }
+
+  .avatar {
+    width: 22px;
+    height: 22px;
   }
 }
