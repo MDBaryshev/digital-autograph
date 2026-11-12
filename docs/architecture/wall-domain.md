@@ -27,6 +27,31 @@ Precisely: `draft → scheduled/live`, `scheduled → draft/live`, `live → pau
 
 ## Public visibility
 
+### Owner controls (EGO-188)
+
+`/me/walls` exposes existing publish, unschedule, pause, resume, end and archive
+actions through the authenticated owner API. The status-based button list is a
+presentation hint; ownership, current state and start/end boundaries remain
+backend decisions. Scheduling/date editing and automatic scheduling are separate.
+
+Every action has an inline confirmation. Opening it focuses Cancel; Escape and
+Cancel close it and restore the trigger's focus without sending a request. End
+and archive describe their irreversible effect; archive preserves the account's
+one-Wall limit. Pause/end warn that checkouts in progress may need support.
+
+Only one request runs at a time. After a successful POST, the workspace is read
+again before controls unlock. The transition response is not used to predict the
+current status. A lost response, conflict or failed read locks mutation controls;
+the separate Refresh Wall status button performs only a GET and never retries
+the POST. Successful reads replace the owner workspace, including changed access.
+Expired sessions link back to sign-in and first-use rejection links to the
+existing explicit confirmation flow with `/me/walls` as the return location.
+All requests retain credentials, no-store behavior and unmount cancellation. A
+15-second operation budget aborts stalled POST/refresh requests and leaves the
+same GET-only recovery path available.
+No backend transition, database, payment, reservation or Placement writer changes
+are introduced by these controls.
+
 | State     | Public Wall                | Public Creator summary |
 | --------- | -------------------------- | ---------------------- |
 | draft     | 404                        | Omitted                |
