@@ -237,6 +237,41 @@ it('imports a confidently cleared Telegram image as a private candidate and supe
   expect((await repository.list(mod, 1)).items).toEqual([]);
 });
 
+it('continues Telegram text checks when photo downloads fail and preserves open photo evidence', async () => {
+  const initial = { name: 'Initial', username: 'initial', avatarDataUrl: null };
+  const updated = { name: 'Updated', username: 'updated', avatarDataUrl: null };
+  await telegram.enqueue(owner, initial, new Date(1000), true);
+  const first = (await telegram.claim())!;
+  expect(first.profile).toEqual(initial);
+  await telegram.finish(first, { kind: 'clear', model: 'synthetic/vision' });
+  await telegram.enqueue(owner, updated, new Date(2000), true);
+  const textCheck = (await telegram.claim())!;
+  expect(textCheck.profile).toEqual(updated);
+  await telegram.finish(textCheck, {
+    kind: 'clear',
+    model: 'synthetic/vision',
+  });
+
+  const withPhoto = { ...updated, avatarDataUrl: image };
+  await telegram.enqueue(owner, withPhoto, new Date(3000));
+  await telegram.enqueue(owner, updated, new Date(4000), true);
+  const photoCheck = (await telegram.claim())!;
+  expect(photoCheck.profile).toEqual(withPhoto);
+  await telegram.finish(photoCheck, {
+    kind: 'flagged',
+    reason: 'SEXUAL_CONTENT',
+    model: 'synthetic/vision',
+  });
+  const review = (await repository.list(mod, 1)).items[0]!;
+  await telegram.enqueue(owner, initial, new Date(5000), true);
+  expect(await telegram.claim()).toBeNull();
+  expect((await repository.list(mod, 1)).items[0]?.id).toBe(review.id);
+
+  expect((await decide(review.id, 'rejected')).statusCode).toBe(200);
+  await telegram.enqueue(owner, initial, new Date(6000), true);
+  expect((await telegram.claim())?.profile).toEqual(initial);
+});
+
 it('discards a disabled account’s unprocessed snapshot and accepts it again after reactivation', async () => {
   const snapshot = {
     name: 'Example',
