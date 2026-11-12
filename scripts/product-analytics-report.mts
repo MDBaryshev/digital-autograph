@@ -1,3 +1,4 @@
+import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -14,7 +15,11 @@ const usage =
   'Supply 1–4 explicitly labelled input files. Window is [from, to). No collection or financial verification is performed.\n';
 
 async function readBounded(path: string, remaining: number) {
-  const handle = await open(path, 'r');
+  // A FIFO can block on open before the descriptor can be checked.
+  const handle = await open(
+    path,
+    constants.O_RDONLY | (constants.O_NONBLOCK ?? 0),
+  );
   try {
     const stat = await handle.stat();
     if (!stat.isFile() || stat.size > remaining)
