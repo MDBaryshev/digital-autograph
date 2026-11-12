@@ -80,13 +80,13 @@ for (const sameOrigin of [true, false]) {
       );
       await expect(
         page.frameLocator('iframe').getByRole('heading', {
-          name: 'Your mark. Their world.',
+          name: 'Leave your autograph.',
         }),
       ).toHaveCount(0);
       await page.goto(webUrl);
       await expect(
         page.getByRole('heading', {
-          name: 'Your mark. Their world.',
+          name: 'Leave your autograph.',
         }),
       ).toBeVisible();
     } finally {

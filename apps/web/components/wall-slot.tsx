@@ -2,7 +2,6 @@
 import { useLocale } from './locale-provider';
 
 import { useState } from 'react';
-import { frontendCapabilities } from '../lib/frontend-capabilities';
 import { placementSourceLabel } from '../lib/placement-history-api';
 import type { PublicWall } from '../lib/public-wall-api';
 import styles from '../app/walls/[id]/page.module.css';
@@ -14,12 +13,14 @@ export function WallSlot({
   apiOrigin,
   actionLabel,
   actionDisabled = false,
+  selected = false,
   onAction,
 }: {
   slot: Slot;
   apiOrigin: string;
   actionLabel?: string;
   actionDisabled?: boolean;
+  selected?: boolean;
   onAction?: () => void;
 }) {
   const { t } = useLocale();
@@ -39,6 +40,7 @@ export function WallSlot({
       tabIndex={-1}
       className={styles.slot}
       data-podium={podium}
+      data-selected={selected ? '' : undefined}
       aria-label={t(`Slot ${number}`)}
     >
       <span className={styles.slotNumber}>
@@ -99,37 +101,27 @@ export function WallSlot({
               ? ` · ${t(placementSourceLabel(slot.currentPlacement.source))}`
               : ''}
           </p>
-          {!frontendCapabilities.paidTakeover && (
-            <div>
-              <button
-                type="button"
-                disabled
-                aria-describedby={`takeover-unavailable-${slot.id}`}
-              >
-                {t('Paid takeover')}
-              </button>
-              <p id={`takeover-unavailable-${slot.id}`}>
-                {t('Paid takeover is not available yet.')}
-              </p>
-            </div>
-          )}
         </div>
+      ) : actionLabel ? (
+        <button
+          id={`slot-action-${slot.id}`}
+          className={styles.slotAction}
+          type="button"
+          disabled={actionDisabled}
+          aria-expanded={selected}
+          onClick={onAction}
+        >
+          <span className={styles.emptyMark} aria-hidden="true">
+            +
+          </span>
+          {t(actionLabel)}
+        </button>
       ) : (
         <div className={styles.slotContent}>
           <span className={styles.emptyMark} aria-hidden="true">
             +
           </span>
           <p>{t('Empty slot')}</p>
-          {actionLabel && (
-            <button
-              id={`slot-action-${slot.id}`}
-              type="button"
-              disabled={actionDisabled}
-              onClick={onAction}
-            >
-              {t(actionLabel)}
-            </button>
-          )}
         </div>
       )}
     </li>

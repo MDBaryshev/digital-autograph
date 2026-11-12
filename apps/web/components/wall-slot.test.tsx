@@ -73,9 +73,7 @@ it('keeps paid takeover disabled without requests, and retries failed public med
     creatorDashboard: false,
     notifications: true,
   });
-  const paid = screen.getByRole('button', { name: 'Paid takeover' });
-  expect(paid).toHaveProperty('disabled', true);
-  fireEvent.click(paid);
+  expect(screen.queryByRole('button', { name: 'Paid takeover' })).toBeNull();
   expect(onAction).not.toHaveBeenCalled();
   fireEvent.error(
     screen.getByRole('img', { name: 'Digital autograph in slot 1' }),

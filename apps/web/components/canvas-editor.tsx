@@ -1,7 +1,7 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   drawStrokes,
   drawingHeight,
@@ -17,17 +17,24 @@ type CanvasEditorProps = {
   onDrawingChange: (hasMarks: boolean) => void;
   onStrokesChange: (strokes: readonly Stroke[]) => void;
   disabled?: boolean;
+  compact?: boolean;
+  initialStrokes?: readonly Stroke[];
 };
 
 export function CanvasEditor({
   onDrawingChange,
   onStrokesChange,
   disabled = false,
+  compact = false,
+  initialStrokes = [],
 }: CanvasEditorProps) {
   const { t } = useLocale();
 
+  const drawingId = useId();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const strokesRef = useRef<Stroke[]>([]);
+  const strokesRef = useRef<Stroke[]>(
+    initialStrokes.map(({ points }) => ({ points: [...points] })),
+  );
   const activePointerRef = useRef<number | null>(null);
   const keyboardPointRef = useRef<Point>({
     x: drawingWidth / 2,
@@ -35,7 +42,7 @@ export function CanvasEditor({
     pressure: 0.65,
   });
   const keyboardDrawingRef = useRef(false);
-  const [strokeCount, setStrokeCount] = useState(0);
+  const [strokeCount, setStrokeCount] = useState(initialStrokes.length);
   const [message, setMessage] = useState('Drawing area ready.');
 
   const redraw = useCallback(() => {
@@ -156,6 +163,7 @@ export function CanvasEditor({
       return;
     }
     if (event.key === 'Escape' && keyboardDrawingRef.current) {
+      event.preventDefault();
       keyboardDrawingRef.current = false;
       publish('Keyboard stroke added.');
       return;
@@ -184,16 +192,21 @@ export function CanvasEditor({
   };
 
   return (
-    <section aria-labelledby="drawing-heading" className={styles.editor}>
+    <section
+      aria-labelledby={compact ? undefined : drawingId}
+      className={compact ? styles.compact : styles.editor}
+    >
       <div className={styles.header}>
-        <div>
-          <h2 id="drawing-heading">{t('Draw your autograph')}</h2>
-          <p>
-            {t(
-              'Use your finger, mouse, or stylus. The canvas stays private while you edit.',
-            )}
-          </p>
-        </div>
+        {!compact && (
+          <div>
+            <h2 id={drawingId}>{t('Draw your autograph')}</h2>
+            <p>
+              {t(
+                'Use your finger, mouse, or stylus. The canvas stays private while you edit.',
+              )}
+            </p>
+          </div>
+        )}
         <div className={styles.actions}>
           <button
             type="button"
@@ -215,7 +228,7 @@ export function CanvasEditor({
         ref={canvasRef}
         className={styles.canvas}
         aria-label={t('Autograph drawing area')}
-        aria-describedby="drawing-help"
+        aria-describedby={`${drawingId}-help`}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
@@ -227,10 +240,14 @@ export function CanvasEditor({
             finishPointer(event);
         }}
       />
-      <p id="drawing-help" className={styles.help}>
-        {t(
-          'Draw inside the bordered area. Keyboard: focus the canvas, press Space to lower or lift the pen, and use arrow keys to move; hold Shift for smaller steps. Use Undo or Clear to correct your drawing.',
-        )}
+      <p id={`${drawingId}-help`} className={styles.help}>
+        {compact
+          ? t(
+              'Draw with your finger or mouse. With a keyboard, press Space to start and use the arrow keys.',
+            )
+          : t(
+              'Draw inside the bordered area. Keyboard: focus the canvas, press Space to lower or lift the pen, and use arrow keys to move; hold Shift for smaller steps. Use Undo or Clear to correct your drawing.',
+            )}
       </p>
       <p className={styles.srOnly} role="status" aria-live="polite">
         {t(message)}
