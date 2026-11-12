@@ -61,6 +61,7 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
     ['/me/walls', t('My Walls'), 'globe'],
     ['/me/placements', t('Placement history'), 'history'],
     ['/me/notifications', t('Notifications'), 'bell'],
+    ['/me/shares', t('My public links'), 'globe'],
     ...(account?.canModerate
       ? [['/moderation', t('Moderation'), 'check']]
       : []),
