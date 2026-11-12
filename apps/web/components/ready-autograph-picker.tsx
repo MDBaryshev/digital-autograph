@@ -1,7 +1,8 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { autographIdParams } from '@digital-autograph/contracts';
 import { autographApi } from '../lib/autograph-api';
 import type { ReadyAutographChoice } from '../lib/wall-claim-api';
 import styles from '../app/walls/[id]/page.module.css';
@@ -21,36 +22,9 @@ export function ReadyAutographPicker({
 }) {
   const { t } = useLocale();
 
-  const [preview, setPreview] = useState<Preview | null>(null);
-  const [previewError, setPreviewError] = useState(false);
-  const [refresh, setRefresh] = useState(0);
-
-  useEffect(() => {
-    if (!selectedId) return;
-    const controller = new AbortController();
-    autographApi(apiOrigin)
-      .preview(selectedId, controller.signal)
-      .then((result) => {
-        if (!controller.signal.aborted) {
-          setPreview({ url: result.url, expiresAt: result.expiresAt });
-          setPreviewError(false);
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setPreviewError(true);
-      });
-    return () => controller.abort();
-  }, [apiOrigin, selectedId, refresh]);
-
-  useEffect(() => {
-    if (!preview || !selectedId) return;
-    const delay = Math.max(
-      1000,
-      new Date(preview.expiresAt).getTime() - Date.now() - 5000,
-    );
-    const timer = setTimeout(() => setRefresh((count) => count + 1), delay);
-    return () => clearTimeout(timer);
-  }, [preview, selectedId]);
+  const validSelection =
+    choices.some((choice) => choice.id === selectedId) &&
+    autographIdParams.safeParse({ id: selectedId }).success;
 
   return (
     <section className={styles.picker} aria-labelledby="ready-heading">
@@ -63,11 +37,7 @@ export function ReadyAutographPicker({
               name="ready-autograph"
               value={choice.id}
               checked={choice.id === selectedId}
-              onChange={() => {
-                setPreview(null);
-                setPreviewError(false);
-                onSelect(choice.id);
-              }}
+              onChange={() => onSelect(choice.id)}
             />
             <span>
               {choice.source === 'canvas' ? t('Drawn') : t('Photo')}
@@ -78,33 +48,152 @@ export function ReadyAutographPicker({
           </label>
         ))}
       </div>
-      {selectedId && (
-        <div className={styles.privatePreview}>
-          <p>{t('Your private preview')}</p>
-          {preview && !previewError ? (
-            <img
-              key={`${selectedId}:${preview.url}`}
-              src={preview.url}
-              alt={t('Private preview of your selected digital autograph')}
-              crossOrigin="anonymous"
-              referrerPolicy="no-referrer"
-              onError={() => setPreviewError(true)}
-            />
-          ) : (
-            <p role="status">
-              {previewError
-                ? t('Preview unavailable. Refresh it to try again.')
-                : t('Loading preview…')}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => setRefresh((count) => count + 1)}
-          >
-            {t('Refresh private preview')}
-          </button>
-        </div>
+      {validSelection && (
+        <SelectedPreview
+          key={JSON.stringify([apiOrigin, selectedId])}
+          apiOrigin={apiOrigin}
+          autographId={selectedId}
+        />
       )}
     </section>
+  );
+}
+
+function selectedPreview(value: unknown): Preview {
+  if (!value || typeof value !== 'object') throw Error('INVALID_PREVIEW');
+  const result = value as Record<string, unknown>;
+  if (typeof result.url !== 'string' || typeof result.expiresAt !== 'string')
+    throw Error('INVALID_PREVIEW');
+  const url = new URL(result.url);
+  const expires = new Date(result.expiresAt);
+  if (
+    !['https:', 'http:'].includes(url.protocol) ||
+    !Number.isFinite(expires.getTime()) ||
+    expires.toISOString() !== result.expiresAt ||
+    expires.getTime() <= Date.now()
+  )
+    throw Error('INVALID_PREVIEW');
+  return { url: result.url, expiresAt: result.expiresAt };
+}
+
+function SelectedPreview({
+  apiOrigin,
+  autographId,
+}: {
+  apiOrigin: string;
+  autographId: string;
+}) {
+  const { t } = useLocale();
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const request = useRef<AbortController | null>(null);
+  const visible = useRef<Preview | null>(null);
+
+  function load() {
+    if (request.current) return;
+    const controller = new AbortController();
+    request.current = controller;
+    visible.current = null;
+    setPreview(null);
+    setError(false);
+    setLoading(true);
+    let rejectAbort!: () => void;
+    const aborted = new Promise<never>((_, reject) => {
+      rejectAbort = () => reject(Error('PREVIEW_READ_ABORTED'));
+      controller.signal.addEventListener('abort', rejectAbort, { once: true });
+    });
+    const timer = window.setTimeout(() => controller.abort(), 10_000);
+    void (async () => {
+      try {
+        // The deadline includes JSON reading, even if fetch/body ignores abort.
+        const result = selectedPreview(
+          await Promise.race([
+            autographApi(apiOrigin).preview(autographId, controller.signal),
+            aborted,
+          ]),
+        );
+        if (request.current !== controller || controller.signal.aborted) return;
+        visible.current = result;
+        setPreview(result);
+      } catch {
+        if (request.current === controller) setError(true);
+      } finally {
+        window.clearTimeout(timer);
+        controller.signal.removeEventListener('abort', rejectAbort);
+        if (request.current === controller) {
+          request.current = null;
+          setLoading(false);
+        }
+      }
+    })();
+  }
+
+  useEffect(() => {
+    load();
+    return () => {
+      const previous = request.current;
+      request.current = null;
+      visible.current = null;
+      previous?.abort();
+    };
+    // The keyed selection remounts on ID/origin change, before effects run.
+  }, []);
+
+  useEffect(() => {
+    if (!preview) return;
+    const remaining = Math.max(
+      0,
+      new Date(preview.expiresAt).getTime() - Date.now(),
+    );
+    const expiry = window.setTimeout(
+      () => {
+        if (visible.current !== preview) return;
+        visible.current = null;
+        setPreview(null);
+        setError(true);
+      },
+      Math.min(remaining, 2_147_483_647),
+    );
+    const renewal =
+      remaining > 5_000
+        ? window.setTimeout(load, Math.min(remaining - 5_000, 2_147_483_647))
+        : null;
+    return () => {
+      window.clearTimeout(expiry);
+      if (renewal !== null) window.clearTimeout(renewal);
+    };
+  }, [preview]);
+
+  return (
+    <div className={styles.privatePreview} aria-busy={loading}>
+      <p>{t('Your private preview')}</p>
+      {preview && new Date(preview.expiresAt).getTime() > Date.now() ? (
+        <img
+          key={preview.url}
+          src={preview.url}
+          alt={t('Private preview of your selected digital autograph')}
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+          onError={() => {
+            if (visible.current !== preview) return;
+            visible.current = null;
+            setPreview(null);
+            setError(true);
+          }}
+        />
+      ) : (
+        <p role={error ? 'alert' : 'status'}>
+          {t(
+            error
+              ? 'Preview unavailable. Refresh it to try again.'
+              : 'Loading preview…',
+          )}
+        </p>
+      )}
+      <button type="button" aria-disabled={loading} onClick={load}>
+        {t('Refresh private preview')}
+      </button>
+    </div>
   );
 }

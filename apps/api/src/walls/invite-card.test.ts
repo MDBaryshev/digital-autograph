@@ -2,7 +2,8 @@ import { expect, it, vi } from 'vitest';
 import sharp from 'sharp';
 import { renderWallInviteCard } from './invite-card';
 import type { PublicWall } from '@digital-autograph/walls';
-// Cold font discovery on a hosted runner can exceed Vitest's default five seconds.
+// The first PNG render on hosted Windows has exceeded 15 seconds. Bound that
+// platform's initialization wait while retaining the shorter limit elsewhere.
 it.each(['ru', 'en'] as const)(
   'renders a fixed %s PNG from bounded public text without fetching media or external URLs',
   async (locale) => {
@@ -42,5 +43,5 @@ it.each(['ru', 'en'] as const)(
       fetcher.mockRestore();
     }
   },
-  15000,
+  process.platform === 'win32' ? 45_000 : 15_000,
 );

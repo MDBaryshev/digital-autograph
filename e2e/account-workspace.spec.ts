@@ -85,6 +85,12 @@ test('owner sets up a profile, creates a draft and explicitly publishes their ow
   await page
     .getByRole('button', { name: 'Опубликовать стену', exact: true })
     .click();
+  await page
+    .getByRole('button', {
+      name: 'Подтвердить: Опубликовать стену',
+      exact: true,
+    })
+    .click();
   await page.getByRole('link', { name: 'Открыть стену', exact: true }).click();
   await expect(page).toHaveURL(/\/walls\/[a-f0-9-]+$/);
   await expect(page.getByRole('listitem', { name: /^Место \d+$/ })).toHaveCount(
