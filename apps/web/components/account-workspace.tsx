@@ -1,5 +1,6 @@
 'use client';
 import { WallAppearanceEditor } from './wall-appearance-editor';
+import { OwnerRejectionDetails } from './owner-rejection-details';
 import { WallLifecycleControls } from './wall-lifecycle-controls';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
 import { isPublicWall, wallStatuses } from '@digital-autograph/domain';
@@ -235,6 +236,12 @@ export function AccountWorkspace({
                   <h2>{t(a.source === 'canvas' ? 'Drawing' : 'Photo')}</h2>
                   <p>{date(a.createdAt)}</p>
                   <p>{t(statuses[a.status] ?? a.status)}</p>
+                  {a.status === 'moderation_rejected' && (
+                    <OwnerRejectionDetails
+                      apiOrigin={apiOrigin}
+                      autographId={a.id}
+                    />
+                  )}
                   {[
                     'awaiting_approval',
                     'awaiting_moderation',
