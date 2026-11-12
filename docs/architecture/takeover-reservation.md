@@ -12,13 +12,13 @@ Creation checks that the Quote belongs to the active authenticated User; unknown
 
 ## Exclusivity and lock order
 
-Creation first takes a transaction advisory lock keyed by User, reads the immutable Quote, locks its Wall `FOR SHARE`, then its Slot `FOR UPDATE`, then its target Placement `FOR SHARE`. This follows the Wall → Slot order of Free Claim and serializes with Wall lifecycle updates and Placement completion. After all row-lock waits, a single PostgreSQL `clock_timestamp()` snapshot governs eligibility, cooldown, Quote expiration, stale Reservation cleanup, and the new Reservation's timestamps. The current Wall must be `live`, with `start_at <= now` and `end_at > now` when set. Guaranteed visibility is checked against the immutable pricing config referenced by the Quote. No takeover count, decay, or price calculation occurs.
+Creation first takes a transaction advisory lock keyed by User, reads the immutable Quote, locks its Wall `FOR SHARE`, then its Slot `FOR UPDATE`, then its target Placement `FOR SHARE`. This follows the Wall → Slot order of Free Claim and serializes with Wall lifecycle updates and Placement completion. After all row-lock waits, a single PostgreSQL `clock_timestamp()` snapshot governs eligibility, cooldown, Quote expiration, stale Reservation cleanup, and the new Reservation's timestamps. The current Wall must be `live`, with `start_at <= now` and `end_at > now` when set. Guaranteed visibility is checked against the current Placement’s immutable paid checkout evidence when present, otherwise the pricing config referenced by the Quote. No takeover count, decay, or price calculation occurs.
 
 Under the locked Slot, any `active` Reservation with `expires_at <= now` becomes `expired`; a partial unique index on `(slot_id) WHERE status = 'active'` is the final database guard. Only one effective active Reservation can exist per Slot. Future Placement writers and Atomic Takeover must lock Wall → Slot and re-read the active Reservation before changing ownership. The Reservation itself does not modify Placement.
 
 ## TTL and lifecycle
 
-Default TTL is 240 seconds, bounded to 180–300 seconds independently of the Quote TTL. A successfully created Reservation may outlive its Quote. Its price remains fixed until cancellation or expiry. No background scheduler is needed for correctness: creation, read, and cancellation lazily mark elapsed active rows `expired` and preserve them as history. `active → expired` and `active → cancelled` are the only state changes. A trigger prevents snapshot mutation, resurrection, other transitions, and deletion. Cancellation is owner-only, idempotent, and frees the Slot immediately. An expired Reservation is returned as expired rather than cancelled.
+Default TTL is 300 seconds, bounded to 180–300 seconds independently of the Quote TTL. A successfully created Reservation may outlive its Quote. Its price remains fixed until cancellation or expiry. No background scheduler is needed for correctness: creation, read, and cancellation lazily mark elapsed active rows `expired` and preserve them as history. `active → expired` and `active → cancelled` are the only state changes. A trigger prevents snapshot mutation, resurrection, other transitions, and deletion. Cancellation is owner-only, idempotent, and frees the Slot immediately. An expired Reservation is returned as expired rather than cancelled.
 
 ## Idempotency and API
 
@@ -68,3 +68,11 @@ creator self-inflation; those remain in EGO-108/EGO-109. It never bans an accoun
 The defaults are server-owned; changing them requires a reviewed code change.
 Direct database writers must follow the admission lock protocol. Rolling deploys
 must replace all old API instances before this cross-instance guarantee applies.
+
+## Payment window — EGO-185 (05.11.2026)
+
+The explicit checkout action creates the existing exclusive reservation for five minutes. Retries never extend it. Public Wall reads expose only `serverNow`, `reservationExpiresAt` and `takeoverAvailableAt`, from one PostgreSQL statement timestamp. Reservation/User/Order/provider identifiers are not part of this projection. Expired reservations are omitted even before cleanup.
+
+The Wall refreshes every five seconds while visible and uses elapsed monotonic time from the server timestamp for its countdown. At zero it keeps the hold and shows a refresh state until a server response confirms release. The existing late-payment recovery path remains authoritative and never replaces a newer placement from an expired reservation. The paid-entry release capability remains subject to the existing launch gates.
+
+Only opaque retry keys/Quote IDs are retained in sessionStorage for an explicit resume after reload. A resume replays the original server request and deadline; it does not create a hold on render or extend one. No auth or provider credentials are stored there.

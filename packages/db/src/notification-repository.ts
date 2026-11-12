@@ -1,3 +1,4 @@
+import { paidProtectionSecondsSql } from './placement-protection';
 import { randomUUID } from 'node:crypto';
 import {
   notificationKinds,
@@ -85,7 +86,7 @@ async function stillRelevant(
         `SELECT 1 FROM placements p JOIN slots s ON s.id=p.slot_id JOIN walls w ON w.id=s.wall_id
       JOIN pricing_config_versions pc ON pc.id=w.pricing_config_id
       WHERE 'cooldown:'||p.id=$1 AND p.ended_at IS NULL AND w.status='live'
-      AND p.started_at+pc.guaranteed_visibility_seconds*interval '1 second' BETWEEN clock_timestamp()-interval '15 minutes' AND clock_timestamp()
+      AND p.started_at+COALESCE(${paidProtectionSecondsSql},pc.guaranteed_visibility_seconds)*interval '1 second' BETWEEN clock_timestamp()-interval '15 minutes' AND clock_timestamp()
       AND (w.end_at IS NULL OR w.end_at>clock_timestamp())`,
         [event.source_key],
       )
@@ -226,8 +227,8 @@ export function createPgNotificationRepository(
         SELECT 'cooldown:'||p.id,p.user_id,'cooldown_ended',w.id,s.id
         FROM placements p JOIN slots s ON s.id=p.slot_id JOIN walls w ON w.id=s.wall_id
         JOIN pricing_config_versions pc ON pc.id=w.pricing_config_id
-        WHERE p.ended_at IS NULL AND w.status='live' AND pc.guaranteed_visibility_seconds>0
-        AND p.started_at + pc.guaranteed_visibility_seconds*interval '1 second' BETWEEN clock_timestamp()-interval '15 minutes' AND clock_timestamp()
+        WHERE p.ended_at IS NULL AND w.status='live' AND COALESCE(${paidProtectionSecondsSql},pc.guaranteed_visibility_seconds)>0
+        AND p.started_at + COALESCE(${paidProtectionSecondsSql},pc.guaranteed_visibility_seconds)*interval '1 second' BETWEEN clock_timestamp()-interval '15 minutes' AND clock_timestamp()
         AND (w.end_at IS NULL OR w.end_at>clock_timestamp()) ON CONFLICT DO NOTHING`);
       await pool.query(`INSERT INTO notification_events (source_key,user_id,kind,wall_id)
         SELECT 'drop:'||w.id||':'||sub.user_id||':'||v.kind||':'||v.at::text,sub.user_id,v.kind,w.id

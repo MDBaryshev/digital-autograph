@@ -148,6 +148,22 @@ export const messages: Record<string, string> = {
   'Confirm revocation': 'Подтвердить отзыв',
   'Cancel revocation': 'Отменить отзыв',
   'Load more links': 'Загрузить ещё ссылки',
+  'Reserved for payment': 'Забронировано для оплаты',
+  'Checking availability…': 'Проверяем доступность…',
+  'Protected from takeover for': 'Защищено от перекупки ещё',
+  'The buyer has 5 minutes to pay. Availability is confirmed by the server.':
+    'У покупателя есть 5 минут на оплату. Доступность подтверждает сервер.',
+  'Resume reservation': 'Продолжить бронирование',
+  'Reserve for 5 minutes': 'Забронировать на 5 минут',
+  'Reserving…': 'Бронируем…',
+  'Continue to payment': 'Перейти к оплате',
+  'Could not reserve. Retry the same request.':
+    'Не удалось подтвердить бронь. Повтори тот же запрос.',
+  'This slot is reserved or no longer available. Refresh the Wall.':
+    'Место забронировано или уже недоступно. Обнови стену.',
+  '1 minute': '1 мин.',
+  '{minutes} minutes': '{minutes} мин.',
+
   'Invite to this Wall': 'Приглашение на стену',
   'Invite your people': 'Позови своих',
   'One Wall. Ten places. Send the link to someone who should be here.':

@@ -14,14 +14,8 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import {
   createDatabase,
-  createPgPricingRepository,
-  createPgTakeoverReservationRepository,
   createPgAutographProcessingRepository,
 } from '../../packages/db/src/index';
-import {
-  TakeoverQuoteService,
-  TakeoverReservationService,
-} from '../../packages/walls/src/index';
 const value = process.env.TEST_DATABASE_URL;
 if (!value || new URL(value).pathname !== '/autograph_test')
   throw new Error('Migration requires isolated autograph_test');
@@ -186,8 +180,8 @@ it('upgrades populated A02 processing jobs while preserving adopted and unknown 
     rmSync(temp, { recursive: true, force: true });
   }
 }, 60000);
-it.each([17, 19])(
-  'migrates clean DB twice and upgrades populated pre-00%s without fabricated checkout confirmation',
+it.each([17, 19, 27])(
+  'migrates clean DB twice and upgrades populated pre-00%s preserving existing checkout evidence without fabricating historical acceptance',
   async (beforeIndex) => {
     const name = `autograph_test_legal_${randomUUID().replaceAll('-', '')}`;
     const u = new URL(value!);
@@ -231,21 +225,28 @@ it.each([17, 19])(
       );
       await db.pool.query('INSERT INTO creators(id) VALUES($1)', [creator]);
       const config = await db.pool.query(
-        `INSERT INTO pricing_config_versions(algorithm_version,currency,base_amount_minor,minimum_amount_minor,maximum_amount_minor,dynamic_takeover_limit,takeover_step_size,step_amount_minor,decay_interval_seconds,decay_amount_minor,decay_floor_amount_minor,guaranteed_visibility_seconds,created_by_user_id) VALUES('takeover_ladder_v1','RUB',65000,10000,100000,3,1,1000,60,100,10000,0,$1) RETURNING id`,
-        [user],
+        `INSERT INTO pricing_config_versions(algorithm_version,currency,base_amount_minor,minimum_amount_minor,maximum_amount_minor,dynamic_takeover_limit,takeover_step_size,step_amount_minor,decay_interval_seconds,decay_amount_minor,decay_floor_amount_minor,guaranteed_visibility_seconds,created_by_user_id) VALUES('takeover_ladder_v1','RUB',65000,10000,100000,3,1,1000,60,100,10000,$2,$1) RETURNING id`,
+        [user, beforeIndex === 27 ? 900 : 0],
       );
       await db.pool.query(
         "INSERT INTO walls(id,creator_id,status,slot_count,pricing_config_id) VALUES($1,$2,'live',10,$3)",
         [wall, creator, config.rows[0].id],
       );
-      await db.pool.query(
-        'INSERT INTO slots(id,wall_id,position) VALUES($1,$2,0)',
-        [slot, wall],
-      );
-      await db.pool.query(
-        'INSERT INTO slots(wall_id,position) SELECT $1,n FROM generate_series(1,9) n',
-        [wall],
-      );
+      if (beforeIndex >= 25) {
+        await db.pool.query(
+          'UPDATE slots SET id=$1 WHERE wall_id=$2 AND position=0',
+          [slot, wall],
+        );
+      } else {
+        await db.pool.query(
+          'INSERT INTO slots(id,wall_id,position) VALUES($1,$2,0)',
+          [slot, wall],
+        );
+        await db.pool.query(
+          'INSERT INTO slots(wall_id,position) SELECT $1,n FROM generate_series(1,9) n',
+          [wall],
+        );
+      }
       await db.pool.query(
         "INSERT INTO autographs(id,user_id,source,status) VALUES($1,$2,'canvas','draft')",
         [autograph, user],
@@ -254,19 +255,43 @@ it.each([17, 19])(
         "INSERT INTO placements(slot_id,user_id,source,started_at) VALUES($1,$2,'free_claim',now()-interval '1 hour')",
         [slot, occupant],
       );
-      const q = await new TakeoverQuoteService(
-        createPgPricingRepository(db.pool),
-      ).createQuote({ userId: user, wallId: wall, slotId: slot });
-      const r = await new TakeoverReservationService(
-        createPgTakeoverReservationRepository(db.pool),
-      ).create(user, q.id, randomUUID());
+      // Seed the historical schema with its own original row contract. Current
+      // repositories require the fully migrated checkout-evidence table.
+      const q = (
+        await db.pool.query(
+          `WITH moment AS MATERIALIZED (SELECT clock_timestamp() AS now)
+        INSERT INTO takeover_quotes(user_id,wall_id,slot_id,target_placement_id,pricing_config_id,algorithm_version,currency,amount_minor,wall_takeover_count,last_takeover_at,step_index,ladder_amount_minor,decay_intervals_applied,quoted_at,expires_at)
+        SELECT $1,$2,$3,p.id,$4,'takeover_ladder_v1','RUB',65000,0,NULL,0,65000,0,moment.now,moment.now+interval '120 seconds'
+        FROM placements p CROSS JOIN moment WHERE p.slot_id=$3 AND p.ended_at IS NULL RETURNING id`,
+          [user, wall, slot, config.rows[0].id],
+        )
+      ).rows[0];
+      const r = {
+        reservation: (
+          await db.pool.query(
+            `WITH moment AS MATERIALIZED (SELECT clock_timestamp() AS now)
+        INSERT INTO takeover_reservations(quote_id,user_id,wall_id,slot_id,target_placement_id,pricing_config_id,currency,amount_minor,idempotency_key_hash,status,created_at,expires_at)
+        SELECT q.id,q.user_id,q.wall_id,q.slot_id,q.target_placement_id,q.pricing_config_id,q.currency,q.amount_minor,repeat('d',64),'active',moment.now,moment.now+interval '300 seconds'
+        FROM takeover_quotes q CROSS JOIN moment WHERE q.id=$1 RETURNING id`,
+            [q.id],
+          )
+        ).rows[0],
+      };
       const seed = await db.pool.connect();
       try {
         await seed.query('BEGIN');
         const order = await seed.query(
-          `INSERT INTO payment_orders(user_id,reservation_id,quote_id,wall_id,slot_id,target_placement_id,autograph_id,creator_id,pricing_config_id,amount_minor,currency,creator_share_bps${beforeIndex === 19 ? ',offer_version,offer_hash,content_rules_version,content_rules_hash,refund_policy_version,refund_policy_hash' : ''}) SELECT user_id,id,quote_id,wall_id,slot_id,target_placement_id,$2,$3,pricing_config_id,amount_minor,currency,5000${beforeIndex === 19 ? ",'legacy-v1',repeat('a',64),'legacy-v1',repeat('b',64),'legacy-v1',repeat('c',64)" : ''} FROM takeover_reservations WHERE id=$1 RETURNING id`,
+          `INSERT INTO payment_orders(user_id,reservation_id,quote_id,wall_id,slot_id,target_placement_id,autograph_id,creator_id,pricing_config_id,amount_minor,currency,creator_share_bps${beforeIndex >= 19 ? ',offer_version,offer_hash,content_rules_version,content_rules_hash,refund_policy_version,refund_policy_hash' : ''}) SELECT user_id,id,quote_id,wall_id,slot_id,target_placement_id,$2,$3,pricing_config_id,amount_minor,currency,5000${beforeIndex >= 19 ? ",'legacy-v1',repeat('a',64),'legacy-v1',repeat('b',64),'legacy-v1',repeat('c',64)" : ''} FROM takeover_reservations WHERE id=$1 RETURNING id`,
           [r.reservation.id, autograph, creator],
         );
+        if (beforeIndex === 27) {
+          await seed.query(
+            `INSERT INTO checkout_confirmations(order_id,user_id,reservation_id,autograph_id,amount_minor,currency,guaranteed_visibility_seconds,reservation_expires_at,target_placement_id,pricing_config_id,offer_version,offer_hash,content_rules_version,content_rules_hash,refund_policy_version,refund_policy_hash)
+            SELECT o.id,o.user_id,o.reservation_id,o.autograph_id,o.amount_minor,o.currency,900,r.expires_at,o.target_placement_id,o.pricing_config_id,o.offer_version,o.offer_hash,o.content_rules_version,o.content_rules_hash,o.refund_policy_version,o.refund_policy_hash
+            FROM payment_orders o JOIN takeover_reservations r ON r.id=o.reservation_id WHERE o.id=$1`,
+            [order.rows[0].id],
+          );
+        }
         await seed.query(
           `INSERT INTO payments(order_id,provider,shop_id,mode,operation_key,request_fingerprint,return_url,amount_minor,currency) SELECT id,'yookassa','123','sandbox',$2,repeat('a',64),'https://example.test/return',amount_minor,currency FROM payment_orders WHERE id=$1`,
           [order.rows[0].id, randomUUID()],
@@ -287,6 +312,7 @@ it.each([17, 19])(
         'placements',
         'payment_orders',
         'payments',
+        ...(beforeIndex === 27 ? ['checkout_confirmations'] : []),
       ];
       const originals = new Map<string, string>();
       for (const t of tables)
@@ -295,7 +321,7 @@ it.each([17, 19])(
           JSON.stringify(
             (
               await db.pool.query(
-                `SELECT to_jsonb(t) AS record FROM ${t} t ORDER BY id`,
+                `SELECT to_jsonb(t) AS record FROM ${t} t ORDER BY ${t === 'checkout_confirmations' ? 'order_id' : 'id'}`,
               )
             ).rows,
           ),
@@ -310,7 +336,7 @@ it.each([17, 19])(
           JSON.stringify(
             (
               await db.pool.query(
-                `SELECT to_jsonb(t)${subtraction} AS record FROM ${t} t ORDER BY id`,
+                `SELECT to_jsonb(t)${subtraction} AS record FROM ${t} t ORDER BY ${t === 'checkout_confirmations' ? 'order_id' : 'id'}`,
               )
             ).rows,
           ),
@@ -329,7 +355,15 @@ it.each([17, 19])(
       );
       expect(
         (await db.pool.query('SELECT 1 FROM checkout_confirmations')).rowCount,
-      ).toBe(0);
+      ).toBe(beforeIndex === 27 ? 1 : 0);
+      if (beforeIndex === 27)
+        expect(
+          (
+            await db.pool.query(
+              'SELECT guaranteed_visibility_seconds FROM checkout_confirmations',
+            )
+          ).rows[0].guaranteed_visibility_seconds,
+        ).toBe(900);
       expect(
         (await db.pool.query('SELECT * FROM legal_evidence_events')).rowCount,
       ).toBe(0);

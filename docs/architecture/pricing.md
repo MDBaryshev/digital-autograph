@@ -3,7 +3,7 @@
 ## Owner product decision — 27.10.2026
 
 [Pricing Spec v1](../product/pricing-spec-v1.md) records the approved 89 RUB
-base/minimum,100 RUB per successful Wall takeover,4989 RUB cap and 900-second
+base/minimum,100 RUB per successful Wall takeover,4989 RUB cap and, as revised on 05.11.2026, 2700-second
 protection. The versioned partial policy is preparation only: decay remains
 unapproved, so it is not seeded/applied as a complete runtime config. Creator50%
 rate does not approve the payout base. No production/publication authorization.
@@ -53,3 +53,5 @@ The Wall must be `live`, with `start_at <= now` and `end_at > now` when those bo
 `takeover_quotes` binds the User, Wall, Slot, exact active target Placement, pinned config, algorithm, currency, amount, Wall takeover count, last takeover timestamp, ladder step, ladder amount, applied decay intervals, quote time, and expiry. Its append-only trigger rejects UPDATE and DELETE. The config version plus stored input and output snapshot explain historical prices even if the global default later changes. HTTP returns no private User IDs, storage keys, provider fields, or payment data. It uses `Cache-Control: no-store`.
 
 The Quote does not lock a Slot beyond its short transaction. A later Placement change can stale it. EGO-98's [Reservation flow](takeover-reservation.md) consumes the immutable Quote, rejects an expired or displaced target, and snapshots its amount without recalculation.
+
+For new paid Orders as of EGO-185, the 2700-second period is pinned in immutable checkout evidence even when the Wall still references an older pricing config. Target eligibility reads the fulfilled Order's evidence first. Existing paid evidence is preserved; free/admin/legacy Placements without such evidence continue to use their pinned config. See [checkout acceptance](paid-checkout-legal-acceptance.md#45-minute-paid-protection--ego-185-05112026).

@@ -1,3 +1,4 @@
+import { paidProtectionSecondsSql } from './placement-protection';
 import type {
   PricingConfiguration,
   WallStatus,
@@ -112,9 +113,10 @@ async function quoteInTransaction(
     id: string;
     user_id: string;
     started_at: Date;
+    protection_seconds: number | null;
   }>(
-    `SELECT id, user_id, started_at FROM placements
-     WHERE slot_id = $1::uuid AND ended_at IS NULL FOR SHARE`,
+    `SELECT p.id, p.user_id, p.started_at, ${paidProtectionSecondsSql} AS protection_seconds FROM placements p
+     WHERE p.slot_id = $1::uuid AND p.ended_at IS NULL FOR SHARE OF p`,
     [input.slotId],
   );
   const pricing = currentWall.pricing_config_id
@@ -153,6 +155,8 @@ async function quoteInTransaction(
           id: target.rows[0].id,
           userId: target.rows[0].user_id,
           startedAt: target.rows[0].started_at,
+          guaranteedVisibilitySeconds:
+            target.rows[0].protection_seconds ?? undefined,
         }
       : null,
     wallTakeoverCount: BigInt(snapshot.takeover_count),

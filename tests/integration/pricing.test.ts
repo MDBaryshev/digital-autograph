@@ -213,7 +213,7 @@ describe('Pricing config and persisted takeover quotes', () => {
         pricingConfigId: config.json().id,
         slotCount: 5,
       });
-      await place(wall.slotId, seller.id, 'free_claim', 1000);
+      await place(wall.slotId, seller.id, 'free_claim', 3000);
       await place(wall.slotIds[2]!, seller.id, 'admin', 1000, false);
       for (let i = 0; i < count; i++)
         await place(wall.slotIds[1]!, seller.id, 'takeover', 1000 + i, false);
@@ -250,7 +250,7 @@ describe('Pricing config and persisted takeover quotes', () => {
     },
   );
   it.each(['free_claim', 'takeover', 'admin'] as const)(
-    'enforces 900-second protection for %s and admits a quote after its boundary',
+    'enforces 2700-second protection for %s and admits a quote after its boundary',
     async (source) => {
       const admin = await person('admin');
       const seller = await person();
@@ -259,7 +259,7 @@ describe('Pricing config and persisted takeover quotes', () => {
       const wall = await createWall(seller.id, {
         pricingConfigId: config.json().id,
       });
-      await place(wall.slotId, seller.id, source, 870);
+      await place(wall.slotId, seller.id, source, 2670);
       expect(
         (await quote(wall.wallId, wall.slotId, buyer.token)).json().error.code,
       ).toBe('TAKEOVER_COOLDOWN_ACTIVE');
@@ -269,7 +269,7 @@ describe('Pricing config and persisted takeover quotes', () => {
       const eligible = await createWall(seller.id, {
         pricingConfigId: config.json().id,
       });
-      await place(eligible.slotId, seller.id, source, 900);
+      await place(eligible.slotId, seller.id, source, 2700);
       expect(
         (await quote(eligible.wallId, eligible.slotId, buyer.token)).statusCode,
       ).toBe(201);

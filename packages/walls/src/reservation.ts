@@ -66,7 +66,7 @@ export interface TakeoverReservationRepository {
 export class TakeoverReservationService {
   constructor(
     private readonly repository: TakeoverReservationRepository,
-    private readonly ttlSeconds = 240,
+    private readonly ttlSeconds = 300,
   ) {
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 180 || ttlSeconds > 300) {
       throw new Error('Reservation TTL must be 180–300 seconds');

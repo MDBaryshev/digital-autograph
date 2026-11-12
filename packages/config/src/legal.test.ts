@@ -5,7 +5,7 @@ import { requireLegalDocument } from '../../domain/src/legal';
 describe('canonical legal registry', () => {
   it('hashes exact served public bytes and fails closed on incomplete legal documents', () => {
     const docs = loadLegalDocuments();
-    expect(docs).toHaveLength(14);
+    expect(docs).toHaveLength(18);
     expect(docs.filter((d) => d.current)).toHaveLength(7);
     for (const d of docs) {
       expect(createHash('sha256').update(d.content).digest('hex')).toBe(d.hash);
@@ -78,9 +78,7 @@ it('verifies the eight pinned DOCX hashes and exact canonical bytes independentl
       .filter((d) => d.current)
       .every((d) => d.version === '1.0-destka-20261010'),
   ).toBe(true);
-  expect(docs.filter((d) => !d.current).every((d) => d.version === '1.0')).toBe(
-    true,
-  );
+  expect(docs.slice(0, 7).every((d) => d.version === '1.0')).toBe(true);
   expect(docs.some((d) => d.file.includes('vulnerability'))).toBe(false);
 });
 
@@ -107,4 +105,39 @@ it('rejects ambiguous/missing types, internal paths, byte tampering and ready pl
       read,
     ),
   ).toThrow('Invalid legal document registry');
+});
+
+it('preserves historical editions while preparing exact 5-minute / 45-minute drafts', async () => {
+  const { readFileSync } = await import('node:fs');
+  const records = JSON.parse(
+    readFileSync('docs/legal/payment-window-20261105.json', 'utf8'),
+  ) as Array<{
+    type: string;
+    sourceFile: string;
+    sourceHash: string;
+    file: string;
+    version: string;
+    hash: string;
+  }>;
+  const docs = loadLegalDocuments();
+  expect(records).toHaveLength(4);
+  for (const record of records) {
+    const prior = readFileSync(`docs/legal/public/${record.sourceFile}`);
+    expect(createHash('sha256').update(prior).digest('hex')).toBe(
+      record.sourceHash,
+    );
+    const draft = docs.find(
+      (d) => d.type === record.type && d.version === record.version,
+    )!;
+    expect(draft).toMatchObject({
+      hash: record.hash,
+      ready: false,
+      current: false,
+    });
+    expect(draft.content).not.toContain('[[');
+    if (record.type !== 'community_guidelines') {
+      expect(draft.content).toContain('2700');
+      expect(draft.content).toContain('300');
+    }
+  }
 });

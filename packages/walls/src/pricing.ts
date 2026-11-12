@@ -13,7 +13,12 @@ export type PricingVersion = PricingConfiguration & { id: string };
 export type QuoteContext = {
   wall: { status: WallStatus; startAt: Date | null; endAt: Date | null };
   pricing: PricingVersion | null;
-  targetPlacement: { id: string; userId: string; startedAt: Date } | null;
+  targetPlacement: {
+    id: string;
+    userId: string;
+    startedAt: Date;
+    guaranteedVisibilitySeconds?: number;
+  } | null;
   wallTakeoverCount: bigint;
   lastTakeoverAt: Date | null;
   now: Date;
@@ -114,7 +119,9 @@ function calculateEligibleQuote(
   if (placement.userId === userId) throw new PricingError('OWN_PLACEMENT');
   const availableAt = new Date(
     placement.startedAt.getTime() +
-      context.pricing.guaranteedVisibilitySeconds * 1000,
+      (placement.guaranteedVisibilitySeconds ??
+        context.pricing.guaranteedVisibilitySeconds) *
+        1000,
   );
   if (context.now < availableAt) {
     throw new PricingError('TAKEOVER_COOLDOWN_ACTIVE', availableAt);

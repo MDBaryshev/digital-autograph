@@ -124,5 +124,41 @@
     "file": "dissemination-consent-destka-20261010.md",
     "ready": false,
     "current": true
+  },
+  {
+    "type": "terms_of_use",
+    "version": "1.1-destka-20261105",
+    "hash": "87a698c62178e506f15541ad7ebba4306fac216e1a1a5803e4c35e35dea47ca8",
+    "path": "/legal/documents/terms_of_use/1.1-destka-20261105",
+    "file": "user-agreement-destka-20261105.md",
+    "ready": false,
+    "current": false
+  },
+  {
+    "type": "community_guidelines",
+    "version": "1.1-destka-20261105",
+    "hash": "e9036d8677684677aad89a4760b33d516a2461fb70b16e471c40da431a8e01be",
+    "path": "/legal/documents/community_guidelines/1.1-destka-20261105",
+    "file": "content-rules-destka-20261105.md",
+    "ready": false,
+    "current": false
+  },
+  {
+    "type": "public_offer",
+    "version": "1.1-destka-20261105",
+    "hash": "b1414da3e3e1e403254156d7269211c883a662c73fac4edcf179b528d43859cd",
+    "path": "/legal/documents/public_offer/1.1-destka-20261105",
+    "file": "public-offer-destka-20261105.md",
+    "ready": false,
+    "current": false
+  },
+  {
+    "type": "refund_policy",
+    "version": "1.1-destka-20261105",
+    "hash": "8049e499d19aeb81fc2075fa33fd6716e32e41c56bf35b6e58549a38596c08f6",
+    "path": "/legal/documents/refund_policy/1.1-destka-20261105",
+    "file": "refund-policy-destka-20261105.md",
+    "ready": false,
+    "current": false
   }
 ]

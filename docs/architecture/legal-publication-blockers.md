@@ -1,8 +1,8 @@
 # EGO-75 / EGO-110 — publication blockers and follow-ups
 
 This foundation imports verified sources; it does not publish them or complete
-EGO-110. All 14 legal registry entries (seven retained old drafts plus seven
-current Destka sources) remain ready=false. The separate security policy is not
+EGO-110. All 18 legal registry entries (seven retained old drafts, seven current
+Destka sources and four proposed 1.1 editions from EGO-185) remain ready=false. The separate security policy is not
 served. No payment mode, production credential, deploy or domain configuration
 is activated.
 

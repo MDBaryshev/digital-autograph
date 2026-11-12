@@ -1,4 +1,5 @@
 export type PublicWall = {
+  serverNow?: string;
   appearance?: {
     title: string;
     description: string;
@@ -15,6 +16,8 @@ export type PublicWall = {
     id: string;
     position: number;
     occupied: boolean;
+    reservationExpiresAt?: string | null;
+    takeoverAvailableAt?: string | null;
     currentPlacement: null | {
       id: string;
       source: 'free_claim' | 'takeover' | 'admin';

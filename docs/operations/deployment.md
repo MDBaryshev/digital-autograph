@@ -16,6 +16,18 @@ The proposed [GitHub prepared-release button](github-staging-button.md) transpor
 only the final owner-approved `start` phase. Package/backup/restore/migration gates
 below remain mandatory; it does not enable the historical Release.
 
+## EGO-185 paid-protection compatibility
+
+The 0027 migration adds the new 2700-second checkout evidence guard. Before any
+new payment admission, replace every API/worker binary and apply the reviewed
+`postgres-runtime.sql`: the notification worker now needs SELECT only on
+`payment_orders(id,placement_id)` and
+`checkout_confirmations(order_id,guaranteed_visibility_seconds)`. It receives no
+financial-column read or payment write privilege. Existing checkout evidence and
+legacy protection durations remain unchanged. Migration alone does not grant
+these operator-managed runtime privileges. Keep payment admission closed until
+the coordinated migration, runtime grants and binary replacement are verified.
+
 ## Before the owner authorizes a server change
 
 1. Merge one independently reviewed PR through existing protected checks. Keep
@@ -301,7 +313,7 @@ sets the corresponding private values; Web uses the approved API origin.
 
 Website/Merchant acceptance remains open until actual privacy/OAuth/mobile/legal
 checks. Keep unapproved legal documents unpublished and all paid operations off.
-Prices stay89RUB minimum,+100 per successful takeover,cap4989,900s protection,
+Prices stay89RUB minimum,+100 per successful takeover,cap4989,2700s protection,
 creator50%. No YooKassa activation or merchant submission is included.
 
 Preserve the paid recovery snapshot and root-only historical runner evidence.

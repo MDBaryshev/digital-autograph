@@ -51,6 +51,9 @@ GRANT SELECT ON users,walls,slots,placements,pricing_config_versions,autographs,
  autograph_processing_jobs,autograph_processing_artifacts,autograph_storage_leases,autograph_cleanup_schedule,
  original_upload_tombstones,oauth_login_attempts,notification_events,notification_deliveries,
  notification_preferences,notification_subscriptions TO da_worker;
+-- Cooldown notifications need only the immutable paid-protection join columns.
+GRANT SELECT(id,placement_id) ON payment_orders TO da_worker;
+GRANT SELECT(order_id,guaranteed_visibility_seconds) ON checkout_confirmations TO da_worker;
 GRANT INSERT ON autograph_assets,autograph_processing_artifacts,autograph_storage_leases,
  original_upload_tombstones,notification_events,notification_deliveries TO da_worker;
 GRANT INSERT(user_id) ON notification_preferences TO da_worker;

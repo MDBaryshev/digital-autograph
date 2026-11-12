@@ -1,3 +1,4 @@
+import { paidTakeoverProtectionSeconds } from '@digital-autograph/domain';
 import { z } from 'zod';
 
 const amountMinor = z.string().regex(/^(0|[1-9][0-9]{0,11})$/);
@@ -14,7 +15,10 @@ export const createPricingConfigBody = z.strictObject({
   decayIntervalSeconds: z.number().int(),
   decayAmountMinor: amountMinor,
   decayFloorAmountMinor: amountMinor,
-  guaranteedVisibilitySeconds: z.number().int(),
+  guaranteedVisibilitySeconds: z
+    .number()
+    .int()
+    .default(paidTakeoverProtectionSeconds),
   activateForNewWalls: z.boolean().default(false),
 });
 

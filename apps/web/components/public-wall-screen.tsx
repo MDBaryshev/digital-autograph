@@ -24,6 +24,8 @@ import { FirstUseGate } from './first-use-gate';
 import { ReadyAutographPicker } from './ready-autograph-picker';
 import { WallPlacementHistory } from './placement-history';
 import { WallSlot } from './wall-slot';
+import { TakeoverStart } from './takeover-start';
+import { frontendCapabilities } from '../lib/frontend-capabilities';
 import { WallInvite } from './wall-invite';
 import { WallCountdown } from './wall-countdown';
 import { ShareControls } from './share-controls';
@@ -64,7 +66,31 @@ export function PublicWallScreen({
   const { t, locale } = useLocale();
 
   const [wall, setWall] = useState(initialWall);
-  const [now, setNow] = useState(() => Date.now());
+  const serverClock = useRef({
+    time: initialWall.serverNow
+      ? Date.parse(initialWall.serverNow)
+      : Date.now(),
+    receivedAt: 0,
+  });
+  const [now, setNow] = useState(serverClock.current.time);
+  const applyWall = useCallback((updated: PublicWall) => {
+    setWall((current) => {
+      if (
+        current.serverNow &&
+        updated.serverNow &&
+        Date.parse(updated.serverNow) < Date.parse(current.serverNow)
+      )
+        return current;
+      return updated;
+    });
+    if (updated.serverNow) {
+      const time = Date.parse(updated.serverNow);
+      if (time >= serverClock.current.time) {
+        serverClock.current = { time, receivedAt: performance.now() };
+        setNow(time);
+      }
+    }
+  }, []);
   const [auth, setAuth] = useState<AuthState>('checking');
   const [authRetry, setAuthRetry] = useState(0);
   const [readyRetry, setReadyRetry] = useState(0);
@@ -125,7 +151,16 @@ export function PublicWallScreen({
 
   useEffect(() => () => requestController.current?.abort(), []);
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    serverClock.current.receivedAt = performance.now();
+    const timer = setInterval(
+      () =>
+        setNow(
+          serverClock.current.time +
+            performance.now() -
+            serverClock.current.receivedAt,
+        ),
+      1000,
+    );
     return () => clearInterval(timer);
   }, []);
   const confirmationRef = useRef<HTMLHeadingElement>(null);
@@ -143,8 +178,7 @@ export function PublicWallScreen({
     setHistoryVersion((version) => version + 1);
     try {
       const updated = await publicWallApi(apiOrigin).get(wall.id);
-      setWall(updated);
-      setNow(Date.now());
+      applyWall(updated);
       return true;
     } catch (error) {
       setRefreshError(true);
@@ -154,7 +188,34 @@ export function PublicWallScreen({
     } finally {
       setRefreshing(false);
     }
-  }, [apiOrigin, wall.id]);
+  }, [apiOrigin, wall.id, applyWall]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let loading = false;
+    const poll = async () => {
+      if (loading || document.visibilityState === 'hidden') return;
+      loading = true;
+      try {
+        const updated = await publicWallApi(apiOrigin).get(
+          wall.id,
+          controller.signal,
+        );
+        if (!controller.signal.aborted) applyWall(updated);
+      } catch {
+        // Keep the last server hold until a successful refresh confirms release.
+      } finally {
+        loading = false;
+      }
+    };
+    const timer = setInterval(() => void poll(), 5000);
+    document.addEventListener('visibilitychange', poll);
+    return () => {
+      controller.abort();
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', poll);
+    };
+  }, [apiOrigin, wall.id, applyWall]);
 
   const claim = async () => {
     if (inFlight.current || !targetSlotId || !selectedId || claimUsed) return;
@@ -363,6 +424,27 @@ export function PublicWallScreen({
                 key={slot.id}
                 slot={slot}
                 apiOrigin={apiOrigin}
+                now={now}
+                paidAction={
+                  frontendCapabilities.paidTakeover &&
+                  auth === 'authenticated' &&
+                  selected &&
+                  potentiallyClaimable(wall, now) ? (
+                    <TakeoverStart
+                      apiOrigin={apiOrigin}
+                      wallId={wall.id}
+                      slotId={slot.id}
+                      autographId={selected.id}
+                      reserved={Boolean(slot.reservationExpiresAt)}
+                      protectedUntil={Boolean(
+                        slot.takeoverAvailableAt &&
+                        Date.parse(slot.takeoverAvailableAt) > now,
+                      )}
+                      now={now}
+                      onReserved={() => void refreshWall()}
+                    />
+                  ) : undefined
+                }
                 actionLabel={actionLabel}
                 actionDisabled={phase === 'claiming' || refreshing}
                 onAction={() => {
