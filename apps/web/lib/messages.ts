@@ -1,14 +1,40 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
-  'Returning from checkout does not confirm payment. Refresh the payment status to request a new check.':
-    'Возврат со страницы оплаты не подтверждает платёж. Обнови статус оплаты, чтобы запросить новую проверку.',
-  'Payment received. Placement is not confirmed yet.':
-    'Платёж получен. Размещение ещё не подтверждено.',
-  'Payment is unavailable for this account.':
-    'Платёж недоступен для этого аккаунта.',
-  'Unable to confirm payment status. Check its saved status before retrying.':
-    'Не удалось подтвердить статус платежа. Проверь сохранённый статус перед повторной попыткой.',
-  'Check saved payment status': 'Проверить сохранённый статус платежа',
+  'Manage this Wall': 'Управление стеной',
+  'Return Wall to draft': 'Вернуть стену в черновик',
+  'Pause Wall': 'Приостановить стену',
+  'Resume Wall': 'Возобновить стену',
+  'End Wall': 'Завершить стену',
+  'Archive Wall': 'Архивировать стену',
+  'Confirm Wall action': 'Подтверждение действия со стеной',
+  'Confirm: {action}': 'Подтвердить: {action}',
+  'Updating Wall status…': 'Обновляем состояние стены…',
+  'Wall status refreshed.': 'Состояние стены обновлено.',
+  'Refresh Wall status': 'Обновить состояние стены',
+  'Your Wall will be public and accept eligible new placements. Its start and end times must allow opening now.':
+    'Стена станет публичной и сможет принимать новые размещения. Время начала и завершения должно разрешать открытие сейчас.',
+  'Your Wall will become a private draft again.':
+    'Стена снова станет приватным черновиком.',
+  'New placements will stop while the Wall is paused. Existing placements and history stay visible. Checkouts already in progress may need support.':
+    'На время паузы новые размещения остановятся. Текущие размещения и история останутся видимыми. Для уже начатых оплат может понадобиться помощь поддержки.',
+  'Your Wall will accept eligible new placements again if its start and end times allow it.':
+    'Стена снова сможет принимать новые размещения, если время начала и завершения это разрешает.',
+  'New placements will stop. Existing history stays visible. Ending cannot be undone, and checkouts already in progress may need support.':
+    'Новые размещения остановятся. История останется видимой. Завершение нельзя отменить; для уже начатых оплат может понадобиться помощь поддержки.',
+  'Your Wall will be hidden from public pages. Archiving cannot be undone. This Wall still counts toward your account limit, so you cannot create another.':
+    'Стена будет скрыта с публичных страниц. Архивирование нельзя отменить. Эта стена продолжит учитываться в лимите аккаунта — создать другую не получится.',
+  'This Wall cannot open with its current start and end times.':
+    'Текущее время начала или завершения не позволяет открыть стену.',
+  'The Wall status changed. Refresh its status before choosing another action.':
+    'Состояние стены изменилось. Обнови его, прежде чем выбирать другое действие.',
+  'You no longer have access to manage this Wall.':
+    'У тебя больше нет доступа к управлению этой стеной.',
+  'The result could not be confirmed. Refresh the Wall status before choosing another action.':
+    'Не удалось подтвердить результат. Обнови состояние стены, прежде чем выбирать другое действие.',
+  'Your session expired. Sign in again to manage your Wall.':
+    'Сессия истекла. Войди снова, чтобы управлять стеной.',
+  'This Wall is archived. Your account cannot create another Wall.':
+    'Стена архивирована. Создать другую стену в этом аккаунте нельзя.',
   'Invite to this Wall': 'Приглашение на стену',
   'Invite your people': 'Позови своих',
   'One Wall. Ten places. Send the link to someone who should be here.':
@@ -461,6 +487,13 @@ export const messages: Record<string, string> = {
   'Pending autographs': 'Автографы на проверке',
   Pending: 'Ожидают проверки',
   'No submissions in this page.': 'На этой странице нет заявок.',
+  'Refresh queue': 'Обновить очередь',
+  'Refreshing queue…': 'Обновляем очередь…',
+  'Retry queue': 'Повторить загрузку очереди',
+  'Could not load the moderation queue. Retry to read its current state.':
+    'Не удалось загрузить очередь модерации. Повтори загрузку, чтобы увидеть её текущее состояние.',
+  'Decision could not be confirmed. Refresh the queue before deciding again.':
+    'Не удалось подтвердить решение. Обнови очередь перед новым решением.',
   'Load more': 'Загрузить ещё',
   'Review selected autograph': 'Проверка выбранного автографа',
   'Select a pending autograph to review.':
@@ -533,6 +566,13 @@ export const messages: Record<string, string> = {
     'Подключить Telegram и разрешить уведомления',
   'Disconnect Telegram': 'Отключить Telegram',
   'Save preferences': 'Сохранить настройки',
+  'Refresh notifications': 'Обновить уведомления',
+  'Could not load notifications. Refresh to try again.':
+    'Не удалось загрузить уведомления. Обнови их, чтобы повторить попытку.',
+  'Changes could not be confirmed. Refresh notifications before trying again.':
+    'Не удалось подтвердить изменения. Обнови уведомления перед новой попыткой.',
+  'Notification access is no longer available to this account.':
+    'Уведомления больше недоступны этому аккаунту.',
   'You can turn off all channels or individual events. Telegram also accepts /stop. Ordinary notices of the same type are limited to one per Wall in 10 minutes. Financial notices are not combined by that short window. All channels remain limited to 20 notices per hour.':
     'Можно отключить все каналы или отдельные события. В Telegram также доступна команда /stop. Обычные уведомления одного типа приходят не чаще одного раза на стену за 10 минут. Финансовые уведомления не объединяются по этому правилу. Общий лимит — 20 уведомлений в час.',
   Inbox: 'Входящие',
@@ -557,6 +597,15 @@ export const messages: Record<string, string> = {
   'Payment requires review.': 'Платёж требует проверки.',
   'Unable to check payment status. Check your connection and retry.':
     'Не удалось проверить статус платежа. Проверь соединение и повтори попытку.',
+  'Returning from checkout does not confirm payment. Refresh the payment status to request a new check.':
+    'Возврат со страницы оплаты не подтверждает платёж. Обнови статус оплаты, чтобы запросить новую проверку.',
+  'Payment received. Placement is not confirmed yet.':
+    'Платёж получен. Размещение ещё не подтверждено.',
+  'Payment is unavailable for this account.':
+    'Платёж недоступен для этого аккаунта.',
+  'Unable to confirm payment status. Check its saved status before retrying.':
+    'Не удалось подтвердить статус платежа. Проверь сохранённый статус перед повторной попыткой.',
+  'Check saved payment status': 'Проверить сохранённый статус платежа',
   'Refresh payment status': 'Обновить статус оплаты',
   'Legal documents': 'Юридические документы',
   'Destka legal documents': 'Юридические документы Destka',

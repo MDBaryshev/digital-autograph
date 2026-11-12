@@ -1,5 +1,14 @@
 # Human autograph moderation
 
+The existing moderator page supports explicit queue refresh and GET-only recovery.
+Refresh replaces the first page/cursor and clears the selected private preview;
+superseded pagination and preview responses cannot restore old state. Queue,
+preview and decision requests have a ten-second deadline. A pending decision
+blocks queue reads; an uncertain decision or conflict clears the review and
+requires reading the current queue before another decision. No POST is retried
+automatically. Expired/revoked sessions clear private state. These interface
+controls leave backend roles, decisions and policy unchanged.
+
 ## Purpose and authority
 
 A User first approves one exact private cleaned Asset. A platform moderator or admin then reviews that derivative for content suitability. Persistent `user_roles` is the only source for moderator authorization; authenticated ordinary Users, finance staff, and Creator owners have no moderation privilege from those facts alone. The moderation page is an operational tool. All three APIs enforce roles server-side.

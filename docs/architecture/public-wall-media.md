@@ -12,6 +12,15 @@ Missing, ended, or inconsistent media returns public 404 with no internal reason
 
 Authenticated `GET /autographs?status=ready` returns up to 30 recent owner choices after evidence verification. A bounded 50-row candidate scan excludes inconsistent ready records. Each item contains ID, source, creation time, and moderation time; no storage metadata. The browser uses the existing owner-only preview endpoint for the selected Autograph. Signed preview URLs stay in component memory, are refreshed before expiry, and are never used for public Wall images.
 
+Private selection preview state is keyed by API origin and the selected ready
+Autograph. A parent selection change removes the old image before the new read
+finishes. Missing/invalid choices do not issue a preview read. Reads include a
+10-second deadline for fetch and body parsing, cancellation on unmount/selection
+change, and explicit GET retry after errors; late reads and image-error events
+cannot replace the current preview. Expired images are hidden, including when
+renewal fails. Preview loading never disables the radio choices or adds a claim
+eligibility condition; the existing backend still authorizes every claim.
+
 The server renders initial public Wall data using `API_INTERNAL_URL`. The browser uses `API_PUBLIC_ORIGIN` for refresh, auth, preview, claim, and public media. The page works anonymously and offers the existing Google/Telegram login flow with a fixed `/walls/<id>` return path when an empty Slot is selected. Authenticated Users without ready Autographs are directed to `/autograph/create`. A User selects a ready Autograph, selects an empty Slot, sees the one-use warning and confirmation, then sends the existing Free Claim request. Both 201 and exact-retry 200 are success; the page refetches the Wall before displaying the new occupied Slot. `SLOT_OCCUPIED` refreshes without trying another Slot, `FREE_CLAIM_ALREADY_USED` disables further attempts, and `WALL_NOT_CLAIMABLE` refreshes and disables the flow. Manual Refresh provides a low-cost update path without push infrastructure.
 
 Browser timing only controls presentation. PostgreSQL remains authoritative for Wall eligibility, Slot occupancy, and Autograph evidence. Scheduled, paused, and ended Walls remain readable without mutation controls; draft and archived Walls remain 404. Owner preview and API session requests use existing cookie auth and origin protection. Browser web/API origins must remain compatible with the existing SameSite cookie setup; local MinIO and production S3 need CORS for browser preview, but never public bucket access.

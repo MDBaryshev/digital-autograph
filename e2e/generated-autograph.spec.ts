@@ -29,6 +29,9 @@ test('signed-in owner creates a ten-place Wall, chooses a generated variant, rev
     .getByRole('button', { name: 'Create draft Wall', exact: true })
     .click();
   await page.getByRole('button', { name: 'Publish Wall', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Confirm: Publish Wall', exact: true })
+    .click();
   await page.getByRole('link', { name: 'Open Wall', exact: true }).click();
   const wallId = page.url().split('/').at(-1)!;
   await expect(page.getByRole('listitem', { name: /^Slot \d+$/ })).toHaveCount(

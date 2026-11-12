@@ -7,7 +7,7 @@ export const metadata = { robots: { index: false, follow: false } };
 export default async function Page() {
   const t = await getTranslator();
   return (
-    <main className={workspaceStyles.page}>
+    <main className={`${workspaceStyles.page} ${workspaceStyles.wallsPage}`}>
       <h1>{t('My Walls')}</h1>
       <AccountWorkspace
         apiOrigin={loadWebConfig().API_PUBLIC_ORIGIN}
