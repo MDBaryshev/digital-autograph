@@ -90,7 +90,7 @@ describe('moderation workspace', () => {
     ).toBeNull();
   });
 
-  it('prevents duplicate approval requests and retries after an uncertain network failure', async () => {
+  it('prevents duplicate approval requests and reads the queue after an uncertain network failure', async () => {
     let resolveFirst!: (value: unknown) => void;
     const fetchMock = vi
       .fn()
@@ -102,15 +102,7 @@ describe('moderation workspace', () => {
             resolveFirst = resolve;
           }),
       )
-      .mockResolvedValueOnce(
-        response({
-          id: item.id,
-          status: 'ready',
-          decision: 'approved',
-          reasonCode: null,
-          decidedAt: 'now',
-        }),
-      );
+      .mockResolvedValueOnce(response({ items: [], nextCursor: null }));
     vi.stubGlobal('fetch', fetchMock);
     render(<ModerationWorkspace apiOrigin="http://api.test" />);
     fireEvent.click(await screen.findByRole('button', { name: /canvas ·/ }));
@@ -124,17 +116,18 @@ describe('moderation workspace', () => {
     expect(approve.hasAttribute('disabled')).toBe(true);
     resolveFirst(response({ error: { code: 'REQUEST_FAILED' } }, 503));
     expect(
-      await screen.findByText('Decision could not be confirmed. Retry safely.'),
-    ).toBeTruthy();
-    fireEvent.click(approve);
-    expect(
       await screen.findByText(
-        'Approved. The autograph is ready but remains private.',
+        'Decision could not be confirmed. Refresh the queue before deciding again.',
       ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry queue' }));
+    expect(
+      await screen.findByText('No submissions in this page.'),
     ).toBeTruthy();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
     expect(fetchMock.mock.calls[3]?.[1]).toMatchObject({
-      body: JSON.stringify({ decision: 'approved' }),
+      method: 'GET',
     });
   });
 });

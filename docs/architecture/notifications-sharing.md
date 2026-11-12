@@ -38,6 +38,17 @@ the latest 100 delivered in-app items with stable deep links and idempotent read
 markers. Preferences can disable either channel or each event type. All private
 responses are `no-store`; ordinary session and Origin protections apply.
 
+The notification inbox bounds each browser request, including response-body
+reading, to ten seconds and cancels outstanding work on unmount or API-origin
+change. Origin changes discard the private inbox and preferences. Reads and
+mutations are serialized; late responses cannot restore replaced state. An
+unconfirmed preferences/read-marker/Telegram action clears private controls and
+requires an explicit GET refresh before another action; it never replays a
+mutation automatically. A confirmed mutation may reload the server's current
+preferences and inbox. Refresh remains keyboard-focusable while its GET is busy,
+with repeated activations suppressed. Server ownership and consent checks remain
+authoritative; browser cancellation does not undo a committed action.
+
 Worker fanout locks an event with `SKIP LOCKED` and serializes each recipient's
 preferences. One `(event, channel)` record is enforced by PostgreSQL. Suppression
 is recorded, rather than repeatedly processing disabled recipients. Rate policy:
