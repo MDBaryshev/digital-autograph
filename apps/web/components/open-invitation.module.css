@@ -1,5 +1,5 @@
 .invite {
-  max-width: 32rem;
+  max-width: min(32rem, 100%);
   scroll-margin-top: 5rem;
 }
 
@@ -7,10 +7,11 @@
   display: inline-flex;
   min-height: 48px;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
-  padding: 0.6rem 0.85rem;
-  border: 1px solid var(--color-border);
-  border-radius: 0.85rem;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid var(--brand-color-control);
+  border-radius: 0.75rem;
   background: var(--color-surface);
   color: var(--color-ink);
   cursor: pointer;
@@ -25,7 +26,7 @@
 
 .invite summary:hover {
   color: var(--color-link);
-  border-color: var(--brand-color-control);
+  border-color: var(--color-link);
 }
 
 .invite[open] summary svg:last-child {
@@ -34,6 +35,7 @@
 
 .invite form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.4rem;
   margin-top: 0.85rem;
 }
@@ -63,4 +65,23 @@
 
 .fields button {
   min-height: 44px;
+}
+
+.fields input::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+.fields input[aria-invalid='true'] {
+  --brand-color-control: var(--brand-color-danger);
+}
+
+@media (max-width: 38rem) {
+  .invite {
+    max-width: none;
+  }
+
+  .invite summary {
+    width: 100%;
+  }
 }
