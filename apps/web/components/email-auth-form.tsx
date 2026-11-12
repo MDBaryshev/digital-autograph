@@ -7,7 +7,8 @@ type Mode = 'login' | 'register' | 'reset' | 'confirm';
 const safePath = (value: string | null) =>
   value &&
   /^\/(?!\/)/.test(value) &&
-  !/[\\%\s]/.test(value) &&
+  !/[\\\s]/.test(value) &&
+  !value.split(/[?#]/, 1)[0]?.includes('%') &&
   ![...value].some(
     (character) =>
       character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,

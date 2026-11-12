@@ -18,7 +18,7 @@ below remain mandatory; it does not enable the historical Release.
 
 ## EGO-185 paid-protection compatibility
 
-The 0027 migration adds the new 2700-second checkout evidence guard. Before any
+Migration `0030_paid_protection_45_minutes` adds the 2700-second checkout evidence guard. Before any
 new payment admission, replace every API/worker binary and apply the reviewed
 `postgres-runtime.sql`: the notification worker now needs SELECT only on
 `payment_orders(id,placement_id)` and
@@ -52,7 +52,7 @@ the coordinated migration, runtime grants and binary replacement are verified.
 
    This uses the local Docker builder, linux/amd64, and `docker save`; it does not
    publish anything. Four archives, their SHA256, immutable Docker config IDs,
-   source revision labels, 24 migration SQL hashes and the deploy-tool bundle
+   source revision labels, the ordered migration SQL hashes and the deploy-tool bundle
    hash are recorded in `manifest.json`. Tags alone are never trusted. Build
    inputs/context must not contain secrets. Keep artifacts outside the checkout.
 

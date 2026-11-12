@@ -6,6 +6,9 @@ import {
   firstUseStateSchema,
   type FirstUseState,
 } from '@digital-autograph/contracts';
+import { EmailSignIn } from './email-sign-in';
+import { VkIdSignIn } from './vk-id-sign-in';
+import { YandexSignIn } from './yandex-sign-in';
 import styles from './first-use-gate.module.css';
 
 const title = {
@@ -145,7 +148,7 @@ export function FirstUseGate({
       </h2>
       <p>
         {t(
-          'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход через Google или Telegram не означает принятия условий.',
+          'Для создания и размещения автографа подтвердите возраст и ознакомьтесь с условиями сервиса. Подтверждения сохраняются отдельно после входа.',
         )}
       </p>
       <p>
@@ -167,6 +170,9 @@ export function FirstUseGate({
           >
             {t('Войти через Telegram')}
           </a>
+          <YandexSignIn apiOrigin={apiOrigin} returnTo={loginReturnTo} />
+          <VkIdSignIn apiOrigin={apiOrigin} returnTo={loginReturnTo} />
+          <EmailSignIn apiOrigin={apiOrigin} returnTo={loginReturnTo} />
         </div>
       ) : !state ? (
         <>

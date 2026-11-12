@@ -95,8 +95,8 @@ transaction/browser behavior, not genuine sandbox completion.
 
 ## 45-minute paid protection — EGO-185, 05.11.2026
 
-New checkout summaries and new Order confirmations pin 2700 seconds, including on a Wall with an older pricing-config pin. Migration 0027 requires this duration on new checkout evidence inserts while retaining all existing binding, current-admission, server-clock and append-only guards. It updates no existing row. Historical Orders/confirmations retain their recorded duration.
+New checkout summaries and new Order confirmations pin 2700 seconds, including on a Wall with an older pricing-config pin. Migration `0030_paid_protection_45_minutes` requires this duration on new checkout evidence inserts while retaining all existing binding, current-admission, server-clock and append-only guards. It updates no existing row. Historical Orders/confirmations retain their recorded duration.
 
 Quote, Reservation, payment eligibility, public Wall deadlines and cooldown notifications prefer the immutable checkout-confirmation duration of the Order that fulfilled the current Placement. They fall back to the original Wall config for free/admin/legacy Placements without paid evidence. The reverse Order/Placement join is unique. None of these public reads exposes the Order or buyer identity.
 
-Rollout requires coordination: keep new payment admissions closed; apply 0027 and replace all API/worker instances together; verify the 300-second reservation, 2700-second summary/evidence and public deadlines before a separately approved reopening. An older binary could otherwise calculate a paid Placement's cooldown from its Wall config. Existing Order recovery is kept available. This change does not perform rollout or enable paid admissions.
+Keep new payment admissions closed while applying the migration and replacing all API/worker instances. Verify the 300-second reservation, 2700-second summary and evidence, and public deadlines before reopening admissions. An older binary can calculate a paid Placement's cooldown from its Wall config. Keep recovery available for existing Orders.
