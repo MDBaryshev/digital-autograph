@@ -4,6 +4,7 @@
     "tests/**/*.ts",
     "vitest*.ts",
     "scripts/backup-files.mts",
-    "scripts/verify-manual-backup.mts"
+    "scripts/verify-manual-backup.mts",
+    "scripts/product-analytics-report.mts"
   ]
 }
