@@ -38,15 +38,28 @@ function deferred() {
 }
 
 it('finds a new submission from an empty queue without reloading or sending POST', async () => {
+  const refreshed = deferred();
   const fetcher = vi
     .fn()
     .mockResolvedValueOnce(response({ items: [], nextCursor: null }))
-    .mockResolvedValueOnce(response({ items: [item], nextCursor: null }));
+    .mockReturnValueOnce(refreshed.promise);
   vi.stubGlobal('fetch', fetcher);
   render(<ModerationWorkspace apiOrigin="https://api.example.test" />);
   expect(await screen.findByText('No submissions in this page.')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Refresh queue' }));
+  const refresh = screen.getByRole('button', { name: 'Refresh queue' });
+  refresh.focus();
+  fireEvent.click(refresh);
+  // Native disabled controls lose focus in Chromium on Linux. Keep the busy
+  // action focusable; the synchronous request guard suppresses repeat actions.
+  expect((refresh as HTMLButtonElement).disabled).toBe(false);
+  expect(refresh.getAttribute('aria-disabled')).toBe('true');
+  fireEvent.click(refresh);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  await act(async () =>
+    refreshed.resolve(response({ items: [item], nextCursor: null })),
+  );
   expect(await screen.findByRole('button', { name: /canvas ·/ })).toBeTruthy();
+  expect(document.activeElement).toBe(refresh);
   expect(fetcher).toHaveBeenCalledTimes(2);
   for (const [url, options] of fetcher.mock.calls) {
     expect(url).toBe('https://api.example.test/moderation/autographs?limit=20');

@@ -334,7 +334,8 @@ function ModerationQueue({ apiOrigin }: { apiOrigin: string }) {
         <h2>{t('Pending')}</h2>
         <button
           type="button"
-          disabled={working === 'decision' || working === 'queue'}
+          disabled={working === 'decision'}
+          aria-disabled={working === 'decision' || working === 'queue'}
           onClick={() => void loadQueue()}
         >
           {working === 'queue' ? t('Refreshing queue…') : t('Refresh queue')}
