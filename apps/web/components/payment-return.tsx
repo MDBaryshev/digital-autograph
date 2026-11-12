@@ -1,15 +1,33 @@
 'use client';
+import {
+  paymentOrderReferenceSchema,
+  paymentOrderStatusSchema,
+  type PaymentOrderStatus,
+} from '@digital-autograph/contracts';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from './locale-provider';
-
-import { useCallback, useEffect, useState } from 'react';
-const messages: Record<string, string> = {
+import styles from './payment-return.module.css';
+const messages: Record<PaymentOrderStatus['status'], string> = {
   created: 'Payment is being prepared.',
   provider_pending: 'Payment is pending.',
   unknown: 'Payment status is being checked. Do not start another payment.',
+  succeeded: 'Payment received. Placement is not confirmed yet.',
   canceled: 'Payment was canceled.',
   paid_but_not_fulfilled:
     'Payment received, but placement could not be completed. Manual review is required.',
   fulfilled: 'Your placement is complete.',
+};
+type View = {
+  message: string;
+  busy: boolean;
+  canRefreshProvider: boolean;
+  signIn: boolean;
+};
+const checking: View = {
+  message: 'Checking payment…',
+  busy: true,
+  canRefreshProvider: false,
+  signIn: false,
 };
 export function PaymentReturn({
   apiOrigin,
@@ -19,56 +37,137 @@ export function PaymentReturn({
   orderId: string;
 }) {
   const { t } = useLocale();
-
-  const [message, setMessage] = useState('Checking payment…');
-  const [busy, setBusy] = useState(false);
-  const refresh = useCallback(async () => {
-    if (!/^[0-9a-f-]{36}$/.test(orderId)) {
-      setMessage('Invalid order reference.');
-      return;
-    }
-    setBusy(true);
-    try {
-      const response = await fetch(
-        `${apiOrigin}/payments/orders/${orderId}/refresh`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{}',
-          cache: 'no-store',
-        },
-      );
-      if (response.status === 401) {
-        setMessage('Sign in to view your payment.');
-        return;
+  const reference = paymentOrderReferenceSchema.safeParse(orderId);
+  if (!reference.success)
+    return (
+      <section>
+        <p role="status">{t('Invalid order reference.')}</p>
+        <HistoryLink />
+      </section>
+    );
+  // A new identity gets a new state machine before effects run, so it cannot
+  // inherit a prior order's success message or in-flight operation.
+  return (
+    <PaymentStatus
+      key={JSON.stringify([apiOrigin, reference.data])}
+      apiOrigin={apiOrigin}
+      orderId={reference.data}
+    />
+  );
+}
+function HistoryLink() {
+  const { t } = useLocale();
+  return (
+    <p>
+      <a href="/me/placements">{t('View your placement history')}</a>
+    </p>
+  );
+}
+function PaymentStatus({
+  apiOrigin,
+  orderId,
+}: {
+  apiOrigin: string;
+  orderId: string;
+}) {
+  const { t } = useLocale();
+  const [view, setView] = useState<View>(checking);
+  const active = useRef<AbortController | null>(null);
+  const check = useCallback(
+    async (method: 'GET' | 'POST') => {
+      if (active.current) return;
+      const controller = new AbortController();
+      active.current = controller;
+      const timer = window.setTimeout(() => controller.abort(), 15_000);
+      setView(checking);
+      const failed = (message: string, signIn = false) => {
+        if (active.current === controller)
+          setView({ message, busy: false, canRefreshProvider: false, signIn });
+      };
+      try {
+        const response = await fetch(
+          `${apiOrigin}/payments/orders/${orderId}${method === 'POST' ? '/refresh' : ''}`,
+          {
+            method,
+            credentials: 'include',
+            cache: 'no-store',
+            signal: controller.signal,
+            ...(method === 'POST'
+              ? { headers: { 'Content-Type': 'application/json' }, body: '{}' }
+              : {}),
+          },
+        );
+        if (active.current !== controller || controller.signal.aborted) return;
+        if (response.status === 401) {
+          failed('Sign in to view your payment.', true);
+          return;
+        }
+        if (response.status === 403 || response.status === 404) {
+          failed('Payment is unavailable for this account.');
+          return;
+        }
+        if (!response.ok) {
+          failed('Unable to check this payment. Try refreshing its status.');
+          return;
+        }
+        const parsed = paymentOrderStatusSchema.safeParse(
+          await response.json(),
+        );
+        if (active.current !== controller || controller.signal.aborted) return;
+        if (!parsed.success || parsed.data.id !== orderId) {
+          failed(
+            'Unable to confirm payment status. Check its saved status before retrying.',
+          );
+          return;
+        }
+        setView({
+          message: messages[parsed.data.status],
+          busy: false,
+          canRefreshProvider: true,
+          signIn: false,
+        });
+      } catch {
+        failed(
+          'Unable to check payment status. Check your connection and retry.',
+        );
+      } finally {
+        window.clearTimeout(timer);
+        if (active.current === controller) {
+          active.current = null;
+          setView((previous) => ({ ...previous, busy: false }));
+        }
       }
-      if (!response.ok) {
-        setMessage('Unable to check this payment. Try refreshing its status.');
-        return;
-      }
-      const result = (await response.json()) as { status: string };
-      setMessage(messages[result.status] ?? 'Payment requires review.');
-    } catch {
-      setMessage(
-        'Unable to check payment status. Check your connection and retry.',
-      );
-    } finally {
-      setBusy(false);
-    }
-  }, [apiOrigin, orderId]);
+    },
+    [apiOrigin, orderId],
+  );
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void check('GET');
+    return () => {
+      active.current?.abort();
+      active.current = null;
+    };
+  }, [check]);
   return (
     <section>
-      <p role="status">{t(message)}</p>
-      <button type="button" disabled={busy} onClick={() => void refresh()}>
-        {t('Refresh payment status')}
+      <p role="status">{t(view.message)}</p>
+      {view.signIn && (
+        <p>
+          <a href="/me">{t('Sign in to continue')}</a>
+        </p>
+      )}
+      <button
+        className={styles.checkButton}
+        type="button"
+        disabled={view.busy}
+        onClick={() => void check(view.canRefreshProvider ? 'POST' : 'GET')}
+      >
+        {t(
+          view.canRefreshProvider || view.busy
+            ? 'Refresh payment status'
+            : 'Check saved payment status',
+        )}
       </button>
-      <p>
-        <a href="/me/placements">{t('View your placement history')}</a>
-      </p>
+      <HistoryLink />
     </section>
   );
 }
