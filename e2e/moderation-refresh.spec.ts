@@ -60,7 +60,7 @@ test('moderator refresh finds a newly submitted autograph without a page reload'
   const ordinary = await scenario.actorContext(e2eUserId);
   const ordinaryPage = await ordinary.newPage();
   await ordinaryPage.goto(web + '/moderation');
-  await expect(ordinaryPage.getByRole('alert')).toHaveText(
+  await expect(ordinaryPage.getByRole('main').getByRole('alert')).toHaveText(
     'Forbidden: a platform moderator or admin role is required.',
   );
   await expect(
