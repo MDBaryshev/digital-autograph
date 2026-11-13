@@ -30,14 +30,78 @@ export const repository = 'MDBaryshev/digital-autograph';
 export const workflow = `${repository}/.github/workflows/deploy-staging.yml@refs/heads/main`;
 const repositoryId = '1447358020';
 const ownerId = '118826513';
-const mainChecks = [
+const ciChecks = [
   'checks',
   'windows-unit',
   'windows-integration-runner',
   'macos-integration-runner',
   'e2e',
-  'secrets',
 ];
+async function actionPages(api, route, field) {
+  const items = [];
+  for (let page = 1; page <= 20; page++) {
+    const response = await api('GET', `${route}&per_page=100&page=${page}`);
+    const batch = response[field];
+    if (!Array.isArray(batch)) refuse();
+    items.push(...batch);
+    if (batch.length < 100) return items;
+  }
+  refuse();
+}
+
+async function verifyActions(api, sourceSha, event) {
+  const runs = await actionPages(
+    api,
+    `/actions/runs?head_sha=${sourceSha}`,
+    'workflow_runs',
+  );
+  const workflows = [
+    ['ci.yml', event, ciChecks],
+    ['secret-scan.yml', event, ['secrets']],
+  ];
+  if (event === 'pull_request')
+    workflows.push(['pr-policy.yml', 'pull_request_target', ['policy']]);
+  for (const [file, expectedEvent, names] of workflows) {
+    const run = runs
+      .filter(
+        (item) =>
+          item.path === `.github/workflows/${file}` &&
+          item.event === expectedEvent,
+      )
+      .sort((a, b) => b.id - a.id)[0];
+    if (
+      !run ||
+      !numeric.test(String(run.id)) ||
+      !numeric.test(String(run.run_attempt)) ||
+      run.head_sha !== sourceSha ||
+      String(run.head_repository?.id) !== repositoryId ||
+      run.event !== expectedEvent ||
+      (event === 'push' && run.head_branch !== 'main') ||
+      run.status !== 'completed' ||
+      run.conclusion !== 'success'
+    )
+      refuse();
+    const jobs = await actionPages(
+      api,
+      `/actions/runs/${run.id}/jobs?filter=latest`,
+      'jobs',
+    );
+    for (const name of names) {
+      const job = jobs
+        .filter((item) => item.name === name)
+        .sort((a, b) => b.id - a.id)[0];
+      if (
+        !job ||
+        job.run_id !== run.id ||
+        job.run_attempt !== run.run_attempt ||
+        job.head_sha !== sourceSha ||
+        job.status !== 'completed' ||
+        job.conclusion !== 'success'
+      )
+        refuse();
+    }
+  }
+}
 export const digest = (bytes) =>
   createHash('sha256').update(bytes).digest('hex');
 const refuse = () => {
@@ -201,29 +265,7 @@ export function validateRequest(deployment, approval, now = Date.now()) {
 
 export async function verifySource(api, sourceSha) {
   if ((await api('GET', '/commits/main')).sha !== sourceSha) refuse();
-  const checks = (
-    await api(
-      'GET',
-      `/commits/${sourceSha}/check-runs?per_page=100&filter=latest`,
-    )
-  ).check_runs;
-  if (!Array.isArray(checks)) refuse();
-  for (const name of mainChecks) {
-    const matches = checks
-      .filter(
-        (x) =>
-          x.name === name &&
-          x.head_sha === sourceSha &&
-          x.app?.slug === 'github-actions',
-      )
-      .sort((a, b) => b.id - a.id);
-    if (
-      !matches.length ||
-      matches[0].status !== 'completed' ||
-      matches[0].conclusion !== 'success'
-    )
-      refuse();
-  }
+  await verifyActions(api, sourceSha, 'push');
   const prs = await api('GET', `/commits/${sourceSha}/pulls?per_page=100`);
   const pr = prs.find(
     (x) =>
@@ -235,29 +277,7 @@ export async function verifySource(api, sourceSha) {
       x.user?.id,
   );
   if (!pr) refuse();
-  const headChecks = (
-    await api(
-      'GET',
-      `/commits/${pr.head.sha}/check-runs?per_page=100&filter=latest`,
-    )
-  ).check_runs;
-  if (!Array.isArray(headChecks)) refuse();
-  for (const name of [...mainChecks, 'policy']) {
-    const matches = headChecks
-      .filter(
-        (x) =>
-          x.name === name &&
-          x.head_sha === pr.head.sha &&
-          x.app?.slug === 'github-actions',
-      )
-      .sort((a, b) => b.id - a.id);
-    if (
-      !matches.length ||
-      matches[0].status !== 'completed' ||
-      matches[0].conclusion !== 'success'
-    )
-      refuse();
-  }
+  await verifyActions(api, pr.head.sha, 'pull_request');
   // Head-specific peer review is checked again; a comment is never approval.
   const reviews = [];
   for (let page = 1; ; page++) {

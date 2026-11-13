@@ -1,22 +1,3 @@
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem var(--space-page);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-.accountLink {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  text-decoration: none;
-  color: var(--color-ink);
-}
 .avatar {
   display: grid;
   place-items: center;
@@ -27,36 +8,6 @@
   background: var(--brand-color-primarySoft);
   color: var(--color-link);
   font-weight: 800;
-}
-.menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: min(22rem, 100vw);
-  padding: 1.5rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 1rem 2rem #0002;
-  max-height: calc(100dvh - 5rem);
-  overflow: auto;
-}
-.menu p {
-  color: var(--color-muted);
-  margin-top: 0;
-}
-.menu a {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 0.85rem;
-  border-radius: 0.6rem;
-  text-decoration: none;
-  color: var(--color-ink);
-}
-.menu a:hover,
-.menu a[aria-current] {
-  background: var(--brand-color-primarySoft);
-  color: var(--color-link);
 }
 .primary {
   display: inline-flex;
@@ -133,6 +84,51 @@
 }
 .muted {
   color: var(--color-muted);
+}
+.wallControls {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  min-width: 0;
+}
+.wallControls p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.wallControls button,
+.wallConfirmation legend {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.wallConfirmation {
+  min-width: 0;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+}
+.wallConfirmation .actions {
+  margin-top: 1rem;
+}
+@media (max-width: 480px) {
+  /* Keep nested spacing from consuming the viewport when text is enlarged. */
+  .page.wallsPage {
+    padding-inline: clamp(12px, 4vw, 24px);
+  }
+  .wallsPage .card {
+    padding: clamp(12px, 3vw, 20px);
+  }
+  .wallsPage .wallConfirmation {
+    padding: 12px;
+  }
+  .wallsPage .wallControls button {
+    padding-inline: 12px;
+  }
+  .wallsPage .tabs a {
+    padding-inline: 8px;
+  }
 }
 @media (max-width: 480px) {
   .accountLink > span:last-child {
@@ -232,27 +228,10 @@
 .form > button {
   justify-self: start;
 }
-.header > a:first-child {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  color: var(--color-ink);
-  font-weight: 750;
-}
 @media (prefers-reduced-motion: reduce) {
   .workspace * {
     scroll-behavior: auto;
   }
-}
-.accountLink {
-  min-width: 0;
-}
-.accountLink > span:last-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .workspace h2,
 .workspace p {
@@ -262,45 +241,6 @@
   min-width: 0;
   flex: 1;
 }
-.header > a:first-child,
-.header > button {
-  flex-shrink: 0;
-}
-@media (max-width: 480px) {
-  .accountLink > span:last-child {
-    min-width: 0;
-    max-width: clamp(3rem, 19vw, 9rem);
-  }
-  .accountLink {
-    gap: 0.5rem;
-  }
-  .avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-}
-@media (max-width: 640px) {
-  .header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.75rem;
-    padding: 0.75rem 1.25rem;
-  }
-  .header > a:first-child > span {
-    display: none;
-  }
-  .accountLink {
-    grid-column: 1/-1;
-    margin: 0;
-    min-width: 0;
-  }
-  .accountLink > span:last-child {
-    max-width: none;
-    min-width: 0;
-    flex: 1;
-  }
-}
-
 .profileAvatar {
   width: 5rem;
   height: 5rem;
@@ -322,11 +262,4 @@
   margin: 0;
   display: grid;
   gap: 1rem;
-}
-
-.navigationAvatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
 }

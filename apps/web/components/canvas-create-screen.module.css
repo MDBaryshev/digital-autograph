@@ -5,7 +5,7 @@
   background: var(--brand-color-surface);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1.75rem;
+  gap: clamp(1rem, 2.8vw, 1.75rem);
 }
 .modeTabs {
   display: flex;
@@ -27,6 +27,14 @@
   font: inherit;
   font-weight: 650;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+.tab[hidden],
+.activeTab[hidden] {
+  display: none;
 }
 .tab {
   color: var(--brand-color-muted);
@@ -45,6 +53,10 @@
   cursor: not-allowed;
 }
 .primary {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem;
   justify-self: start;
   border: 0;
   border-radius: 0.6rem;
@@ -101,19 +113,21 @@
   cursor: not-allowed;
 }
 .preview {
-  padding: 1.25rem;
-  border: 1px solid var(--brand-color-border);
-  border-radius: 1rem;
-  background: var(--brand-color-surface);
+  min-width: 0;
+}
+.preview > .steps {
+  margin-bottom: 1.3rem;
 }
 .preview h2 {
   margin-top: 0;
 }
 .preview img {
   display: block;
-  max-width: 100%;
-  min-height: 4rem;
+  width: 100%;
+  min-height: 9rem;
   max-height: 24rem;
+  padding: clamp(1rem, 4vw, 2rem);
+  border-radius: 1rem;
   object-fit: contain;
   margin: 1.25rem 0;
   background: var(--brand-color-mediaPaper);
@@ -162,5 +176,65 @@
   .actions button,
   .primary {
     width: 100%;
+  }
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 0.35rem;
+  padding: 0 0 0.85rem;
+  margin: 0;
+  border-bottom: 1px solid var(--color-border);
+  list-style: none;
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted);
+  font-size: clamp(0.73rem, 1.7vw, 0.9rem);
+  line-height: 1.25;
+  font-weight: 750;
+  overflow-wrap: normal;
+}
+
+.steps li > span {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ui-surface-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.steps li[aria-current],
+.steps li[data-complete] {
+  color: var(--color-link);
+}
+
+.steps li[aria-current] > span {
+  background: var(--brand-color-primary);
+  color: var(--brand-color-onPrimary);
+}
+
+.steps li[data-complete] > span {
+  background: var(--brand-color-primarySoft);
+}
+
+@media (max-width: 35rem) {
+  .steps li {
+    display: grid;
+    justify-items: center;
+    gap: 0.3rem;
+    text-align: center;
+  }
+
+  .flow {
+    padding: 1rem;
+    border-radius: 1rem;
   }
 }

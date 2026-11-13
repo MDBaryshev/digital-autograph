@@ -1,0 +1,228 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  max-width: 83rem;
+  margin-inline: auto;
+  min-height: 4.25rem;
+  padding: 0.5rem var(--space-page);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  flex: none;
+  color: var(--color-ink);
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.brand svg {
+  flex: none;
+  color: var(--color-link);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.35rem, 1.5vw, 1.25rem);
+  min-width: 0;
+}
+
+.productNav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: clamp(0.4rem, 1vw, 0.95rem);
+}
+
+.homeLink,
+.dockLabel,
+.studioLink svg,
+.accountIcon {
+  display: none;
+}
+
+.studioLink,
+.accountLink,
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  color: var(--color-ink);
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: none;
+  border-radius: 0.65rem;
+}
+
+.studioLink:hover,
+.studioLink[aria-current],
+.accountLink:hover,
+.accountLink[aria-current],
+.accountLink[data-section] {
+  color: var(--color-link);
+}
+
+.studioLink,
+.accountLink {
+  min-width: 0;
+  padding-inline: 0.65rem;
+}
+
+.studioLink[aria-current],
+.accountLink[aria-current],
+.accountLink[data-section] {
+  background: var(--brand-color-primarySoft);
+}
+
+.accountLink {
+  min-width: 0;
+  gap: 0.55rem;
+}
+
+.desktopLabel {
+  overflow: hidden;
+  max-width: 22ch;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand-color-primarySoft);
+  color: var(--color-link);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.toggle {
+  flex: none;
+  min-width: 44px;
+  padding: 0;
+  border-color: var(--color-border);
+}
+
+.toggle:hover,
+.toggle[aria-expanded='true'] {
+  background: var(--ui-surface-subtle);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: var(--space-page);
+  width: min(19rem, calc(100% - 2 * var(--space-page)));
+  max-height: calc(100dvh - 6rem - var(--mobile-dock-height, 0px));
+  overflow: auto;
+  padding: 0.45rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  box-shadow: var(--brand-shadow-raised);
+}
+
+.menu a {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.45rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.menu a:hover,
+.menu a[aria-current] {
+  background: var(--brand-color-primarySoft);
+  color: var(--color-link);
+}
+
+@media (max-width: 38rem) {
+  .inner {
+    min-height: 3.75rem;
+    padding-block: 0.35rem;
+  }
+
+  .desktopLabel {
+    display: none;
+  }
+
+  .dockLabel,
+  .studioLink svg,
+  .accountIcon {
+    display: block;
+  }
+
+  .productNav {
+    position: fixed;
+    inset: auto 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    min-height: var(--mobile-dock-height);
+    gap: 0.35rem;
+    padding: 0.35rem 0.55rem max(0.35rem, env(safe-area-inset-bottom));
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .homeLink,
+  .studioLink,
+  .accountLink {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    gap: 0.18rem;
+    padding: 0.3rem 0.2rem;
+    color: var(--color-muted);
+    text-align: center;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.2;
+    border-radius: 0.6rem;
+  }
+
+  .productNav a[aria-current],
+  .productNav a[data-section] {
+    background: var(--brand-color-primarySoft);
+    color: var(--color-link);
+  }
+
+  .accountIcon {
+    line-height: 0;
+  }
+
+  .avatar {
+    width: 22px;
+    height: 22px;
+  }
+}

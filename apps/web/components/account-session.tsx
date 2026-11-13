@@ -1,8 +1,8 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { YandexSignIn } from './yandex-sign-in';
-import { VkIdSignIn } from './vk-id-sign-in';
+import { SignInHelp, SignInOptions } from './sign-in-options';
+import styles from './sign-in-options.module.css';
 
 import { useEffect, useRef, useState } from 'react';
 import { wallClaimApi } from '../lib/wall-claim-api';
@@ -10,9 +10,11 @@ import { wallClaimApi } from '../lib/wall-claim-api';
 export function AccountSession({
   apiOrigin,
   onSignedOut,
+  returnTo = '/me',
 }: {
   apiOrigin: string;
   onSignedOut?: () => void;
+  returnTo?: string;
 }) {
   const { t } = useLocale();
 
@@ -87,28 +89,15 @@ export function AccountSession({
     );
   if (auth === 'anonymous')
     return (
-      <section aria-labelledby="account-sign-in">
+      <section className={styles.panel} aria-labelledby="account-sign-in">
         <h2 id="account-sign-in">{t('Sign in to continue')}</h2>
         <p>
           {t(
             'Your autograph and placement history are associated with your account.',
           )}
         </p>
-        <div className="linkActions">
-          <a href={`${apiOrigin}/auth/google/start?returnTo=%2Fme`}>
-            {t('Continue with Google')}
-          </a>
-          <a href={`${apiOrigin}/auth/telegram/start?returnTo=%2Fme`}>
-            {t('Continue with Telegram')}
-          </a>
-          <YandexSignIn apiOrigin={apiOrigin} returnTo="/me" />
-          <VkIdSignIn apiOrigin={apiOrigin} returnTo="/me" />
-        </div>
-        <p>
-          {t(
-            'If sign-in cannot open inside this app, open this page in Safari or Chrome and try again.',
-          )}
-        </p>
+        <SignInOptions apiOrigin={apiOrigin} returnTo={returnTo} />
+        <SignInHelp />
       </section>
     );
   return (

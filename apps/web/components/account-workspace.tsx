@@ -1,7 +1,9 @@
 'use client';
 import { WallAppearanceEditor } from './wall-appearance-editor';
+import { OwnerRejectionDetails } from './owner-rejection-details';
+import { WallLifecycleControls } from './wall-lifecycle-controls';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
-import { isPublicWall } from '@digital-autograph/domain';
+import { isPublicWall, wallStatuses } from '@digital-autograph/domain';
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from './locale-provider';
 import { AccountSession } from './account-session';
@@ -32,9 +34,11 @@ const statuses: Record<AutographStatus | WallStatus, string> = {
 export function AccountWorkspace({
   apiOrigin,
   section = 'overview',
+  wallId,
 }: {
   apiOrigin: string;
   section?: Section;
+  wallId?: string;
 }) {
   const { t, locale } = useLocale();
   const [data, setData] = useState<Workspace | null>(null);
@@ -122,12 +126,18 @@ export function AccountWorkspace({
         </div>
       </section>
     ) : null;
+  const accountPath = section === 'overview' ? '/me' : `/me/${section}`;
+  const returnTo =
+    section === 'autographs' && wallId
+      ? `${accountPath}?wall=${wallId}`
+      : accountPath;
   if (error === 'SIGN_IN')
     return (
       <div className={styles.workspace}>
         {preferences}
         <AccountSession
           apiOrigin={apiOrigin}
+          returnTo={returnTo}
           onSignedOut={() => window.location.assign('/me')}
         />
       </div>
@@ -195,7 +205,9 @@ export function AccountWorkspace({
               <p className={styles.muted}>
                 {profile
                   ? '@' + profile.slug
-                  : t('Choose a name in settings to create your first Wall.')}
+                  : data.canEditProfile
+                    ? t('Choose a name in settings to create your first Wall.')
+                    : t('Public profile setup is temporarily unavailable.')}
               </p>
             </div>
           </div>
@@ -234,6 +246,12 @@ export function AccountWorkspace({
                   <h2>{t(a.source === 'canvas' ? 'Drawing' : 'Photo')}</h2>
                   <p>{date(a.createdAt)}</p>
                   <p>{t(statuses[a.status] ?? a.status)}</p>
+                  {a.status === 'moderation_rejected' && (
+                    <OwnerRejectionDetails
+                      apiOrigin={apiOrigin}
+                      autographId={a.id}
+                    />
+                  )}
                   {[
                     'awaiting_approval',
                     'awaiting_moderation',
@@ -297,8 +315,22 @@ export function AccountWorkspace({
       )}
       {section === 'walls' && (
         <>
-          <a href="/me/settings">{t('Edit Wall appearance')}</a>
-          {!profile ? (
+          {profile && data.canEditProfile && (
+            <a href="/me/settings">{t('Edit Wall appearance')}</a>
+          )}
+          {!profile && !data.canEditProfile ? (
+            <section className={styles.card}>
+              <h2>{t('Wall creation is temporarily unavailable')}</h2>
+              <p>
+                {t(
+                  'A public profile is required to create a Wall. You can still create an autograph.',
+                )}
+              </p>
+              <a className={styles.primary} href="/autograph/create">
+                {t('Create autograph')}
+              </a>
+            </section>
+          ) : !profile ? (
             <section className={styles.card}>
               <h2>{t('Give your Wall a name')}</h2>
               <p>
@@ -337,9 +369,7 @@ export function AccountWorkspace({
           ) : (
             <p>{t('Your account already has its Wall with 10 places.')}</p>
           )}
-          {data.walls.length === 0 ? (
-            <p>{t('Your Walls will appear here.')}</p>
-          ) : (
+          {data.walls.length > 0 && (
             <div className={styles.grid}>
               {data.walls.map((w, i) => (
                 <article className={styles.card} key={w.id}>
@@ -355,24 +385,29 @@ export function AccountWorkspace({
                     {isPublicWall(w.status) && (
                       <a href={`/walls/${w.id}`}>{t('Open Wall')}</a>
                     )}
-                    {w.status === 'draft' && (
-                      <button
-                        disabled={pending}
-                        onClick={() =>
-                          void act((signal) =>
-                            workspaceRequest(
-                              apiOrigin,
-                              `/walls/${w.id}/transitions`,
-                              signal,
-                              { action: 'publish' },
-                            ),
-                          )
-                        }
-                      >
-                        {t('Publish Wall')}
-                      </button>
-                    )}
                   </div>
+                  <WallLifecycleControls
+                    apiOrigin={apiOrigin}
+                    wall={w}
+                    refresh={async (signal) => {
+                      const next = await workspaceRequest<Workspace>(
+                        apiOrigin,
+                        '/me/workspace',
+                        signal,
+                      );
+                      if (
+                        !Array.isArray(next?.walls) ||
+                        next.walls.some(
+                          (item) =>
+                            !item ||
+                            typeof item.id !== 'string' ||
+                            !wallStatuses.includes(item.status),
+                        )
+                      )
+                        throw Error('REQUEST_FAILED');
+                      if (!signal.aborted) setData(next);
+                    }}
+                  />
                 </article>
               ))}
             </div>

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { BrandMark, Icon } from './ui-icon';
 import { useLocale } from './locale-provider';
 import { workspaceRequest, type Workspace } from './workspace-api';
-import styles from './workspace.module.css';
+import styles from './workspace-navigation.module.css';
 export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
   const { t } = useLocale();
   const path = usePathname();
@@ -55,88 +55,117 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
       window.removeEventListener('pointerdown', outside);
     };
   }, [open]);
-  const links = [
-    ['/me', t('Overview'), 'user'],
-    ['/me/autographs', t('My autographs'), 'pen'],
-    ['/me/walls', t('My Walls'), 'globe'],
-    ['/me/placements', t('Placement history'), 'history'],
-    ['/me/notifications', t('Notifications'), 'bell'],
-    ...(account?.canModerate
-      ? [['/moderation', t('Moderation'), 'check']]
-      : []),
-    ['/me/settings', t('Settings'), 'theme'],
-  ];
+  const links: [string, string, Parameters<typeof Icon>[0]['name']][] = account
+    ? [
+        ['/me', 'Overview', 'user'],
+        ['/me/autographs', 'My autographs', 'pen'],
+        ['/me/walls', 'My Walls', 'globe'],
+        ['/me/placements', 'Placement history', 'history'],
+        ['/me/notifications', 'Notifications', 'bell'],
+        ['/me/shares', 'My public links', 'globe'],
+      ]
+    : [['/#how-it-works', 'How it works', 'globe']];
+  if (account?.canModerate) links.push(['/moderation', 'Moderation', 'check']);
+  links.push(['/me/settings', 'Settings', 'theme']);
+  const accountLabel = account
+    ? account.profile?.displayName || t('Your account')
+    : t('Sign in');
+
   return (
     <header ref={header} className={styles.header}>
-      <a className="brand" href="/" aria-label="Destka">
-        <BrandMark />
-        <span>Destka.</span>
-      </a>
-      <button
-        ref={toggle}
-        type="button"
-        aria-expanded={open}
-        aria-controls="workspace-menu"
-        onClick={() => setOpen(!open)}
-      >
-        {open ? t('Close menu') : t('Menu')}
-      </button>
-      <a className={styles.accountLink} href="/me">
-        <span className={styles.avatar} aria-hidden="true">
-          {account?.profile?.avatarDataUrl ? (
-            <img
-              className={styles.navigationAvatar}
-              src={account.profile.avatarDataUrl}
-              alt=""
-            />
-          ) : (
-            (Array.from(
-              account?.profile?.displayName ?? '',
-            )[0]?.toUpperCase() ?? <Icon name="user" />)
-          )}
-        </span>
-        <span>{account?.profile?.displayName ?? t('Your account')}</span>
-      </a>
-      {open && (
+      <div className={styles.inner}>
+        <a className={styles.brand} href="/" aria-label="Destka">
+          <BrandMark />
+          <span>Destka</span>
+        </a>
+        <div className={styles.actions}>
+          <nav
+            className={styles.productNav}
+            aria-label={t('Product navigation')}
+          >
+            <a
+              className={styles.homeLink}
+              href="/"
+              aria-current={path === '/' ? 'page' : undefined}
+            >
+              <Icon name="home" size={22} />
+              <span>{t('Home')}</span>
+            </a>
+            <a
+              className={styles.studioLink}
+              href="/autograph/create"
+              aria-current={path === '/autograph/create' ? 'page' : undefined}
+            >
+              <Icon name="pen" size={22} />
+              <span className={styles.desktopLabel}>
+                {t('Autograph studio')}
+              </span>
+              <span className={styles.dockLabel}>{t('Studio')}</span>
+            </a>
+            <a
+              className={styles.accountLink}
+              href="/me"
+              aria-current={path === '/me' ? 'page' : undefined}
+              data-section={path?.startsWith('/me/') ? 'current' : undefined}
+            >
+              {account?.profile?.avatarDataUrl ? (
+                <span className={styles.avatar}>
+                  <img src={account.profile.avatarDataUrl} alt="" />
+                </span>
+              ) : (
+                <span className={styles.accountIcon}>
+                  <Icon name="user" size={22} />
+                </span>
+              )}
+              {account?.profile?.displayName ? (
+                <>
+                  <span className={styles.desktopLabel}>{accountLabel}</span>
+                  <span className={styles.dockLabel}>{t('Your account')}</span>
+                </>
+              ) : (
+                <span>{accountLabel}</span>
+              )}
+            </a>
+          </nav>
+          <button
+            className={styles.toggle}
+            ref={toggle}
+            type="button"
+            aria-label={open ? t('Close menu') : t('Menu')}
+            aria-expanded={open}
+            aria-controls="workspace-menu"
+            onClick={() => setOpen((value) => !value)}
+          >
+            <Icon name={open ? 'close' : 'menu'} />
+          </button>
+        </div>
         <nav
           id="workspace-menu"
           aria-label={t('Main navigation')}
           className={styles.menu}
+          hidden={!open}
         >
-          <p>{t('Your space')}</p>
-          {links.map(([href, label, icon]) => (
-            <a
-              key={href}
-              href={href}
-              target={
-                path === '/autograph/create' && href === '/me/settings'
-                  ? '_blank'
-                  : undefined
-              }
-              rel={
-                path === '/autograph/create' && href === '/me/settings'
-                  ? 'noopener noreferrer'
-                  : undefined
-              }
-              aria-label={
-                path === '/autograph/create' && href === '/me/settings'
-                  ? t('Settings (opens in a new tab)')
-                  : undefined
-              }
-              aria-current={path === href ? 'page' : undefined}
-            >
-              <Icon name={icon as Parameters<typeof Icon>[0]['name']} />
-              {label}
-            </a>
-          ))}
-          <a
-            className={styles.primary}
-            href={account ? '/autograph/create' : '/me'}
-          >
-            {account ? t('Create autograph') : t('Sign in to continue')}
-          </a>
+          {links.map(([href, label, icon]) => {
+            const newTab =
+              path === '/autograph/create' && href === '/me/settings';
+            return (
+              <a
+                key={href}
+                href={href}
+                target={newTab ? '_blank' : undefined}
+                rel={newTab ? 'noopener noreferrer' : undefined}
+                aria-label={
+                  newTab ? t('Settings (opens in a new tab)') : undefined
+                }
+                aria-current={path === href ? 'page' : undefined}
+                onClick={() => setOpen(false)}
+              >
+                <Icon name={icon} size={18} /> {t(label)}
+              </a>
+            );
+          })}
         </nav>
-      )}
+      </div>
     </header>
   );
 }
