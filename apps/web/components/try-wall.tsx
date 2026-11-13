@@ -136,11 +136,7 @@ export function TryWall() {
           <h2 id="try-wall-heading" tabIndex={-1}>
             {t('Try the Wall')}
           </h2>
-          <p>
-            {mark
-              ? t('You signed the demo Wall.')
-              : t('Pick a free place and draw right here.')}
-          </p>
+          <p>{t('Pick a free place and draw right here.')}</p>
         </div>
         <span className={styles.badge}>{t('Demo')}</span>
       </div>
@@ -150,7 +146,19 @@ export function TryWall() {
           return place <= 3 ? (
             <li key={place} className={styles.sample}>
               <span className={styles.number} aria-hidden="true">
-                {place}
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m3 7 4 3 5-6 5 6 4-3-2 11H5L3 7Zm2 14h14" />
+                </svg>
+                {String(place).padStart(2, '0')}
               </span>
               <span className={styles.srOnly}>
                 {t('Example autograph in place {place}', { place })}
@@ -175,12 +183,14 @@ export function TryWall() {
                 onClick={() => setEditing(place)}
               >
                 <span className={styles.number} aria-hidden="true">
-                  {place}
+                  {String(place).padStart(2, '0')}
                 </span>
                 {drawn ? (
                   <Ink strokes={mark.strokes} />
                 ) : (
-                  <Icon name="plus" size={23} />
+                  <span className={styles.plus}>
+                    <Icon name="plus" size={18} />
+                  </span>
                 )}
               </button>
             </li>

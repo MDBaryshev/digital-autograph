@@ -8,20 +8,27 @@
 }
 :root {
   color-scheme: light;
-  --brand-color-ink: #20232b;
-  --brand-color-muted: #646875;
-  --brand-color-paper: #f8f9fc;
-  --brand-color-surface: #ffffff;
-  --brand-color-border: #dfe2ea;
-  --brand-color-control: #818797;
-  --brand-color-primary: #3455db;
+  --cobalt-cover: #2244a8;
+  --cobalt-white: #fbfcff;
+  --cobalt-ink: #e1eaff;
+  --cobalt-point: #b8d7ff;
+  --podium-gold-paper: #ebdbac;
+  --podium-silver-paper: #dcdfd9;
+  --podium-bronze-paper: #dfc9b4;
+  --brand-color-ink: #1e2846;
+  --brand-color-muted: #4b5a7d;
+  --brand-color-paper: #edf1f9;
+  --brand-color-surface: #f9fbff;
+  --brand-color-border: #c5d0e8;
+  --brand-color-control: #6676a5;
+  --brand-color-primary: #2249bd;
   --brand-color-onPrimary: #ffffff;
-  --brand-color-primarySoft: #edf0ff;
+  --brand-color-primarySoft: #dfe8ff;
   --brand-color-secondary: #8b5615;
   --brand-color-secondarySoft: #fff5e5;
   --brand-color-danger: #b5364e;
   --brand-color-dangerSoft: #fff0f3;
-  --brand-color-focus: #3455db;
+  --brand-color-focus: #2249bd;
   --brand-color-mediaPaper: #ffffff;
   --brand-color-mediaInk: #20232b;
   --brand-font-body: 'Manrope', 'Segoe UI', sans-serif;
@@ -30,9 +37,9 @@
   --brand-radius-small: 0.75rem;
   --brand-radius-card: 1.5rem;
   --brand-shadow-raised: 0 12px 40px #1b254114;
-  --ui-surface-subtle: #f2f4f9;
-  --ui-primary-hover: #2646c4;
-  --ui-stage: #e9edff;
+  --ui-surface-subtle: #eaf0fc;
+  --ui-primary-hover: #153799;
+  --ui-stage: #e0e7f7;
   --ui-stage-ink: #314da9;
   --ui-shadow: 0 28px 60px #26396e1c;
 }

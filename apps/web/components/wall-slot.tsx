@@ -14,6 +14,7 @@ export function WallSlot({
   actionLabel,
   actionDisabled = false,
   selected = false,
+  arrived = false,
   onAction,
 }: {
   slot: Slot;
@@ -21,6 +22,7 @@ export function WallSlot({
   actionLabel?: string;
   actionDisabled?: boolean;
   selected?: boolean;
+  arrived?: boolean;
   onAction?: () => void;
 }) {
   const { t } = useLocale();
@@ -41,6 +43,8 @@ export function WallSlot({
       className={styles.slot}
       data-podium={podium}
       data-selected={selected ? '' : undefined}
+      data-empty={slot.occupied ? undefined : ''}
+      data-arrived={arrived ? '' : undefined}
       aria-label={t(`Slot ${number}`)}
     >
       <span className={styles.slotNumber}>

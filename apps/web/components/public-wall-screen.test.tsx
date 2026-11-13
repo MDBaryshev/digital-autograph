@@ -353,9 +353,13 @@ describe('public Wall and Free Claim UX', () => {
     expect(
       await screen.findByText('Your autograph is on the Wall.'),
     ).toBeTruthy();
+    const placed = await screen.findByAltText('Digital autograph in slot 1');
+    expect(placed.closest('li')?.hasAttribute('data-arrived')).toBe(true);
     expect(
-      await screen.findByAltText('Digital autograph in slot 1'),
-    ).toBeTruthy();
+      screen
+        .getByRole('complementary', { name: 'Wall overview' })
+        .querySelectorAll('[data-arrived]'),
+    ).toHaveLength(1);
     expect(
       await within(
         screen.getByRole('region', { name: 'Placement history' }),

@@ -1,5 +1,6 @@
 import { getTranslator } from '../lib/i18n-server';
 import { Icon } from '../components/ui-icon';
+import { CobaltSignature } from '../components/cobalt-signature';
 import { TryWall } from '../components/try-wall';
 import { OpenInvitation } from '../components/open-invitation';
 import styles from './page.module.css';
@@ -28,21 +29,37 @@ export default async function HomePage() {
     <main className={styles.page}>
       <section className={styles.hero} aria-labelledby="home-heading">
         <div className={styles.heroCopy}>
-          <h1 id="home-heading">{t('Leave your autograph.')}</h1>
+          <h1 id="home-heading">
+            {t('Leave your autograph.').slice(0, -1)}
+            <span>.</span>
+          </h1>
           <p className={styles.description}>
             {t(
               'Draw your autograph and leave it on someone’s Wall. Every Wall has 10 places.',
             )}
           </p>
         </div>
+        <CobaltSignature />
+      </section>
+
+      <div className={styles.wallLayout}>
         <TryWall />
-        <div className={styles.heroActions}>
+        <aside
+          className={styles.heroActions}
+          aria-label={t('Create autograph')}
+        >
+          <h2>{t('Make an autograph')}</h2>
+          <p>
+            {t(
+              'Draw by hand or upload a photo. Your original upload stays private.',
+            )}
+          </p>
           <a className="primaryLink" href="/autograph/create">
             <Icon name="pen" size={18} /> {t('Create autograph')}
           </a>
           <OpenInvitation />
-        </div>
-      </section>
+        </aside>
+      </div>
 
       <section className={styles.process} aria-labelledby="how-it-works">
         <div className={styles.sectionHeading}>

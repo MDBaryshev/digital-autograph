@@ -1,12 +1,5 @@
 .stage {
-  --stage-paper: #f8f9ff;
-  --stage-line: #818cc8;
-  --stage-ink: #e9edff;
   min-width: 0;
-  padding: clamp(1rem, 3vw, 2.15rem);
-  border-radius: clamp(1.1rem, 3vw, 2rem);
-  background: #202e79;
-  color: var(--stage-ink);
 }
 
 .header,
@@ -24,8 +17,7 @@
 .header h2 {
   margin: 0;
   scroll-margin-top: 5rem;
-  color: white;
-  font-size: clamp(1.3rem, 2.65vw, 2.1rem);
+  font-size: clamp(1.4rem, 2.65vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 1.12;
@@ -34,6 +26,7 @@
 .header p,
 .footer {
   margin: 0.4rem 0 0;
+  color: var(--color-muted);
   font-size: clamp(0.78rem, 1.25vw, 0.92rem);
   line-height: 1.45;
 }
@@ -42,9 +35,10 @@
   flex: none;
   align-self: flex-start;
   padding: 0.35rem 0.65rem;
-  border: 1px solid var(--stage-line);
+  border: 1px solid var(--brand-color-control);
   border-radius: 100px;
-  color: white;
+  background: var(--brand-color-primarySoft);
+  color: var(--color-ink);
   font-size: 0.74rem;
   font-weight: 750;
 }
@@ -69,31 +63,41 @@
 
 .sample {
   grid-column: span 4;
-  aspect-ratio: 1.35;
-  background: var(--stage-paper);
-  color: #263b96;
+  min-height: clamp(6.3rem, 12vw, 9.4rem);
+  border: 1px solid #b99f55;
+  background: var(--podium-gold-paper);
+  color: #39291a;
 }
 
 .sample:nth-child(2) {
-  background: #dbe2ff;
-  color: #202e79;
+  border-color: #9da79e;
+  background: var(--podium-silver-paper);
+  color: #2a332e;
 }
 
 .sample:nth-child(3) {
-  background: #f5e9df;
-  color: #774027;
+  border-color: #b88e6d;
+  background: var(--podium-bronze-paper);
+  color: #423027;
 }
 
-.sample svg {
-  width: 83%;
-  max-height: 87%;
-  margin-top: 0.55rem;
+.sample > svg {
+  width: 85%;
+  height: clamp(3.3rem, 8vw, 6.6rem);
+  margin-top: 0.75rem;
 }
 
 .number {
   position: absolute;
   top: 0.4rem;
-  left: 0.55rem;
+  left: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.25rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, currentColor 10%, transparent);
   font-size: 0.75rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -110,32 +114,44 @@
 
 .place button {
   width: 100%;
-  min-height: clamp(3.05rem, 5.7vw, 5.5rem);
+  min-height: clamp(4.25rem, 7.4vw, 6.75rem);
   padding: 0.6rem;
-  color: var(--stage-ink);
-  background: #2a3a8e;
-  border: 1px solid var(--stage-line);
+  color: var(--color-muted);
+  background: var(--ui-surface-subtle);
+  border: 1px dashed var(--brand-color-control);
 }
 
 .place button[data-first],
 .place button:hover {
-  background: #4053b8;
+  background: var(--brand-color-primarySoft);
+  color: var(--color-link);
+  border-color: var(--color-link);
 }
 
 .place button:focus-visible,
 .footer a:focus-visible {
-  outline: 2px solid white;
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
 .place .signed {
-  background: var(--stage-paper);
-  border-color: var(--stage-paper);
-  color: #263b96;
+  background: var(--brand-color-mediaPaper);
+  border: 1px solid var(--color-link);
+  color: var(--brand-color-mediaInk);
 }
 
 .place .signed:hover {
-  background: #dbe2ff;
+  background: var(--brand-color-mediaPaper);
+  color: var(--brand-color-mediaInk);
+}
+
+.plus {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
 }
 
 .signed svg {
@@ -154,7 +170,7 @@
   align-items: center;
   gap: 0.35rem;
   min-height: 44px;
-  color: white;
+  color: var(--color-link);
   font-weight: 800;
 }
 
@@ -239,5 +255,50 @@
 
   .show {
     width: 100%;
+  }
+}
+
+@media (max-width: 38rem) {
+  .place:nth-child(n + 4):nth-child(-n + 7) {
+    grid-column: span 6;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .place button,
+  .plus {
+    transition:
+      background-color 180ms,
+      color 180ms,
+      border-color 180ms,
+      transform 180ms;
+  }
+
+  .place button:is(:hover, :focus-visible) .plus {
+    transform: scale(1.12);
+  }
+
+  .place button:active .plus {
+    transform: scale(0.94);
+  }
+
+  .dialog[open] {
+    animation: reveal-ink 185ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .signed svg {
+    animation: reveal-ink 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes reveal-ink {
+  from {
+    opacity: 0.55;
+    transform: translateY(4px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

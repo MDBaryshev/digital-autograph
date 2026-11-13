@@ -1,90 +1,89 @@
 .page {
-  --content-inset: max(
-    var(--space-page),
-    calc((100% - 83rem) / 2 + var(--space-page))
-  );
-  max-width: none;
-  margin: 0;
-  padding: 0;
+  max-width: 83rem;
+  margin: clamp(1rem, 2.5vw, 1.75rem) auto 0;
+  padding: 0 var(--space-page);
 }
 
 .hero {
-  --paper: color-mix(
-    in srgb,
-    var(--brand-color-paper) 94%,
-    var(--brand-color-secondarySoft)
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: end;
+  overflow: hidden;
+  min-height: clamp(17rem, 25vw, 21rem);
+  padding: clamp(1.35rem, 3.4vw, 3rem);
+  border-radius: 0.85rem;
+  color: var(--cobalt-white);
+  background: radial-gradient(
+    ellipse at 78% 50%,
+    #385dc5,
+    var(--cobalt-cover) 64%
   );
-  --rule: color-mix(in srgb, var(--color-ink) 6%, transparent);
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  grid-template-areas:
-    'intro wall'
-    'actions wall';
-  grid-template-rows: auto auto;
-  gap: 1.5rem clamp(1.8rem, 4.5vw, 4.75rem);
-  min-height: calc(100svh - 4.25rem);
-  padding-block: clamp(2.75rem, 5vw, 4.5rem);
-  padding-inline: var(--content-inset);
-  background-color: var(--paper);
-  background-image:
-    linear-gradient(to bottom, transparent 28%, var(--brand-color-paper)),
-    linear-gradient(to top, var(--rule) 0 1px, transparent 1px);
-  background-size:
-    100% 100%,
-    100% 28px;
-  background-repeat: no-repeat, repeat-y;
-}
-
-.process,
-.owner {
-  margin-inline: var(--content-inset);
 }
 
 .heroCopy {
-  grid-area: intro;
-  align-self: end;
-}
-
-.hero > section {
-  grid-area: wall;
-  align-self: center;
+  position: relative;
+  z-index: 1;
+  max-width: 54%;
 }
 
 .hero h1 {
-  max-width: 10ch;
+  max-width: 11ch;
   margin: 0;
-  font-size: clamp(3.1rem, 6.05vw, 5.7rem);
+  font-size: clamp(2.5rem, 6.1vw, 5.5rem);
   font-weight: 800;
-  letter-spacing: -0.065em;
-  line-height: 0.99;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
   text-wrap: balance;
 }
 
+.hero h1 span {
+  color: var(--cobalt-point);
+}
+
 .description {
-  max-width: 36ch;
-  margin: 1.45rem 0 0;
-  color: color-mix(in srgb, var(--color-muted) 88%, var(--color-ink));
-  font-size: clamp(1rem, 1.5vw, 1.22rem);
-  line-height: 1.55;
+  max-width: 42ch;
+  margin: 1rem 0 0;
+  color: var(--cobalt-ink);
+  font-size: clamp(0.92rem, 1.45vw, 1.13rem);
+  line-height: 1.5;
+}
+
+.wallLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+  gap: clamp(1rem, 2vw, 1.25rem);
+  align-items: start;
+  margin-block: 1.75rem 2.25rem;
 }
 
 .heroActions {
-  grid-area: actions;
-  display: flex;
-  align-items: start;
-  align-self: start;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 1rem;
+  border-radius: 0.85rem;
+  background: var(--ui-stage);
+}
+
+.heroActions h2 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.heroActions p {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
 }
 
 .heroActions > a {
-  gap: 0.55rem;
+  justify-content: space-between;
   font-size: 0.88rem;
-  font-weight: 800;
 }
 
-.heroActions:has(details[open]) {
-  flex-flow: column nowrap;
+.heroActions summary {
+  width: 100%;
 }
 
 .process {
@@ -178,42 +177,27 @@
   color: color-mix(in srgb, var(--color-ink) 45%, var(--color-muted));
 }
 
-@media (forced-colors: active) {
-  .hero {
-    background-image: none;
-  }
-}
-
 @media (max-width: 52rem) {
-  .hero {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'intro' 'wall' 'actions';
-    grid-template-rows: auto;
-    min-height: auto;
-  }
-
-  .hero h1 {
-    max-width: 15ch;
+  .wallLayout {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 38rem) {
+@media (max-width: 42rem) {
   .hero {
-    gap: 1.35rem;
-    padding-block: 1.65rem 2.5rem;
+    padding-top: 6rem;
+  }
+
+  .heroCopy {
+    max-width: 100%;
   }
 
   .hero h1 {
-    font-size: clamp(2.4rem, 10.5vw, 4rem);
+    font-size: clamp(2.4rem, 10.5vw, 3.5rem);
   }
 
   .description {
-    margin: 0.85rem 0 0;
-  }
-
-  .heroActions {
-    flex-flow: column nowrap;
-    align-items: stretch;
+    margin-top: 0.7rem;
   }
 
   .sectionHeading,
