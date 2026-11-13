@@ -11,6 +11,16 @@ ALTER TABLE "account_appearance" ADD COLUMN "public_updated_at" timestamp with t
 ALTER TABLE "walls" ADD COLUMN "discoverable" boolean DEFAULT false NOT NULL;
 --> statement-breakpoint
 
+-- Recommendation settings are private; only changes to the other Wall fields
+-- advance the timestamp used for public feed activity.
+DROP TRIGGER walls_updated_at ON walls;
+CREATE TRIGGER walls_updated_at BEFORE UPDATE ON walls
+FOR EACH ROW
+WHEN ((to_jsonb(NEW) - 'discoverable' - 'updated_at') IS DISTINCT FROM
+      (to_jsonb(OLD) - 'discoverable' - 'updated_at'))
+EXECUTE FUNCTION touch_updated_at();
+--> statement-breakpoint
+
 ALTER TABLE "creator_follows" ADD CONSTRAINT "creator_follows_follower_user_id_users_id_fk" FOREIGN KEY ("follower_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
 
