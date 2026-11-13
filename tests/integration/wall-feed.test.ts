@@ -6,7 +6,9 @@ import {
   createPgAppearanceRepository,
   createPgSessionRepository,
   createPgWallFeedRepository,
+  createPgWallRepository,
 } from '../../packages/db/src';
+import { WallService } from '../../packages/walls/src';
 import {
   autographs,
   creatorProfiles,
@@ -269,4 +271,53 @@ it('sorts follows by public changes and excludes private avatar imports from act
     title: 'New public title',
     activityKind: 'wall',
   });
+});
+
+it('preserves public activity across discovery changes and retries while tracking real Wall changes', async () => {
+  const older = await wall(40, false, 5);
+  const newer = await wall(41, false, 2);
+  const setting = `/me/walls/${older.id}/discovery`;
+  const ownerToken = (await sessionService.createSession(older.owner)).token;
+  for (const profile of [older, newer])
+    await request('PUT', `/creators/${profile.slug}/follow`, actorToken);
+  await sign(older.id, signer, 1, 0, 3);
+
+  const baseline = await feed('?mode=following', actorToken);
+  expect(baseline.items.map((item) => item.id)).toEqual([newer.id, older.id]);
+  expect(baseline.items[1]?.activityKind).toBe('placement');
+  const wallTimestamp = async () =>
+    (
+      await database.pool.query<{ updated_at: Date }>(
+        'SELECT updated_at FROM walls WHERE id=$1',
+        [older.id],
+      )
+    ).rows[0]!.updated_at;
+  const originalTimestamp = await wallTimestamp();
+
+  for (const method of ['PUT', 'PUT', 'DELETE', 'DELETE'] as const) {
+    expect((await request(method, setting, ownerToken)).json()).toEqual({
+      discoverable: method === 'PUT',
+    });
+    expect(await wallTimestamp()).toEqual(originalTimestamp);
+    expect(await feed('?mode=following', actorToken)).toEqual(baseline);
+    expect((await feed('')).items.map((item) => item.id)).toEqual(
+      method === 'PUT' ? [older.id] : [],
+    );
+  }
+
+  const wallService = new WallService(createPgWallRepository(database.pool));
+  await wallService.transitionWall(older.owner, older.id, 'pause');
+  expect((await wallTimestamp()).getTime()).toBeGreaterThan(
+    originalTimestamp.getTime(),
+  );
+  const changed = await feed('?mode=following', actorToken);
+  expect(changed.items.map((item) => item.id)).toEqual([older.id, newer.id]);
+  expect(changed.items[0]).toMatchObject({
+    id: older.id,
+    status: 'paused',
+    activityKind: 'wall',
+  });
+  expect(new Date(changed.items[0]!.activityAt).getTime()).toBeGreaterThan(
+    new Date(baseline.items[1]!.activityAt).getTime(),
+  );
 });
