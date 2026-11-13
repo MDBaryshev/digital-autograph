@@ -102,6 +102,11 @@ export function registerEmailAuthRoutes(
                 { event: 'AUTH_EMAIL_CAPACITY_REACHED' },
                 'Authentication email capacity reached',
               );
+              // Capacity is global, independent of whether the address exists.
+              return reply
+                .header('Retry-After', '2')
+                .code(429)
+                .send({ error: { code: 'AUTH_RATE_LIMITED' } });
             }
             return reply.code(202).send({ accepted: true });
           }
