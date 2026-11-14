@@ -1,3 +1,5 @@
+import { wallIdParams } from '@digital-autograph/contracts';
+
 export type PlacementHistoryItem = {
   wallId: string;
   wallSlug: string;
@@ -45,40 +47,152 @@ async function requestJson<T>(response: Response): Promise<T> {
   throw new PlacementHistoryApiError(response.status, code);
 }
 
+async function historyRequest<T>(
+  origin: string,
+  path: string,
+  credentials: 'include' | 'omit',
+  signal: AbortSignal | undefined,
+  read: (response: Response) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  let rejectAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = () => reject(new Error('HISTORY_REQUEST_ABORTED'));
+    controller.signal.addEventListener('abort', rejectAbort, { once: true });
+  });
+  signal?.addEventListener('abort', cancel, { once: true });
+  const timer = setTimeout(cancel, 10_000);
+  if (signal?.aborted) cancel();
+  try {
+    if (controller.signal.aborted) return await aborted;
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(`${origin}${path}`, {
+          cache: 'no-store',
+          credentials,
+          signal: controller.signal,
+        });
+        return read(response);
+      })(),
+      aborted,
+    ]);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', cancel);
+    controller.signal.removeEventListener('abort', rejectAbort);
+    // Session checks use headers only; release any unread response body too.
+    controller.abort();
+  }
+}
+
+type PublicPlacement = PublicWallPlacementHistory['placements'][number];
+
+function record(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw Error('INVALID_HISTORY');
+  return value as Record<string, unknown>;
+}
+
+function validDate(value: unknown): value is string {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value));
+}
+
+function placement(value: unknown): PublicPlacement {
+  const item = record(value);
+  if (
+    !Number.isSafeInteger(item.slotPosition) ||
+    (item.slotPosition as number) < 0 ||
+    !['free_claim', 'takeover', 'admin'].includes(item.source as string) ||
+    !validDate(item.startedAt) ||
+    !(item.endedAt === null || validDate(item.endedAt)) ||
+    ![null, 'displaced', 'wall_ended', 'administrative', 'other'].includes(
+      item.endReason as null | string,
+    )
+  )
+    throw Error('INVALID_HISTORY');
+  return {
+    slotPosition: item.slotPosition as number,
+    source: item.source as PublicPlacement['source'],
+    startedAt: item.startedAt,
+    endedAt: item.endedAt,
+    endReason: item.endReason as PublicPlacement['endReason'],
+  };
+}
+
+function historyItems(value: unknown): unknown[] {
+  if (!Array.isArray(value) || value.length > 100)
+    throw Error('INVALID_HISTORY');
+  return value;
+}
+
 export function placementHistoryApi(origin: string) {
   return {
     async wall(
       wallId: string,
       signal?: AbortSignal,
     ): Promise<PublicWallPlacementHistory> {
-      const response = await fetch(
-        `${origin}/walls/${encodeURIComponent(wallId)}/placements`,
-        { cache: 'no-store', credentials: 'omit', signal },
+      return historyRequest(
+        origin,
+        `/walls/${encodeURIComponent(wallId)}/placements`,
+        'omit',
+        signal,
+        async (response) => {
+          const body = record(await requestJson<unknown>(response));
+          if (body.wallId !== wallId) throw Error('INVALID_HISTORY');
+          return {
+            wallId,
+            placements: historyItems(body.placements).map(placement),
+          };
+        },
       );
-      return requestJson<PublicWallPlacementHistory>(response);
     },
     async mine(signal?: AbortSignal): Promise<PlacementHistoryItem[]> {
-      const response = await fetch(`${origin}/me/placements`, {
-        cache: 'no-store',
-        credentials: 'include',
+      return historyRequest(
+        origin,
+        '/me/placements',
+        'include',
         signal,
-      });
-      const body = await requestJson<{ items: PlacementHistoryItem[] }>(
-        response,
+        async (response) => {
+          const body = record(await requestJson<unknown>(response));
+          return historyItems(body.items).map((value) => {
+            const item = record(value);
+            const publicItem = placement(item);
+            if (
+              !wallIdParams.safeParse({ id: item.wallId }).success ||
+              typeof item.wallSlug !== 'string' ||
+              typeof item.wallDisplayName !== 'string' ||
+              typeof item.wallIsPublic !== 'boolean'
+            )
+              throw Error('INVALID_HISTORY');
+            return {
+              ...publicItem,
+              wallId: item.wallId as string,
+              wallSlug: item.wallSlug,
+              wallDisplayName: item.wallDisplayName,
+              wallIsPublic: item.wallIsPublic,
+            };
+          });
+        },
       );
-      return body.items;
     },
     async session(
       signal?: AbortSignal,
     ): Promise<'authenticated' | 'anonymous'> {
-      const response = await fetch(`${origin}/auth/me`, {
-        cache: 'no-store',
-        credentials: 'include',
+      return historyRequest(
+        origin,
+        '/auth/me',
+        'include',
         signal,
-      });
-      if (response.ok) return 'authenticated';
-      if (response.status === 401) return 'anonymous';
-      throw new PlacementHistoryApiError(response.status, 'AUTH_UNAVAILABLE');
+        async (response) => {
+          if (response.ok) return 'authenticated' as const;
+          if (response.status === 401) return 'anonymous' as const;
+          throw new PlacementHistoryApiError(
+            response.status,
+            'AUTH_UNAVAILABLE',
+          );
+        },
+      );
     },
   };
 }
