@@ -16,7 +16,7 @@
   color: var(--cobalt-white);
   background: radial-gradient(
     ellipse at 78% 50%,
-    #385dc5,
+    var(--cobalt-light),
     var(--cobalt-cover) 64%
   );
 }
@@ -78,8 +78,15 @@
 }
 
 .heroActions > a {
+  background: var(--ui-action-surface);
+  color: var(--ui-action-ink);
   justify-content: space-between;
   font-size: 0.88rem;
+}
+
+.heroActions > a:hover {
+  background: var(--ui-action-hover);
+  color: var(--ui-action-ink);
 }
 
 .heroActions summary {

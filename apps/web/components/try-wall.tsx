@@ -5,6 +5,7 @@ import { drawingBounds, type Stroke } from '../lib/drawing';
 import { CanvasEditor } from './canvas-editor';
 import { useLocale } from './locale-provider';
 import { SignatureArt } from './signature-art';
+import { CubePreview, CubeViewer, type CubeDetails } from './autograph-cube';
 import { Icon } from './ui-icon';
 import styles from './try-wall.module.css';
 
@@ -124,6 +125,7 @@ export function TryWall() {
   const { t } = useLocale();
   const [editing, setEditing] = useState<number | null>(null);
   const [mark, setMark] = useState<Mark | null>(null);
+  const [viewing, setViewing] = useState<CubeDetails | null>(null);
 
   return (
     <section
@@ -136,63 +138,83 @@ export function TryWall() {
           <h2 id="try-wall-heading" tabIndex={-1}>
             {t('Try the Wall')}
           </h2>
-          <p>{t('Pick a free place and draw right here.')}</p>
+          <p>
+            <span className={styles.pointerHint}>
+              {t(
+                'Hover over a place to unfold it. Click an autograph to rotate.',
+              )}
+            </span>
+            <span className={styles.touchHint}>
+              {t('Tap an autograph to rotate its cube. Or sign a free place.')}
+            </span>
+          </p>
         </div>
         <span className={styles.badge}>{t('Demo')}</span>
       </div>
       <ol className={styles.grid} role="list">
         {places.map((place) => {
           const drawn = mark?.place === place;
-          return place <= 3 ? (
-            <li key={place} className={styles.sample}>
-              <span className={styles.number} aria-hidden="true">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m3 7 4 3 5-6 5 6 4-3-2 11H5L3 7Zm2 14h14" />
-                </svg>
-                {String(place).padStart(2, '0')}
-              </span>
-              <span className={styles.srOnly}>
-                {t('Example autograph in place {place}', { place })}
-              </span>
-              <SignatureArt variant={place - 1} />
-            </li>
-          ) : (
-            <li key={place} className={styles.place}>
+          const details: CubeDetails = {
+            place,
+            artwork:
+              place <= 3 ? (
+                <SignatureArt variant={place - 1} />
+              ) : drawn ? (
+                <Ink strokes={mark.strokes} />
+              ) : (
+                <span>+</span>
+              ),
+            demoName:
+              place <= 3 ? ['mira', 'leo', 'nika'][place - 1] : undefined,
+            empty: place > 3 && !drawn,
+          };
+          return (
+            <li
+              key={place}
+              className={styles.place}
+              data-podium={place <= 3 ? '' : undefined}
+            >
               <button
                 type="button"
-                className={drawn ? styles.signed : undefined}
+                className={styles.cubeButton}
                 data-first={place === 4 && !mark ? '' : undefined}
                 aria-haspopup="dialog"
                 aria-label={t(
-                  drawn
-                    ? 'Edit your autograph in place {place}'
-                    : mark
-                      ? 'Move your autograph to place {place}'
-                      : 'Sign demo place {place}',
+                  place <= 3
+                    ? 'Explore demo cube in place {place}'
+                    : drawn
+                      ? 'Edit your autograph in place {place}'
+                      : mark
+                        ? 'Move your autograph to place {place}'
+                        : 'Sign demo place {place}',
                   { place },
                 )}
-                onClick={() => setEditing(place)}
+                onClick={() =>
+                  place <= 3 ? setViewing(details) : setEditing(place)
+                }
               >
-                <span className={styles.number} aria-hidden="true">
-                  {String(place).padStart(2, '0')}
-                </span>
-                {drawn ? (
-                  <Ink strokes={mark.strokes} />
-                ) : (
-                  <span className={styles.plus}>
-                    <Icon name="plus" size={18} />
+                <CubePreview details={details} />
+                <span className={styles.plinth} aria-hidden="true">
+                  <span>{String(place).padStart(2, '0')}</span>
+                  <span>
+                    {place <= 3
+                      ? `@${details.demoName}`
+                      : t(drawn ? 'Your autograph' : 'Free place')}
                   </span>
-                )}
+                  <Icon name={place <= 3 ? 'arrow' : 'plus'} size={14} />
+                </span>
               </button>
+              {place > 3 && (
+                <button
+                  type="button"
+                  className={styles.explore}
+                  aria-label={t('Explore cube in slot {place}', { place })}
+                  aria-haspopup="dialog"
+                  onClick={() => setViewing(details)}
+                >
+                  {t('Rotate cube')}
+                </button>
+              )}
             </li>
           );
         })}
@@ -211,6 +233,9 @@ export function TryWall() {
           <span aria-hidden="true">{t('10 places')}</span>
         )}
       </div>
+      {viewing && (
+        <CubeViewer details={viewing} onClose={() => setViewing(null)} />
+      )}
       {editing !== null && (
         <DrawingDialog
           place={editing}

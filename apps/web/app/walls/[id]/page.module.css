@@ -18,7 +18,7 @@
   color: var(--cobalt-white);
   background: radial-gradient(
     ellipse at 78% 50%,
-    #385dc5,
+    var(--cobalt-light),
     var(--cobalt-cover) 64%
   );
 }
@@ -184,60 +184,47 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(0.4rem, 0.9vw, 0.75rem);
+  gap: clamp(0.5rem, 1vw, 0.9rem);
   padding: 0;
   margin-block: 1rem 0;
   list-style: none;
 }
 .slot {
-  --place-edge: var(--brand-color-border);
+  grid-column: span 3;
+  --slot-height: clamp(5rem, 7.4vw, 6.75rem);
+  --slot-cube-size: clamp(3rem, 4.7vw, 4rem);
   --place-label: var(--brand-color-primarySoft);
   --place-label-ink: var(--color-link);
-  grid-column: span 3;
   min-width: 0;
-  min-height: 7rem;
-  border: 1px solid var(--place-edge);
-  border-radius: 0.7rem;
-  background: var(--place-paper, var(--brand-color-surface));
-  padding: 0.55rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  align-items: stretch;
+  position: relative;
+  border-radius: 0.5rem;
 }
-.slot:nth-child(n + 8),
-.slot[data-podium] {
+.slot[data-podium],
+.slot:nth-child(n + 8) {
   grid-column: span 4;
 }
 .slot[data-podium] {
-  min-height: 9.4rem;
-  border-width: 2px;
-}
-.slot[data-empty] {
-  border-style: dashed;
-  border-color: var(--brand-color-control);
-  background: var(--ui-surface-subtle);
-}
-.slot[data-empty]:is(:has(.slotAction:hover:not(:disabled)), [data-selected]) {
-  border-color: var(--color-link);
-  background: var(--brand-color-primarySoft);
+  --slot-height: clamp(7rem, 14vw, 11rem);
+  --slot-cube-size: clamp(3.75rem, 7.5vw, 6.5rem);
 }
 .slot[data-selected] {
   outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
-
 .slotNumber {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  align-self: flex-start;
-  gap: 0.45rem;
-  min-height: 1.5rem;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.5rem;
-  background: var(--place-label);
-  font-size: 0.7rem;
-  font-weight: 650;
-  color: var(--place-label-ink);
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.slot[data-podium] .slotNumber {
+  color: var(--color-ink);
 }
 .slot[data-podium='gold'] {
   --place-edge: #c28b1d;
@@ -263,75 +250,43 @@
   flex: none;
 }
 .slotContent {
-  flex: 1;
-  min-height: 4.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 0.5rem;
   text-align: center;
-  padding: 0;
 }
-.slotContent > p {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--brand-color-muted);
-}
-.slotContent > div > p {
-  color: var(--brand-color-muted);
+.slotContent p,
+.emptyLabel {
+  margin: 0.35rem 0;
+  color: var(--color-muted);
   font-size: 0.7rem;
-  max-width: 22ch;
-  line-height: 1.5;
-  margin: 0.5rem 0 0;
+  text-align: center;
 }
-.slot[data-podium]:not([data-empty]) .slotContent p {
-  color: var(--place-label-ink);
-}
+.page .cubeOpen,
 .page .slotAction {
-  display: grid;
-  flex: 1;
-  place-content: center;
-  justify-items: center;
-  gap: 0.25rem;
-  min-height: 4.5rem;
-  padding: 0.25rem;
-  border: 1px solid transparent;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-ink);
+  font-weight: 700;
+  text-align: center;
+}
+.page .cubeOpen:hover,
+.page .slotAction:hover:not(:disabled) {
   background: transparent;
   color: var(--color-link);
-  overflow-wrap: anywhere;
-  text-align: center;
-  font-weight: 750;
 }
-
-.page .slotAction:hover:not(:disabled),
-.page .slotAction[aria-expanded='true'] {
-  border-color: transparent;
-  background: transparent;
+.page .cubeOpen:focus-visible,
+.page .slotAction:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
 }
-.emptyMark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  color: var(--brand-color-primary);
-  font-size: 1.5rem;
-  font-weight: 300;
-}
-.autograph {
-  background: var(--brand-color-mediaPaper);
-  width: 100%;
-  height: 4rem;
-  object-fit: contain;
-  border-radius: 0.35rem;
-}
-
-.slot[data-podium] .autograph {
-  height: 5rem;
-  background: var(--place-paper);
+.page .slotAction > span:last-child {
+  display: block;
+  padding: 0.55rem 0.25rem;
+  border-top: 1px solid var(--brand-color-border);
+  font-size: 0.75rem;
 }
 .panel,
 .picker {
@@ -406,7 +361,7 @@
   border-radius: 0.75rem;
   background: var(--brand-color-primarySoft);
 }
-.page button:not(.slotAction) {
+.page button:not(.slotAction, .cubeOpen, .cubeInspect):not(dialog button) {
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
@@ -444,9 +399,12 @@
   .slot:nth-child(n + 4):nth-child(-n + 7) {
     grid-column: span 6;
   }
-
-  .slot[data-podium] {
-    min-height: 7.75rem;
+  .wallSummary {
+    grid-template-columns: 1fr auto;
+  }
+  .segments {
+    grid-column: 1 / -1;
+    margin: 0.4rem 0;
   }
 }
 
@@ -463,7 +421,7 @@
     transform: scale(0.94);
   }
 
-  .slot[data-arrived] .autograph {
+  .slot[data-arrived] .cubeOpen {
     animation: reveal-placement 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
@@ -543,4 +501,17 @@
   max-width: 62ch;
   color: var(--color-muted);
   margin: 0.5rem 0 1.25rem;
+}
+
+.page .cubeInspect {
+  display: block;
+  margin: 0 auto;
+  min-height: 44px;
+  padding: 0.4rem;
+  border: 0;
+  background: transparent;
+  color: var(--ui-action-link);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }

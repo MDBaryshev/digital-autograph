@@ -46,118 +46,78 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(0.35rem, 0.9vw, 0.75rem);
+  gap: clamp(0.5rem, 1vw, 0.9rem);
   padding: 0;
   margin: 0;
   list-style: none;
 }
-
-.sample,
-.place button {
-  position: relative;
-  display: grid;
-  min-width: 0;
-  place-items: center;
-  border-radius: clamp(0.5rem, 1.1vw, 0.85rem);
-}
-
-.sample {
-  grid-column: span 4;
-  min-height: clamp(6.3rem, 12vw, 9.4rem);
-  border: 1px solid #b99f55;
-  background: var(--podium-gold-paper);
-  color: #39291a;
-}
-
-.sample:nth-child(2) {
-  border-color: #9da79e;
-  background: var(--podium-silver-paper);
-  color: #2a332e;
-}
-
-.sample:nth-child(3) {
-  border-color: #b88e6d;
-  background: var(--podium-bronze-paper);
-  color: #423027;
-}
-
-.sample > svg {
-  width: 85%;
-  height: clamp(3.3rem, 8vw, 6.6rem);
-  margin-top: 0.75rem;
-}
-
-.number {
-  position: absolute;
-  top: 0.4rem;
-  left: 0.45rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-height: 1.25rem;
-  padding: 0.15rem 0.3rem;
-  border-radius: 0.25rem;
-  background: color-mix(in srgb, currentColor 10%, transparent);
-  font-size: 0.75rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
 .place {
   grid-column: span 3;
+  --slot-height: clamp(5rem, 7.4vw, 6.75rem);
+  --slot-cube-size: clamp(3rem, 4.7vw, 4rem);
+  min-width: 0;
+  position: relative;
 }
-
+.place[data-podium],
 .place:nth-child(n + 8) {
   grid-column: span 4;
 }
-
-.place button {
+.place[data-podium] {
+  --slot-height: clamp(7rem, 14vw, 11rem);
+  --slot-cube-size: clamp(3.75rem, 7.5vw, 6.5rem);
+}
+.place .cubeButton {
+  display: block;
   width: 100%;
-  min-height: clamp(4.25rem, 7.4vw, 6.75rem);
-  padding: 0.6rem;
-  color: var(--color-muted);
-  background: var(--ui-surface-subtle);
-  border: 1px dashed var(--brand-color-control);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-ink);
+  text-align: center;
 }
-
-.place button[data-first],
-.place button:hover {
-  background: var(--brand-color-primarySoft);
-  color: var(--color-link);
-  border-color: var(--color-link);
+.place .cubeButton:hover {
+  background: transparent;
 }
-
-.place button:focus-visible,
-.footer a:focus-visible {
+.cubeButton:focus-visible {
   outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
+.plinth {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.6rem 0.4rem;
 
-.place .signed {
-  background: var(--brand-color-mediaPaper);
-  border: 1px solid var(--color-link);
-  color: var(--brand-color-mediaInk);
+  font-size: 0.72rem;
 }
-
-.place .signed:hover {
-  background: var(--brand-color-mediaPaper);
-  color: var(--brand-color-mediaInk);
+.plinth > span:first-child {
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
 }
-
-.plus {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid currentColor;
-  border-radius: 50%;
+.plinth > span:nth-child(2) {
+  font-weight: 750;
 }
-
-.signed svg {
-  width: 100%;
-  height: clamp(1.8rem, 4vw, 3.25rem);
-  margin-top: 0.45rem;
+.plinth > svg {
+  flex: none;
+  color: var(--color-link);
+}
+.cubeButton:hover .plinth {
+  color: var(--color-link);
+}
+.place .explore {
+  display: block;
+  min-height: 44px;
+  margin: auto;
+  padding: 0.4rem;
+  border: 0;
+  background: transparent;
+  color: var(--ui-action-link);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .footer {
@@ -185,7 +145,7 @@
 }
 
 .dialog::backdrop {
-  background: #101635b8;
+  background: var(--cube-backdrop);
 }
 
 .dialogHeader {
@@ -258,47 +218,31 @@
   }
 }
 
-@media (max-width: 38rem) {
+@media (max-width: 42rem) {
   .place:nth-child(n + 4):nth-child(-n + 7) {
     grid-column: span 6;
   }
 }
-
 @media (prefers-reduced-motion: no-preference) {
-  .place button,
-  .plus {
-    transition:
-      background-color 180ms,
-      color 180ms,
-      border-color 180ms,
-      transform 180ms;
-  }
-
-  .place button:is(:hover, :focus-visible) .plus {
-    transform: scale(1.12);
-  }
-
-  .place button:active .plus {
-    transform: scale(0.94);
-  }
-
   .dialog[open] {
     animation: reveal-ink 185ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-
-  .signed svg {
-    animation: reveal-ink 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
 }
-
 @keyframes reveal-ink {
   from {
     opacity: 0.55;
-    transform: translateY(4px) scale(0.96);
+    transform: translateY(4px);
   }
+}
 
-  to {
-    opacity: 1;
-    transform: none;
+.touchHint {
+  display: none;
+}
+@media (hover: none), (pointer: coarse) {
+  .pointerHint {
+    display: none;
+  }
+  .touchHint {
+    display: inline;
   }
 }

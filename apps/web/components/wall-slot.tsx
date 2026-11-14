@@ -2,6 +2,7 @@
 import { useLocale } from './locale-provider';
 
 import { useState } from 'react';
+import { CubePreview, CubeViewer, type CubeDetails } from './autograph-cube';
 import { placementSourceLabel } from '../lib/placement-history-api';
 import type { PublicWall } from '../lib/public-wall-api';
 import styles from '../app/walls/[id]/page.module.css';
@@ -28,6 +29,7 @@ export function WallSlot({
   const { t } = useLocale();
 
   const [failedPath, setFailedPath] = useState<string | null>(null);
+  const [viewing, setViewing] = useState(false);
   const number = slot.position + 1;
   const podium = ['gold', 'silver', 'bronze'][slot.position];
   const podiumLabel = ['Gold place', 'Silver place', 'Bronze place'][
@@ -35,6 +37,31 @@ export function WallSlot({
   ];
   const mediaPath = slot.currentPlacement?.mediaPath;
   const showMedia = Boolean(mediaPath && failedPath !== mediaPath);
+
+  const artwork =
+    showMedia && mediaPath ? (
+      <img
+        ref={(image) => {
+          if (image?.complete && image.naturalWidth === 0)
+            setFailedPath(mediaPath);
+        }}
+        src={`${apiOrigin}${mediaPath}`}
+        alt={t(`Digital autograph in slot ${number}`)}
+        crossOrigin="anonymous"
+        referrerPolicy="no-referrer"
+        onError={() => setFailedPath(mediaPath)}
+      />
+    ) : (
+      <span>{slot.occupied ? '—' : '+'}</span>
+    );
+  const details: CubeDetails = {
+    place: number,
+    artwork,
+    empty: !slot.occupied,
+    detail: slot.currentPlacement
+      ? t(placementSourceLabel(slot.currentPlacement.source))
+      : undefined,
+  };
 
   return (
     <li
@@ -47,6 +74,40 @@ export function WallSlot({
       data-arrived={arrived ? '' : undefined}
       aria-label={t(`Slot ${number}`)}
     >
+      {slot.occupied ? (
+        <button
+          type="button"
+          className={styles.cubeOpen}
+          aria-haspopup="dialog"
+          aria-label={t('Explore cube in slot {place}', { place: number })}
+          onClick={() => setViewing(true)}
+        >
+          <CubePreview details={details} />
+        </button>
+      ) : actionLabel ? (
+        <button
+          id={`slot-action-${slot.id}`}
+          className={styles.slotAction}
+          type="button"
+          aria-label={t(actionLabel)}
+          disabled={actionDisabled}
+          aria-expanded={selected}
+          onClick={onAction}
+        >
+          <CubePreview details={details} />
+          <span>{t(actionLabel)}</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          className={styles.cubeOpen}
+          aria-haspopup="dialog"
+          aria-label={t('Explore cube in slot {place}', { place: number })}
+          onClick={() => setViewing(true)}
+        >
+          <CubePreview details={details} />
+        </button>
+      )}
       <span className={styles.slotNumber}>
         {podium && (
           <svg
@@ -75,21 +136,7 @@ export function WallSlot({
       </span>
       {slot.occupied ? (
         <div className={styles.slotContent}>
-          {showMedia && mediaPath ? (
-            <img
-              ref={(image) => {
-                // A server-rendered image may fail before React attaches onError.
-                if (image?.complete && image.naturalWidth === 0)
-                  setFailedPath(mediaPath);
-              }}
-              className={styles.autograph}
-              src={`${apiOrigin}${mediaPath}`}
-              alt={t(`Digital autograph in slot ${number}`)}
-              crossOrigin="anonymous"
-              referrerPolicy="no-referrer"
-              onError={() => setFailedPath(mediaPath)}
-            />
-          ) : (
+          {!showMedia && (
             <div>
               <p>{t('Autograph unavailable')}</p>
               {mediaPath && (
@@ -101,32 +148,25 @@ export function WallSlot({
           )}
           <p>
             {t('Current placement')}
-            {slot.currentPlacement
-              ? ` · ${t(placementSourceLabel(slot.currentPlacement.source))}`
-              : ''}
+            {details.detail ? ` · ${details.detail}` : ''}
           </p>
         </div>
-      ) : actionLabel ? (
+      ) : !actionLabel ? (
+        <p className={styles.emptyLabel}>{t('Empty slot')}</p>
+      ) : null}
+      {!slot.occupied && actionLabel && (
         <button
-          id={`slot-action-${slot.id}`}
-          className={styles.slotAction}
           type="button"
-          disabled={actionDisabled}
-          aria-expanded={selected}
-          onClick={onAction}
+          className={styles.cubeInspect}
+          aria-haspopup="dialog"
+          aria-label={t('Explore cube in slot {place}', { place: number })}
+          onClick={() => setViewing(true)}
         >
-          <span className={styles.emptyMark} aria-hidden="true">
-            +
-          </span>
-          {t(actionLabel)}
+          {t('Rotate cube')}
         </button>
-      ) : (
-        <div className={styles.slotContent}>
-          <span className={styles.emptyMark} aria-hidden="true">
-            +
-          </span>
-          <p>{t('Empty slot')}</p>
-        </div>
+      )}
+      {viewing && (
+        <CubeViewer details={details} onClose={() => setViewing(false)} />
       )}
     </li>
   );
