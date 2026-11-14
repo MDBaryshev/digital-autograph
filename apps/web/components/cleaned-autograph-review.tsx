@@ -29,6 +29,29 @@ type ApprovalState =
   | { kind: 'approval_error'; message: string; legalRequired?: boolean }
   | { kind: 'submitted_for_moderation'; approvedAt: string };
 
+async function reviewRequest<T>(
+  controller: AbortController,
+  work: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  let rejectAbort!: (error: Error) => void;
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = reject;
+  });
+  const cancel = () => rejectAbort(new Error('REVIEW_REQUEST_ABORTED'));
+  controller.signal.addEventListener('abort', cancel, { once: true });
+  const timer = window.setTimeout(() => controller.abort(), 10_000);
+  try {
+    if (controller.signal.aborted) {
+      cancel();
+      return await aborted;
+    }
+    return await Promise.race([work(controller.signal), aborted]);
+  } finally {
+    window.clearTimeout(timer);
+    controller.signal.removeEventListener('abort', cancel);
+  }
+}
+
 function approvalError(error: unknown): string {
   if (error instanceof AutographApiError) {
     if (error.code === 'REVIEWED_ASSET_MISMATCH') {
@@ -62,71 +85,73 @@ export function CleanedAutographReview({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
-  const inFlight = useRef(false);
-  const refreshInFlight = useRef(false);
   const controller = useRef<AbortController | null>(null);
 
-  useEffect(() => () => controller.current?.abort(), []);
+  useEffect(
+    () => () => {
+      const pending = controller.current;
+      controller.current = null;
+      pending?.abort();
+    },
+    [],
+  );
 
   const approve = async () => {
     if (
-      inFlight.current ||
+      controller.current ||
       !imageLoaded ||
-      refreshInFlight.current ||
       phase.kind === 'submitted_for_moderation'
     )
       return;
-    inFlight.current = true;
     const next = new AbortController();
     controller.current = next;
     setPhase({ kind: 'approving' });
     try {
-      const result = await api.approve(
-        autographId,
-        preview.assetId,
-        next.signal,
+      const result = await reviewRequest(next, (signal) =>
+        api.approve(autographId, preview.assetId, signal),
       );
-      if (!next.signal.aborted) {
+      if (controller.current === next) {
         setPhase({
           kind: 'submitted_for_moderation',
           approvedAt: result.approvedAt,
         });
       }
     } catch (error) {
-      if (!next.signal.aborted)
+      if (controller.current === next)
         setPhase({
           kind: 'approval_error',
           message: approvalError(error),
           legalRequired: needsFirstUseConfirmation(error),
         });
     } finally {
-      inFlight.current = false;
       if (controller.current === next) controller.current = null;
     }
   };
 
   const refresh = async () => {
-    if (inFlight.current || refreshInFlight.current) return;
-    refreshInFlight.current = true;
+    if (controller.current) return;
     const next = new AbortController();
     controller.current = next;
     setRefreshing(true);
     setRefreshError(null);
     try {
-      const result = await api.preview(autographId, next.signal);
-      if (!next.signal.aborted) {
+      const result = await reviewRequest(next, (signal) =>
+        api.preview(autographId, signal),
+      );
+      if (controller.current === next) {
         if (result.url !== preview.url || result.assetId !== preview.assetId)
           setImageLoaded(false);
         setPreview(result);
         if (phase.kind === 'approval_error') setPhase({ kind: 'preview' });
       }
     } catch {
-      if (!next.signal.aborted)
+      if (controller.current === next)
         setRefreshError('Could not refresh the private preview. Try again.');
     } finally {
-      refreshInFlight.current = false;
-      setRefreshing(false);
-      if (controller.current === next) controller.current = null;
+      if (controller.current === next) {
+        controller.current = null;
+        setRefreshing(false);
+      }
     }
   };
 
