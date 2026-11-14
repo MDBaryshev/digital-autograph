@@ -1,5 +1,6 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Refresh account status': 'Обновить состояние аккаунта',
   'Public profile setup is temporarily unavailable.':
     'Настройка публичного профиля временно недоступна.',
   'Wall creation is temporarily unavailable':
