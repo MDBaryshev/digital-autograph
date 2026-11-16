@@ -29,3 +29,17 @@ a history version token to reload the list without polling. `/me/placements` pre
 the current and completed placements for the signed-in User; anonymous users
 are offered the existing Google and Telegram return flow. No Placement writer
 or ownership rule is changed by this feature.
+
+The public history view is scoped to API origin, Wall ID and refresh version.
+Changing any of these discards the previous list before another read completes;
+a failed refresh never retains an old current-placement label. Private history
+similarly resets before a changed API origin is queried. Abandoned reads are
+canceled and late responses cannot populate a newer view.
+
+Each history/session GET has a ten-second budget, including JSON reading where
+needed, even if the transport ignores abort. A failed read uses the explicit
+retry UI without automatic requests or writes; private retries recheck the
+session and a 401 clears the private list. Response validation checks the bounded
+100-row projection, required field types and dates, and the requested public
+Wall ID before displaying any rows. All data still comes from the authoritative
+backend read model; these UI checks do not grant ownership or placement rights.

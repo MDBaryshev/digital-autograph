@@ -38,6 +38,22 @@ export function WallPlacementHistory({
   wallId: string;
   apiOrigin: string;
 }) {
+  return (
+    <WallHistory
+      key={JSON.stringify([apiOrigin, wallId, refreshVersion])}
+      wallId={wallId}
+      apiOrigin={apiOrigin}
+    />
+  );
+}
+
+function WallHistory({
+  wallId,
+  apiOrigin,
+}: {
+  wallId: string;
+  apiOrigin: string;
+}) {
   const { t } = useLocale();
 
   const [items, setItems] = useState<Array<
@@ -53,6 +69,8 @@ export function WallPlacementHistory({
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
+    setItems(null);
+    setError(false);
     placementHistoryApi(apiOrigin)
       .wall(wallId, controller.signal)
       .then((history) => {
@@ -62,13 +80,16 @@ export function WallPlacementHistory({
         }
       })
       .catch(() => {
-        if (!controller.signal.aborted) setError(true);
+        if (!controller.signal.aborted) {
+          setItems(null);
+          setError(true);
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [apiOrigin, wallId, refreshVersion, retry]);
+  }, [apiOrigin, wallId, retry]);
 
   return (
     <section
@@ -137,6 +158,10 @@ export function WallPlacementHistory({
 }
 
 export function UserPlacementHistory({ apiOrigin }: { apiOrigin: string }) {
+  return <UserHistory key={apiOrigin} apiOrigin={apiOrigin} />;
+}
+
+function UserHistory({ apiOrigin }: { apiOrigin: string }) {
   const { t } = useLocale();
 
   const [auth, setAuth] = useState<
