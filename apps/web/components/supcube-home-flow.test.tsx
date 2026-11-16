@@ -118,6 +118,8 @@ it('keeps homepage A and the chosen autograph when closing and reopening the emb
   );
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(screen.getByRole('heading', { level: 1 })).toBe(hero);
+  expect(screen.getByText('ТВОЁ МЕСТО / 144')).toBeTruthy();
+  expect(screen.getByText('Куб 2 · место № 144')).toBeTruthy();
   expect(document.body.style.overflow).toBe('');
   expect(window.location.href).toBe(location);
   fireEvent.click(screen.getByRole('link', { name: 'К моему автографу' }));
@@ -153,4 +155,51 @@ it('opens deep links over the same homepage and preserves it when canceling crea
   expect(
     screen.getByRole('dialog', { name: 'Твой почерк. Твоё место.' }),
   ).toBeTruthy();
+});
+
+it('shows product navigation and an illustrated wall instead of the test playground', () => {
+  render(<SupcubeDesignLab standalone />);
+  expect(screen.queryByText('Демонстрационная стена')).toBeNull();
+  expect(
+    screen.getByRole('img', { name: 'Иллюстрация стены на десять мест' }),
+  ).toBeTruthy();
+  expect(
+    screen
+      .getByRole('link', { name: 'Создать свою стену' })
+      .getAttribute('href'),
+  ).toBe('/me/walls');
+  expect(
+    screen.getByRole('link', { name: 'Личный кабинет' }).getAttribute('href'),
+  ).toBe('/me');
+  expect(screen.queryByText(/Попробуй сейчас:/)).toBeNull();
+  expect(screen.getByText('Предварительная версия')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть навигацию' }));
+  expect(
+    screen
+      .getByRole('navigation', { name: 'Навигация supcube' })
+      .getAttribute('data-open'),
+  ).toBe('true');
+  fireEvent.keyDown(window, { key: 'Escape' });
+  expect(
+    screen
+      .getByRole('button', { name: 'Открыть навигацию' })
+      .getAttribute('aria-expanded'),
+  ).toBe('false');
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть навигацию' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Как это работает' }));
+  expect(
+    screen
+      .getByRole('navigation', { name: 'Навигация supcube' })
+      .hasAttribute('data-open'),
+  ).toBe(false);
+  const toggle = screen.getByRole('button', { name: 'Открыть навигацию' });
+  toggle.focus();
+  fireEvent.click(toggle);
+  const nav = screen.getByRole('navigation', { name: 'Навигация supcube' });
+  fireEvent.click(within(nav).getByRole('link', { name: /Общий куб/ }));
+  const viewer = screen.getByRole('dialog', { name: 'Общий куб' });
+  fireEvent.click(
+    within(viewer).getByRole('button', { name: 'Вернуться на главную' }),
+  );
+  expect(document.activeElement).toBe(toggle);
 });

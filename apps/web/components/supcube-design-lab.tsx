@@ -1,21 +1,41 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import { BrandMark, Icon } from './ui-icon';
 import { SignatureArt } from './signature-art';
 import { CommunityCubeArtwork } from './community-cube-home';
 import { TryWall } from './try-wall';
 import { OpenInvitation } from './open-invitation';
-import { CommunityCube } from './community-cube';
+import { CommunityCube, type CubePlacementPreview } from './community-cube';
+import { DraftAutograph } from './community-cube-place-picker';
+import { SupcubeWallsShowcase } from './supcube-walls-showcase';
 import styles from './supcube-design-lab.module.css';
 
-function PersonalCube({ variant = 0 }: { variant?: number }) {
+function PersonalCube({
+  variant = 0,
+  placement,
+}: {
+  variant?: number;
+  placement?: CubePlacementPreview | null;
+}) {
   return (
     <div className={styles.personalCube} aria-hidden="true">
       <div className={styles.personalFront}>
-        <span>ТВОЙ ПОЧЕРК</span>
-        <SignatureArt variant={variant} />
-        <small>один из нас.</small>
+        <span>
+          {placement ? `ТВОЁ МЕСТО / ${placement.slot}` : 'ТВОЙ ПОЧЕРК'}
+        </span>
+        {placement ? (
+          <DraftAutograph strokes={placement.strokes} />
+        ) : (
+          <SignatureArt variant={variant} />
+        )}
+        <small>{placement ? 'теперь ты часть истории.' : 'один из нас.'}</small>
       </div>
       <div className={styles.personalRight}>
         <span>supcube</span>
@@ -39,17 +59,32 @@ export function SupcubeDesignLab({
   const [mobile, setMobile] = useState(false);
   const bold = direction === 'cube';
   const workflow = useRef<HTMLDialogElement>(null);
+  const workflowOpener = useRef<HTMLElement | null>(null);
   const [cubeOpen, setCubeOpen] = useState(Boolean(initialCube));
   const [cubeMounted, setCubeMounted] = useState(Boolean(initialCube));
   const [creationRequest, setCreationRequest] = useState(
     initialCube === 'create' ? 1 : 0,
   );
   const [focusRequest, setFocusRequest] = useState(0);
-  const [hasPersonal, setHasPersonal] = useState(false);
+  const [placement, setPlacement] = useState<CubePlacementPreview | null>(null);
+  const hasPersonal = placement !== null;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuToggle = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        menuToggle.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [menuOpen]);
   useLayoutEffect(() => {
     const node = workflow.current;
     if (!node || !cubeOpen) return;
-    const previousFocus = document.activeElement;
+    const previousFocus = workflowOpener.current ?? document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     node.showModal();
@@ -58,6 +93,7 @@ export function SupcubeDesignLab({
       document.body.style.overflow = previousOverflow;
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
         previousFocus.focus({ preventScroll: true });
+      workflowOpener.current = null;
     };
   }, [cubeOpen]);
   const openCube = (event: MouseEvent<HTMLAnchorElement>, create = false) => {
@@ -70,6 +106,15 @@ export function SupcubeDesignLab({
     )
       return;
     event.preventDefault();
+    const openedFromMenu =
+      menuOpen &&
+      event.currentTarget.closest('nav') &&
+      menuToggle.current &&
+      menuToggle.current.getBoundingClientRect().width > 0;
+    workflowOpener.current = openedFromMenu
+      ? menuToggle.current
+      : event.currentTarget;
+    setMenuOpen(false);
     setCubeMounted(true);
     if (create) {
       if (hasPersonal) setFocusRequest((value) => value + 1);
@@ -148,16 +193,40 @@ export function SupcubeDesignLab({
               <BrandMark />
               <span>supcube</span>
             </a>
-            <nav aria-label="Навигация supcube">
-              <a href="#design-wall">Стены авторов</a>
+            <nav
+              id="supcube-navigation"
+              aria-label="Навигация supcube"
+              data-open={menuOpen || undefined}
+            >
+              <a href="#design-wall" onClick={() => setMenuOpen(false)}>
+                Стены авторов
+              </a>
               <a href="/community-cube" onClick={(event) => openCube(event)}>
                 Общий куб <span>↗</span>
               </a>
+              <a href="#how-it-works" onClick={() => setMenuOpen(false)}>
+                Как это работает
+              </a>
             </nav>
-            <a className={styles.account} href="/me">
+            <a
+              className={styles.account}
+              href="/me"
+              aria-label={standalone ? 'Личный кабинет' : 'Войти'}
+            >
               <Icon name="user" size={17} />
-              <span>Войти</span>
+              <span>{standalone ? 'Личный кабинет' : 'Войти'}</span>
             </a>
+            <button
+              className={styles.menuToggle}
+              ref={menuToggle}
+              type="button"
+              aria-label={menuOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
+              aria-expanded={menuOpen}
+              aria-controls="supcube-navigation"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <Icon name={menuOpen ? 'close' : 'menu'} size={20} />
+            </button>
           </header>
 
           <section
@@ -206,17 +275,25 @@ export function SupcubeDesignLab({
                   <Icon name="arrow" size={18} />
                 </a>
                 <a
-                  href={bold ? '/community-cube' : '#design-wall'}
-                  onClick={bold ? (event) => openCube(event) : undefined}
+                  href={bold || standalone ? '/community-cube' : '#design-wall'}
+                  onClick={
+                    bold || standalone ? (event) => openCube(event) : undefined
+                  }
                 >
-                  {bold ? 'Исследовать куб' : 'Попробовать на демостене'}{' '}
+                  {bold
+                    ? 'Исследовать куб'
+                    : standalone
+                      ? 'Открыть общий куб'
+                      : 'Попробовать на демостене'}{' '}
                   <span>↗</span>
                 </a>
               </div>
               <p className={styles.heroNote}>
-                {bold
-                  ? 'Общий куб пока работает как прототип.'
-                  : 'Попробуй сейчас: рисунок и выбор места без регистрации. Это демо.'}
+                {standalone
+                  ? 'Один автограф. Свободное место. Твоя часть общей истории.'
+                  : bold
+                    ? 'Общий куб пока работает как прототип.'
+                    : 'Попробуй сейчас: рисунок и выбор места без регистрации. Это демо.'}
               </p>
             </div>
             <div className={styles.heroStage}>
@@ -248,8 +325,19 @@ export function SupcubeDesignLab({
                     <PersonalCube variant={2} />
                   </div>
                   <div className={styles.mainCube}>
-                    <PersonalCube />
+                    <PersonalCube placement={placement} />
                   </div>
+                  {placement && (
+                    <div className={styles.memberStamp}>
+                      <Icon name="check" size={16} />
+                      <div>
+                        <strong>Ты на общем кубе</strong>
+                        <span>
+                          Куб {placement.generation} · место № {placement.slot}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <span className={styles.handNote}>
                     Твой след.
                     <br />
@@ -286,11 +374,12 @@ export function SupcubeDesignLab({
                 </h2>
               </div>
               <p>
-                У каждой стены — свой автор и 10 мест. Здесь можно попробовать
-                оставить след: это демонстрация, а не настоящая стена.
+                {standalone
+                  ? 'У каждой стены — свой автор и десять мест для людей, которые хотят оставить больше, чем лайк.'
+                  : 'У каждой стены — свой автор и 10 мест. Здесь можно попробовать оставить след: это демонстрация, а не настоящая стена.'}
               </p>
             </div>
-            <TryWall />
+            {standalone ? <SupcubeWallsShowcase /> : <TryWall />}
             <OpenInvitation />
           </section>
 
@@ -315,9 +404,14 @@ export function SupcubeDesignLab({
                 href="/community-cube"
                 onClick={(event) => openCube(event)}
               >
-                Покрутить общий куб <Icon name="arrow" size={18} />
+                {standalone ? 'Открыть общий куб' : 'Покрутить общий куб'}{' '}
+                <Icon name="arrow" size={18} />
               </a>
-              <small>Прототип: примеры и счётчики демонстрационные.</small>
+              <small>
+                {standalone
+                  ? 'У каждого поколения — своё место в общей истории.'
+                  : 'Прототип: примеры и счётчики демонстрационные.'}
+              </small>
             </div>
             <div className={styles.communityVisual}>
               <CommunityCubeArtwork />
@@ -332,7 +426,11 @@ export function SupcubeDesignLab({
             </div>
           </section>
 
-          <section className={styles.how} aria-labelledby="design-how-title">
+          <section
+            className={styles.how}
+            id="how-it-works"
+            aria-labelledby="design-how-title"
+          >
             <div>
               <p className={styles.eyebrow}>ТРИ ПРОСТЫХ ШАГА</p>
               <h2 id="design-how-title">
@@ -373,7 +471,20 @@ export function SupcubeDesignLab({
               <span>supcube</span>
             </a>
             <p>Каждый почерк имеет значение.</p>
-            <a href="/legal">Документы</a>
+            <nav aria-label="Информация о сервисе">
+              <a href="/legal">Документы</a>
+              <a href="/security">Безопасность</a>
+            </nav>
+            {standalone && (
+              <details className={styles.releaseInfo}>
+                <summary>Предварительная версия</summary>
+                <p>
+                  Эта версия даёт создать автограф и выбрать место в общем кубе.
+                  Сейчас куб не связан с аккаунтом: рисунок хранится до закрытия
+                  или обновления страницы. Остальные подписи — образцы.
+                </p>
+              </details>
+            )}
           </footer>
         </div>
       </div>
@@ -433,7 +544,7 @@ export function SupcubeDesignLab({
             initialCreating={creationRequest > 0}
             creationRequest={creationRequest}
             focusRequest={focusRequest}
-            onPlaced={() => setHasPersonal(true)}
+            onPlaced={setPlacement}
           />
         )}
       </dialog>

@@ -50,6 +50,28 @@ const faceNames = [
   'Верхняя',
   'Нижняя',
 ];
+export type CubePlacementPreview = {
+  slot: number;
+  generation: number;
+  strokes: readonly Stroke[];
+};
+
+function CreationSteps({ current }: { current: 1 | 2 }) {
+  return (
+    <ol className={styles.creationSteps} aria-label="Создание автографа">
+      <li
+        aria-current={current === 1 ? 'step' : undefined}
+        data-complete={current === 2 || undefined}
+      >
+        <span>{current === 2 ? <Icon name="check" size={14} /> : '01'}</span>
+        Автограф
+      </li>
+      <li aria-current={current === 2 ? 'step' : undefined}>
+        <span>02</span>Место на кубе
+      </li>
+    </ol>
+  );
+}
 
 function FaceCanvas({
   count,
@@ -173,10 +195,12 @@ function Modal({
   title,
   onClose,
   children,
+  step,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  step?: 1 | 2;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -196,13 +220,16 @@ function Modal({
     >
       <div className={styles.modalHeader}>
         <div>
-          <span className={styles.eyebrow}>ОБЩИЙ КУБ · ДЕМО</span>
+          <span className={styles.eyebrow}>
+            SUPCUBE / {step ? 'ТВОЙ АВТОГРАФ' : 'ОБЩИЙ КУБ'}
+          </span>
           <h2>{title}</h2>
         </div>
         <button type="button" onClick={onClose} aria-label="Закрыть">
           <Icon name="close" />
         </button>
       </div>
+      {step && <CreationSteps current={step} />}
       {children}
     </dialog>
   );
@@ -220,10 +247,10 @@ function SignDialog({
   const strokes = useRef<readonly Stroke[]>(initialStrokes);
   const [hasMarks, setHasMarks] = useState(initialStrokes.length > 0);
   return (
-    <Modal title="Твой почерк. Твоё место." onClose={onClose}>
+    <Modal title="Твой почерк. Твоё место." onClose={onClose} step={1}>
       <p className={styles.modalIntro}>
-        Шаг 1 из 2. Нарисуй автограф, затем выбери любое свободное место на
-        общем кубе. Рисунок останется только в этой вкладке.
+        Нарисуй свой автограф. На следующем шаге выберешь его место на общем
+        кубе.
       </p>
       <CanvasEditor
         compact
@@ -256,7 +283,7 @@ export function CommunityCube({
   embedded?: boolean;
   creationRequest?: number;
   focusRequest?: number;
-  onPlaced?: () => void;
+  onPlaced?: (placement: CubePlacementPreview) => void;
 }) {
   const [count, setCount] = useState(96);
   const [personal, setPersonal] = useState<PersonalMark | null>(null);
@@ -413,11 +440,11 @@ export function CommunityCube({
     turn.cancel();
     const id = count + 1;
     setPersonal({ id, slot, strokes: draft });
-    onPlaced?.();
     setCount(id);
     setPlacing(false);
     setDraft([]);
     const next = communityCubeState(id);
+    onPlaced?.({ slot, generation: next.generation, strokes: draft });
     const target = focusCubeAutograph(slot, next.generation);
     turn.turnTo(target.face, () => setChosen(slot), target.camera);
     setAnnouncement(
@@ -499,6 +526,12 @@ export function CommunityCube({
       </div>
       <section className={styles.hero} aria-labelledby="community-heading">
         <div className={styles.intro}>
+          {embedded && (
+            <div className={styles.viewerContext}>
+              <span>Общий куб</span>
+              <small>Пример заполнения · выбери свой ракурс</small>
+            </div>
+          )}
           <label className={styles.desktopPreset}>
             Демо-куб
             <select
@@ -794,6 +827,7 @@ export function CommunityCube({
       {placing && (
         <Modal
           title="Выбери своё место на кубе"
+          step={2}
           onClose={() => setPlacing(false)}
         >
           <CommunityCubePlacePicker
