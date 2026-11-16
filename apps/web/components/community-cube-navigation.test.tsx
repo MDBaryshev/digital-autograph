@@ -189,7 +189,13 @@ function addMark() {
   fireEvent.click(
     screen.getByRole('button', { name: 'Нарисовать тестовый автограф' }),
   );
-  fireEvent.click(screen.getByRole('button', { name: /Добавить на демо-куб/ }));
+  fireEvent.click(
+    screen.getByRole('button', { name: /Выбрать место на кубе/ }),
+  );
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Ячейка № 97 — свободна' }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: /Разместить здесь/ }));
 }
 
 it('focuses the personal cell immediately and finds it again after a face change and cube growth', () => {
@@ -221,6 +227,73 @@ it('focuses the personal cell immediately and finds it again after a face change
   expect(Number(viewer().getAttribute('data-camera-y'))).toBeCloseTo(0.6975);
   expect(Number(viewer().getAttribute('data-camera-zoom'))).toBeGreaterThan(10);
   expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+it('requires a free cell choice during creation and keeps a nonsequential choice after growth', () => {
+  render(<CommunityCube initialCreating />);
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Нарисовать тестовый автограф' }),
+  );
+  fireEvent.click(
+    screen.getByRole('button', { name: /Выбрать место на кубе/ }),
+  );
+  const confirm = screen.getByRole('button', {
+    name: /Разместить здесь/,
+  }) as HTMLButtonElement;
+  expect(confirm.disabled).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: /^Лицевая.*свободно/ }));
+  const occupied = screen.getByRole('button', {
+    name: 'Ячейка № 1 — занята',
+  }) as HTMLButtonElement;
+  expect(occupied.disabled).toBe(true);
+  fireEvent.click(occupied);
+  expect(confirm.disabled).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: /^Нижняя.*свободно/ }));
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Ячейка № 144 — свободна' }),
+  );
+  expect(confirm.disabled).toBe(false);
+  fireEvent.click(confirm);
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.getByText('97 / 144 автографов')).toBeTruthy();
+  expect(viewer().getAttribute('data-face')).toBe('5');
+  expect(Number(viewer().getAttribute('data-camera-x'))).toBeCloseTo(0.895);
+  expect(screen.getByLabelText('Грань 6: 1 из 24 ячеек занято')).toBeTruthy();
+  fireEvent.click(
+    screen.getByRole('button', { name: /Заполнить куб и вырастить/ }),
+  );
+  fireEvent.click(
+    screen.getAllByRole('button', { name: 'К моему автографу' })[0]!,
+  );
+  expect(viewer().getAttribute('data-face')).toBe('0');
+  expect(Number(viewer().getAttribute('data-camera-x'))).toBeCloseTo(0.9345);
+  expect(Number(viewer().getAttribute('data-camera-y'))).toBeCloseTo(0.9345);
+});
+
+it('keeps the drawing when returning from cell selection and does not place it when canceled', () => {
+  render(<CommunityCube initialCreating />);
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Нарисовать тестовый автограф' }),
+  );
+  fireEvent.click(
+    screen.getByRole('button', { name: /Выбрать место на кубе/ }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить автограф' }));
+  const next = screen.getByRole('button', {
+    name: /Выбрать место на кубе/,
+  }) as HTMLButtonElement;
+  expect(next.disabled).toBe(false);
+  fireEvent.click(next);
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.getByText('96 / 144 автографов')).toBeTruthy();
+  expect(
+    (
+      screen.getByRole('button', {
+        name: 'К моему автографу',
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(true);
 });
 
 it('allows 64x zoom and returns to a whole cube with one button', () => {

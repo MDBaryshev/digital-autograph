@@ -7,7 +7,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
-import { occupiedOnFace } from '../lib/community-cube';
+import { occupiedOnFace, isCubeCellOccupied } from '../lib/community-cube';
 import {
   boundedCubeCamera,
   desktopCubeMedia,
@@ -24,6 +24,7 @@ import {
   papers,
   paintMark,
   type PersonalMark,
+  personalCubeSlot,
 } from '../lib/community-cube-art';
 import { Icon } from './ui-icon';
 import styles from './community-cube.module.css';
@@ -148,7 +149,12 @@ export function CubeFaceNavigator({
   const [dragging, setDragging] = useState(false);
   const [size, setSize] = useState({ width: 1, height: 1 });
   const { rows, columns, perFace } = cubeFaceGrid(generation);
-  const occupied = occupiedOnFace(count, perFace, face);
+  const occupied = occupiedOnFace(
+    count,
+    perFace,
+    face,
+    personalCubeSlot(personal),
+  );
   useEffect(() => {
     const node = container.current;
     if (!node) return;
@@ -233,8 +239,8 @@ export function CubeFaceNavigator({
       for (let column = firstColumn; column <= lastColumn; column++) {
         const cell = row * columns + column,
           id = face * perFace + cell + 1,
-          filled = cell < occupied,
-          own = personal?.id === id;
+          filled = isCubeCellOccupied(id, count, personalCubeSlot(personal)),
+          own = personalCubeSlot(personal) === id;
         const x = 26 + column * width,
           y = 26 + row * height;
         ctx.fillStyle = own
@@ -308,6 +314,7 @@ export function CubeFaceNavigator({
     generation,
     face,
     occupied,
+    count,
     personal,
   ]);
   const release = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -458,7 +465,12 @@ export function CubeFaceNavigator({
             const cell =
               Math.floor(((y - 0.026) / 0.948) * rows) * columns +
               Math.floor(((x - 0.026) / 0.948) * columns);
-            onChoose(cell < occupied ? face * perFace + cell + 1 : null);
+            const id = face * perFace + cell + 1;
+            onChoose(
+              isCubeCellOccupied(id, count, personalCubeSlot(personal))
+                ? id
+                : null,
+            );
           }
         }
         release(event);

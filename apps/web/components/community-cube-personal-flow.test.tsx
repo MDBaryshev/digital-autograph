@@ -88,12 +88,17 @@ it('draws a real personal mark, pans it, rotates the whole cube, changes faces a
     clientX: 400,
     clientY: 150,
   });
-  const save = screen.getByRole('button', { name: /Добавить на демо-куб/ });
+  const save = screen.getByRole('button', { name: /Выбрать место на кубе/ });
   expect((save as HTMLButtonElement).disabled).toBe(false);
   fireEvent.click(save);
+  fireEvent.click(screen.getByRole('button', { name: /^Нижняя.*свободно/ }));
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Ячейка № 144 — свободна' }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: /Разместить здесь/ }));
   expect(screen.queryByRole('dialog')).toBeNull();
   const detail = screen.getByRole('group', { name: /Приближенная грань/ });
-  expect(detail.getAttribute('data-face')).toBe('4');
+  expect(detail.getAttribute('data-face')).toBe('5');
   fireEvent.pointerDown(detail, {
     pointerId: 2,
     pointerType: 'mouse',
@@ -142,7 +147,7 @@ it('draws a real personal mark, pans it, rotates the whole cube, changes faces a
     screen.getAllByRole('button', { name: 'К моему автографу' })[0]!,
   );
   const returned = screen.getByRole('group', { name: /Приближенная грань/ });
-  expect(returned.getAttribute('data-face')).toBe('4');
-  expect(Number(returned.getAttribute('data-camera-x'))).toBeCloseTo(0.105);
-  expect(Number(returned.getAttribute('data-camera-y'))).toBeCloseTo(0.1445);
+  expect(returned.getAttribute('data-face')).toBe('5');
+  expect(Number(returned.getAttribute('data-camera-x'))).toBeCloseTo(0.895);
+  expect(Number(returned.getAttribute('data-camera-y'))).toBeCloseTo(0.8555);
 });

@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function CommunityCubePage() {
-  return <CommunityCube />;
+export default async function CommunityCubePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ create?: string | string[] }>;
+}) {
+  return (
+    <CommunityCube initialCreating={(await searchParams).create === '1'} />
+  );
 }

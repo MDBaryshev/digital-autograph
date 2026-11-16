@@ -11,6 +11,7 @@ import {
   communityCubeState,
   cubeCapacity,
   occupiedOnFace,
+  isCubeCellOccupied,
 } from '../lib/community-cube';
 import { type Stroke } from '../lib/drawing';
 import {
@@ -20,6 +21,7 @@ import {
   format,
   paintMark,
   type PersonalMark,
+  personalCubeSlot,
 } from '../lib/community-cube-art';
 import {
   CubeFaceNavigator,
@@ -33,6 +35,7 @@ import {
   type CubeCamera,
 } from '../lib/community-cube-camera';
 import { CanvasEditor } from './canvas-editor';
+import { CommunityCubePlacePicker } from './community-cube-place-picker';
 import { Icon } from './ui-icon';
 import styles from './community-cube.module.css';
 import { useCubeFaceTurn } from './use-cube-face-turn';
@@ -66,7 +69,12 @@ function FaceCanvas({
   let rows = Math.floor(Math.sqrt(perFace));
   while (perFace % rows) rows--;
   const columns = perFace / rows;
-  const occupied = occupiedOnFace(count, perFace, face);
+  const occupied = occupiedOnFace(
+    count,
+    perFace,
+    face,
+    personalCubeSlot(personal),
+  );
   useEffect(() => {
     const ctx = canvas.current?.getContext('2d');
     if (!ctx) return;
@@ -80,8 +88,8 @@ function FaceCanvas({
     ctx.fillRect(0, 0, size, size);
     for (let cell = 0; cell < perFace; cell++) {
       const id = face * perFace + cell + 1;
-      const filled = cell < occupied;
-      const own = personal?.id === id;
+      const filled = isCubeCellOccupied(id, count, personalCubeSlot(personal));
+      const own = personalCubeSlot(personal) === id;
       const x = inset + (cell % columns) * width;
       const y = inset + Math.floor(cell / columns) * height;
       ctx.fillStyle = own
@@ -130,7 +138,7 @@ function FaceCanvas({
         ctx.stroke();
       }
     }
-  }, [columns, rows, perFace, face, generation, occupied, personal]);
+  }, [columns, rows, perFace, face, generation, count, personal]);
   return (
     <canvas
       ref={canvas}
@@ -148,7 +156,12 @@ function FaceCanvas({
               const cell =
                 Math.floor(y / (948 / rows)) * columns +
                 Math.floor(x / (948 / columns));
-              onChoose(cell < occupied ? face * perFace + cell + 1 : null);
+              const id = face * perFace + cell + 1;
+              onChoose(
+                isCubeCellOccupied(id, count, personalCubeSlot(personal))
+                  ? id
+                  : null,
+              );
             }
           : undefined
       }
@@ -198,20 +211,23 @@ function Modal({
 function SignDialog({
   onClose,
   onSave,
+  initialStrokes = [],
 }: {
   onClose: () => void;
   onSave: (strokes: readonly Stroke[]) => void;
+  initialStrokes?: readonly Stroke[];
 }) {
-  const strokes = useRef<readonly Stroke[]>([]);
-  const [hasMarks, setHasMarks] = useState(false);
+  const strokes = useRef<readonly Stroke[]>(initialStrokes);
+  const [hasMarks, setHasMarks] = useState(initialStrokes.length > 0);
   return (
     <Modal title="Твой почерк. Твоё место." onClose={onClose}>
       <p className={styles.modalIntro}>
-        Нарисуй автограф для общего куба. Рисунок останется только в этой
-        вкладке.
+        Шаг 1 из 2. Нарисуй автограф, затем выбери любое свободное место на
+        общем кубе. Рисунок останется только в этой вкладке.
       </p>
       <CanvasEditor
         compact
+        initialStrokes={initialStrokes}
         onDrawingChange={setHasMarks}
         onStrokesChange={(next) => {
           strokes.current = next;
@@ -223,15 +239,22 @@ function SignDialog({
         disabled={!hasMarks}
         onClick={() => onSave(strokes.current)}
       >
-        Добавить на демо-куб <Icon name="arrow" size={18} />
+        Выбрать место на кубе <Icon name="arrow" size={18} />
       </button>
     </Modal>
   );
 }
 
-export function CommunityCube() {
+export function CommunityCube({
+  initialCreating = false,
+}: {
+  initialCreating?: boolean;
+}) {
   const [count, setCount] = useState(96);
   const [personal, setPersonal] = useState<PersonalMark | null>(null);
+  const ownSlot = personalCubeSlot(personal);
+  const [draft, setDraft] = useState<readonly Stroke[]>([]);
+  const [placing, setPlacing] = useState(false);
   const [rotation, setRotation] = useState({ x: -18, y: -28 });
   const [camera, setCamera] = useState<CubeCamera>({ zoom: 1, x: 0.5, y: 0.5 });
   const zoom = camera.zoom;
@@ -242,7 +265,7 @@ export function CommunityCube() {
     rotation,
     setRotation,
   });
-  const [signing, setSigning] = useState(false);
+  const [signing, setSigning] = useState(initialCreating);
   const [about, setAbout] = useState(false);
   const modalScene = useRef<HTMLDivElement>(null);
   const [inspecting, setInspecting] = useState(false);
@@ -280,7 +303,19 @@ export function CommunityCube() {
   }, [zoom, turn.phase, inspecting, cameraMotion.animate]);
   const state = communityCubeState(count);
   const percent = Math.round((count / state.total) * 100);
-  const faceCount = occupiedOnFace(count, state.perFace, face);
+  const faceCount = occupiedOnFace(count, state.perFace, face, ownSlot);
+  const firstOnFace = (index: number) => {
+    const first = index * state.perFace + 1;
+    return isCubeCellOccupied(first, count, ownSlot)
+      ? first
+      : ownSlot && Math.floor((ownSlot - 1) / state.perFace) === index
+        ? ownSlot
+        : null;
+  };
+  const filledFaces = faceNames.filter(
+    (_, index) =>
+      occupiedOnFace(count, state.perFace, index, ownSlot) === state.perFace,
+  ).length;
   const overviewRotation = useCubeOverviewRotation({
     enabled: zoom === 1 && turn.phase === null && cameraMotion.stage === null,
     rotation,
@@ -288,12 +323,7 @@ export function CommunityCube() {
       setRotation(next);
       const nextFace = facingCubeFace(next);
       setFace(nextFace);
-      if (nextFace !== face)
-        setChosen(
-          occupiedOnFace(count, state.perFace, nextFace)
-            ? nextFace * state.perFace + 1
-            : null,
-        );
+      if (nextFace !== face) setChosen(firstOnFace(nextFace));
     },
   });
   const overviewProps =
@@ -311,13 +341,7 @@ export function CommunityCube() {
       : {};
   const viewFace = (index: number) => {
     cameraMotion.cancel();
-    turn.turnTo(index, () =>
-      setChosen(
-        occupiedOnFace(count, state.perFace, index)
-          ? index * state.perFace + 1
-          : null,
-      ),
-    );
+    turn.turnTo(index, () => setChosen(firstOnFace(index)));
   };
   const preset = (generation: number) => {
     cameraMotion.cancel();
@@ -329,6 +353,7 @@ export function CommunityCube() {
         : capacity.perFace + Math.floor(capacity.perFace * 5 * 0.6);
     setCount(next);
     setPersonal(null);
+    setDraft([]);
     setCamera({ zoom: 1, x: 0.5, y: 0.5 });
     setChosen(1);
     setRotation({ x: -18, y: -28 });
@@ -352,10 +377,43 @@ export function CommunityCube() {
     if (!personal) return;
     cameraMotion.cancel();
     turn.cancel();
-    const target = focusCubeAutograph(personal.id, state.generation);
-    turn.turnTo(target.face, () => setChosen(personal.id), target.camera);
+    const target = focusCubeAutograph(ownSlot!, state.generation);
+    turn.turnTo(target.face, () => setChosen(ownSlot!), target.camera);
     setAnnouncement('Твой автограф в центре. Можно приблизить ещё сильнее.');
     if (!inspecting && !window.matchMedia(desktopCubeMedia).matches)
+      scene.current?.scrollIntoView({
+        block: 'center',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'instant'
+          : 'smooth',
+      });
+  };
+  const placeDraft = (slot: number) => {
+    if (
+      personal ||
+      !draft.length ||
+      !Number.isSafeInteger(slot) ||
+      slot < 1 ||
+      slot > state.total ||
+      isCubeCellOccupied(slot, count)
+    )
+      return;
+    cameraMotion.cancel();
+    turn.cancel();
+    const id = count + 1;
+    setPersonal({ id, slot, strokes: draft });
+    setCount(id);
+    setPlacing(false);
+    setDraft([]);
+    const next = communityCubeState(id);
+    const target = focusCubeAutograph(slot, next.generation);
+    turn.turnTo(target.face, () => setChosen(slot), target.camera);
+    setAnnouncement(
+      next.generation > state.generation
+        ? 'Куб заполнен! Твой автограф сохранился на лицевой грани следующего куба.'
+        : `Твой автограф на выбранном месте № ${slot}.`,
+    );
+    if (!window.matchMedia(desktopCubeMedia).matches)
       scene.current?.scrollIntoView({
         block: 'center',
         behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -543,7 +601,7 @@ export function CommunityCube() {
             </div>
             <div className={styles.progressBox}>
               <div>
-                <span>{state.filledFaces} из 6 граней заполнены</span>
+                <span>{filledFaces} из 6 граней заполнены</span>
                 <strong>{percent}%</strong>
               </div>
               <progress
@@ -568,7 +626,7 @@ export function CommunityCube() {
         <button
           type="button"
           onClick={() => {
-            setChosen(faceCount ? face * state.perFace + 1 : null);
+            setChosen(firstOnFace(face));
             setInspecting(true);
           }}
         >
@@ -698,31 +756,31 @@ export function CommunityCube() {
       )}
       {signing && (
         <SignDialog
+          initialStrokes={draft}
           onClose={() => setSigning(false)}
           onSave={(strokes) => {
-            cameraMotion.cancel();
-            turn.cancel();
-            const id = count + 1;
-            setPersonal({ id, strokes });
-            setCount(id);
+            setDraft(strokes);
             setSigning(false);
-            const next = communityCubeState(id);
-            const target = focusCubeAutograph(id, next.generation);
-            turn.turnTo(target.face, () => setChosen(id), target.camera);
-            if (!window.matchMedia(desktopCubeMedia).matches)
-              requestAnimationFrame(() =>
-                scene.current?.scrollIntoView({
-                  block: 'center',
-                  behavior: 'smooth',
-                }),
-              );
-            setAnnouncement(
-              next.generation > state.generation
-                ? 'Твой автограф заполнил куб! Все подписи перенесены на лицевую грань следующего.'
-                : 'Твой автограф добавлен на общий демо-куб.',
-            );
+            setPlacing(true);
           }}
         />
+      )}
+      {placing && (
+        <Modal
+          title="Выбери своё место на кубе"
+          onClose={() => setPlacing(false)}
+        >
+          <CommunityCubePlacePicker
+            count={count}
+            generation={state.generation}
+            strokes={draft}
+            onPlace={placeDraft}
+            onBack={() => {
+              setPlacing(false);
+              setSigning(true);
+            }}
+          />
+        </Modal>
       )}
       {inspecting && (
         <Modal
@@ -767,12 +825,12 @@ export function CommunityCube() {
             {chosen ? (
               <>
                 <strong>
-                  {personal?.id === chosen
+                  {ownSlot === chosen
                     ? 'Твой автограф'
                     : `Автограф № ${format(chosen)}`}
                 </strong>
                 <span>
-                  {personal?.id === chosen
+                  {ownSlot === chosen
                     ? 'Нарисован тобой в этой вкладке.'
                     : `@${names[chosen % names.length]} · демонстрационный участник`}
                 </span>

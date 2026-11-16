@@ -26,6 +26,29 @@ export function communityCubeState(signatures: number) {
   };
 }
 
-export function occupiedOnFace(count: number, perFace: number, face: number) {
-  return Math.min(perFace, Math.max(0, count - face * perFace));
+export function isCubeCellOccupied(
+  cell: number,
+  count: number,
+  personalSlot?: number,
+) {
+  const sequential = personalSlot && personalSlot > count ? count - 1 : count;
+  return cell <= sequential || cell === personalSlot;
+}
+
+export function occupiedOnFace(
+  count: number,
+  perFace: number,
+  face: number,
+  personalSlot?: number,
+) {
+  const sequential = personalSlot && personalSlot > count ? count - 1 : count;
+  const occupied = Math.min(perFace, Math.max(0, sequential - face * perFace));
+  return (
+    occupied +
+    (personalSlot &&
+    personalSlot > sequential &&
+    Math.floor((personalSlot - 1) / perFace) === face
+      ? 1
+      : 0)
+  );
 }

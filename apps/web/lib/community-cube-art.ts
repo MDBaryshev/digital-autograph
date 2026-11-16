@@ -32,7 +32,13 @@ export const papers = [
 ];
 export const format = (value: number) =>
   new Intl.NumberFormat('ru-RU').format(value);
-export type PersonalMark = { id: number; strokes: readonly Stroke[] };
+export type PersonalMark = {
+  id: number;
+  slot?: number;
+  strokes: readonly Stroke[];
+};
+export const personalCubeSlot = (personal: PersonalMark | null) =>
+  personal ? (personal.slot ?? personal.id) : undefined;
 
 /** Seeded illustrative ink, deliberately unrelated to accounts or private uploads. */
 function demoInk(context: CanvasRenderingContext2D, id: number) {
@@ -66,7 +72,7 @@ export function paintMark(
   id: number,
   personal: PersonalMark | null,
 ) {
-  if (personal?.id !== id) {
+  if (!personal || personalCubeSlot(personal) !== id) {
     demoInk(context, id);
     return;
   }

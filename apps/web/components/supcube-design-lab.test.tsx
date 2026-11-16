@@ -15,14 +15,14 @@ it('compares both directions while preserving the real create and community dest
   );
   expect(
     screen.getByRole('link', { name: /Создать автограф/ }).getAttribute('href'),
-  ).toBe('/autograph/create');
+  ).toBe('/community-cube?create=1');
   fireEvent.click(screen.getByRole('button', { name: /Куб в центре/ }));
   expect(screen.getByRole('heading', { level: 1 }).textContent).toContain(
     'Каждый почерк',
   );
   expect(
     screen.getByRole('link', { name: /Создать автограф/ }).getAttribute('href'),
-  ).toBe('/autograph/create');
+  ).toBe('/community-cube?create=1');
   expect(
     screen.getByRole('link', { name: /Исследовать куб/ }).getAttribute('href'),
   ).toBe('/community-cube');
