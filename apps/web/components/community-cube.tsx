@@ -667,7 +667,7 @@ export function CommunityCube() {
         <div>
           На настоящем общем кубе каждый автограф будет принадлежать
           подтверждённому участнику. Здесь — примеры для проверки идеи, а не
-          статистика пользователей Destka.
+          статистика пользователей supcube.
         </div>
       </section>
       <p className={styles.announcement} role="status" aria-live="polite">

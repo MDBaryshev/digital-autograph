@@ -74,9 +74,9 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
   return (
     <header ref={header} className={styles.header}>
       <div className={styles.inner}>
-        <a className={styles.brand} href="/" aria-label="Destka">
+        <a className={styles.brand} href="/" aria-label="supcube">
           <BrandMark />
-          <span>Destka</span>
+          <span>supcube</span>
         </a>
         <div className={styles.actions}>
           <nav

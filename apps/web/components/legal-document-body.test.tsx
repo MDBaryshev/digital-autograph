@@ -45,7 +45,7 @@ it('treats HTML and Markdown syntax as literal text', () => {
   expect(markdown).toBeTruthy();
 });
 
-it('preserves every character of the eight current Destka source texts in reading blocks', () => {
+it('preserves every character of the eight current supcube source texts in reading blocks', () => {
   // Test-only source access; the Web runtime still reads published API bytes only.
   const documents = [
     ...loadLegalDocuments().filter((document) => document.current),

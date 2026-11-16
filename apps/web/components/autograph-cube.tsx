@@ -259,7 +259,7 @@ export function CubeObject({
         </span>
       </span>
       <span className={`${styles.face} ${styles.left}`} aria-hidden="true">
-        <span className={styles.faceIndex}>Destka</span>
+        <span className={styles.faceIndex}>supcube</span>
         <span className={styles.edition}>
           {String(details.place).padStart(2, '0')}
         </span>
@@ -267,7 +267,7 @@ export function CubeObject({
       </span>
       <span className={`${styles.face} ${styles.top}`} aria-hidden="true">
         {details.place <= 3 && <span className={styles.crownSeat} />}
-        <span>destka</span>
+        <span>supcube</span>
         <span>{String(details.place).padStart(2, '0')}</span>
       </span>
       <span className={`${styles.face} ${styles.bottom}`} aria-hidden="true">

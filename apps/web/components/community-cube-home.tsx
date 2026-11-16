@@ -3,7 +3,7 @@ import styles from './community-cube-home.module.css';
 
 const copy = {
   ru: {
-    eyebrow: 'ОБЩИЙ КУБ DESTKA',
+    eyebrow: 'ОБЩИЙ КУБ SUPCUBE',
     badge: 'Локальный концепт',
     title: 'Разные почерки.',
     emphasis: 'Одна общая история.',
@@ -15,7 +15,7 @@ const copy = {
     first: 'Первый куб: 4 автографа на каждой грани.',
   },
   en: {
-    eyebrow: 'THE DESTKA COMMUNITY CUBE',
+    eyebrow: 'THE SUPCUBE COMMUNITY CUBE',
     badge: 'Local concept',
     title: 'Different handwriting.',
     emphasis: 'One shared story.',
@@ -96,7 +96,7 @@ function MiniatureFace({
   );
 }
 
-function CommunityCubeArtwork() {
+export function CommunityCubeArtwork() {
   return (
     <svg viewBox="0 0 360 330" fill="none" aria-hidden="true" focusable="false">
       <ellipse cx="180" cy="305" rx="112" ry="10" fill="#604124" opacity=".1" />

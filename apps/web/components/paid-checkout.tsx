@@ -243,7 +243,7 @@ export function PaidCheckout({
       aria-labelledby="checkout-heading"
       aria-busy={busy}
     >
-      <p className="eyebrow">{t('Destka')}</p>
+      <p className="eyebrow">{t('supcube')}</p>
       <h2 id="checkout-heading" ref={heading} tabIndex={-1}>
         {t('Условия вашего заказа')}
       </h2>
@@ -390,7 +390,7 @@ export function PaidCheckout({
           </form>
           <p>
             {t(
-              'Платёжные реквизиты вводятся только на защищённой странице ЮKassa. Destka не запрашивает номер карты, CVV/CVC, банковские пароли или SMS-коды.',
+              'Платёжные реквизиты вводятся только на защищённой странице ЮKassa. supcube не запрашивает номер карты, CVV/CVC, банковские пароли или SMS-коды.',
             )}
           </p>
           <p>

@@ -29,7 +29,7 @@ const escape = (value) =>
       })[character],
   );
 const mark = (x, y, size, color = c.primary) =>
-  `<g transform="translate(${x} ${y}) scale(${size / 36})"><rect width="36" height="36" rx="11" fill="${color}"/><path d="M8 24C12 19 16 9 19 9c4 0-6 20-3 18 2-1 5-12 8-11 2 1-2 6 0 6l5-4M9 28l18-3" fill="none" stroke="${color === c.primary ? c.onPrimary : c.primary}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+  `<g transform="translate(${x} ${y}) scale(${size / 36})"><path d="m18 2 14 8v16l-14 8-14-8V10Z" fill="${color}"/><path d="m4 10 14 8 14-8M18 18v16M11 6l14 8" fill="none" stroke="${color === c.primary ? c.onPrimary : c.primary}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 const svg = (width, height, body, title) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title"><title id="title">${escape(title)}</title>${body}</svg>\n`;
 const text = (x, y, value, size = 32, color = c.ink, extra = '') =>
@@ -55,7 +55,7 @@ css += '}\n';
 emit('apps/web/app/brand-tokens.css', css);
 emit(
   'docs/brand/assets/mark.svg',
-  svg(64, 64, mark(0, 0, 64), 'Destka working symbol'),
+  svg(64, 64, mark(0, 0, 64), 'supcube working symbol'),
 );
 emit(
   'docs/brand/assets/mark-reverse.svg',
@@ -71,8 +71,8 @@ emit(
   svg(
     280,
     80,
-    `${mark(8, 8, 64)}${text(88, 49, 'Destka', 36, c.ink, 'font-weight="700"')}`,
-    'Destka provisional wordmark',
+    `${mark(8, 8, 64)}${text(88, 49, 'supcube', 36, c.ink, 'font-weight="700"')}`,
+    'supcube provisional wordmark',
   ),
 );
 emit(
@@ -80,8 +80,8 @@ emit(
   svg(
     36,
     36,
-    '<rect width="36" height="36" rx="11" fill="#3455db"/><path d="M8 24C12 19 16 9 19 9c4 0-6 20-3 18 2-1 5-12 8-11 2 1-2 6 0 6l5-4M9 28l18-3" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
-    'Destka',
+    '<path d="m18 2 14 8v16l-14 8-14-8V10Z" fill="#9f4528"/><path d="m4 10 14 8 14-8M18 18v16M11 6l14 8" fill="none" stroke="#fffaf2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+    'supcube',
   ),
 );
 emit(
@@ -142,7 +142,7 @@ for (const { id, width: w, height: h, channel } of formats) {
   const cardY = tall ? 620 : 272;
   const cardHeight = tall ? 480 : 180;
   const footerY = tall ? Math.max(cardY + cardHeight + 96, h - 310) : h - 76;
-  const card = `${background(w, h)}${mark(left, tall ? 220 : 48, 56)}${text(146, tall ? 258 : 84, 'Destka', 30, c.primary, 'font-weight="700"')}${text(left, y, 'A place on the Wall.', tall ? 76 : 64, c.ink, 'font-weight="900" letter-spacing="-2"')}${text(left, y + 64, 'A mark in its history.', tall ? 54 : 44, c.muted)}<rect x="72" y="${cardY}" width="${w - 144}" height="${cardHeight}" rx="32" fill="${c.primarySoft}"/>${text(110, cardY + 64, 'CREATOR / DEMO WALL', 24, c.ink)}${mark(108, cardY + (tall ? 144 : 94), tall ? 160 : 48, c.primary)}${text(tall ? 310 : 184, cardY + (tall ? 244 : 130), 'Your public mark', tall ? 46 : 34, c.ink)}${text(left, footerY, 'Open the creator’s Wall', 30, c.primary)}${text(left, footerY + (tall ? 58 : 40), 'Design specimen · no live ownership claim', 20, c.muted)}`;
+  const card = `${background(w, h)}${mark(left, tall ? 220 : 48, 56)}${text(146, tall ? 258 : 84, 'supcube', 30, c.primary, 'font-weight="700"')}${text(left, y, 'A place on the Wall.', tall ? 76 : 64, c.ink, 'font-weight="900" letter-spacing="-2"')}${text(left, y + 64, 'A mark in its history.', tall ? 54 : 44, c.muted)}<rect x="72" y="${cardY}" width="${w - 144}" height="${cardHeight}" rx="32" fill="${c.primarySoft}"/>${text(110, cardY + 64, 'CREATOR / DEMO WALL', 24, c.ink)}${mark(108, cardY + (tall ? 144 : 94), tall ? 160 : 48, c.primary)}${text(tall ? 310 : 184, cardY + (tall ? 244 : 130), 'Your public mark', tall ? 46 : 34, c.ink)}${text(left, footerY, 'Open the creator’s Wall', 30, c.primary)}${text(left, footerY + (tall ? 58 : 40), 'Design specimen · no live ownership claim', 20, c.muted)}`;
   emit(
     `docs/brand/assets/share-${id}.svg`,
     svg(w, h, card, `${channel} share-card design specimen`),
@@ -156,8 +156,8 @@ emit(
         svg(
           1200,
           630,
-          `${background(1200, 630)}${mark(72, 64, 64)}${text(160, 108, 'Destka', 36, c.primary, 'font-weight="700"')}${text(72, 300, 'Leave your mark.', 88, c.ink, 'font-weight="700"')}${text(72, 384, 'Creator Walls. Shared moments. Living history.', 38, c.muted)}<path d="M72 510h1056" stroke="${c.control}" stroke-width="2"/>${text(72, 563, 'Destka', 28, c.primary)}`,
-          'Destka platform preview',
+          `${background(1200, 630)}${mark(72, 64, 64)}${text(160, 108, 'supcube', 36, c.primary, 'font-weight="700"')}${text(72, 300, 'Leave your mark.', 88, c.ink, 'font-weight="700"')}${text(72, 384, 'Creator Walls. Shared moments. Living history.', 38, c.muted)}<path d="M72 510h1056" stroke="${c.control}" stroke-width="2"/>${text(72, 563, 'supcube', 28, c.primary)}`,
+          'supcube platform preview',
         ),
       ),
     )
@@ -246,9 +246,9 @@ const badge = (label, tone) =>
   `<span class="badge ${tone}">${escape(label)}</span>`;
 const gallery = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EGO-82 · Brand Kit v1 preview</title><style>${css}
 *{box-sizing:border-box}body{margin:0;background:${c.paper};color:${c.ink};font:16px/1.6 system-ui,sans-serif}a{color:${c.primary}}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid ${c.focus};outline-offset:3px}header,main,footer{max-width:1200px;margin:auto;padding:32px}header{display:flex;justify-content:space-between;gap:24px;border-bottom:1px solid ${c.border}}nav{display:flex;gap:24px;flex-wrap:wrap}nav a{min-height:44px;display:flex;align-items:center}.label{font:12px/1.5 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.12em;color:${c.muted}}h1{font:900 clamp(44px,8vw,96px)/.98 system-ui,sans-serif;max-width:850px;letter-spacing:-.04em;margin:32px 0}h2{font:800 36px/1.15 system-ui,sans-serif;margin-top:64px}h3{margin:8px 0}.intro{max-width:65ch;font-size:20px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.panel{padding:24px;border:1px solid ${c.border};border-radius:16px;background:${c.surface}}.direction{min-height:240px}.direction h3{font-size:32px}.archive{background:#f4f3f8;color:#20232b}.archive .label{color:#646875}.archive .sample{font-family:Georgia,serif;font-weight:400}.live{background:${c.paper};color:${c.ink};border:2px solid ${c.primary}}.live .label{color:#c0c4d1}.gridstyle{background:#edf0ff;color:#20232b}.gridstyle .label{color:#646875}.sample{font:800 56px/1.05 system-ui,sans-serif}.swatches{display:flex;flex-wrap:wrap;gap:12px}.swatch{min-width:150px;padding:20px;border:1px solid ${c.control};border-radius:8px}.badge{display:inline-flex;gap:8px;align-items:center;border:1px solid currentColor;border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}.primary{color:${c.primary};background:${c.primarySoft}}.secondary{color:${c.secondary};background:${c.secondarySoft}}.danger{color:${c.danger};background:${c.dangerSoft}}.neutral{color:${c.muted};background:${c.paper}}button{font:inherit;border:1px solid ${c.control};border-radius:8px;min-height:44px;padding:8px 20px;background:${c.surface};color:${c.ink};cursor:pointer}button.cta{background:${c.primary};color:${c.onPrimary};border-color:${c.primary}}.wall{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:24px}.slot{min-height:110px;border:1px solid ${c.control};border-radius:12px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px}.slot img{width:40px;height:40px}.wall .badge{font-size:12px;padding:2px 6px}.portraitMaster{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:48px;margin:32px 0 48px}.portraitMaster img{width:100%;max-height:650px;object-fit:contain}.portraitMaster h3{font-size:clamp(32px,5vw,56px);line-height:1;letter-spacing:-.04em}.portraitMaster a{min-height:44px;display:inline-flex;align-items:center}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.cards img{width:100%;height:auto;border:1px solid ${c.border};border-radius:16px}.cards .portrait img{max-height:600px;object-fit:contain;background:${c.paper}}.states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.assets{display:flex;gap:24px;flex-wrap:wrap;align-items:center}.assets img{max-width:280px}.muted{color:${c.muted}}.rule{max-width:70ch}details{padding:16px;border-top:1px solid ${c.border}}summary{cursor:pointer;min-height:44px}footer{border-top:1px solid ${c.border}}@media(max-width:700px){header{display:block}.grid,.cards,.states,.portraitMaster{grid-template-columns:1fr}.wall{grid-template-columns:repeat(2,minmax(0,1fr))}header,main,footer{padding:20px}h2{margin-top:48px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}</style>
-<body><header><strong>Destka / Brand Kit</strong><nav aria-label="Preview sections"><a href="#directions">Directions</a><a href="#system">System</a><a href="#wall">Wall</a><a href="#share">Share</a></nav></header><main><p class="label">EGO-82 · v1.2 preview · Destka</p><h1>YOUR MARK.<br><span style="color:${c.primary}">YOUR MOMENT.</span></h1><p class="intro">A shared space for creators and their people. Bold marks, real moments, and a Wall that keeps its story.</p><p class="muted">Destka naming and the neutral palette follow the current user brief. All creators, states and share cards below are design specimens.</p>
+<body><header><strong>supcube / Brand Kit</strong><nav aria-label="Preview sections"><a href="#directions">Directions</a><a href="#system">System</a><a href="#wall">Wall</a><a href="#share">Share</a></nav></header><main><p class="label">EGO-82 · v1.2 preview · supcube</p><h1>YOUR MARK.<br><span style="color:${c.primary}">YOUR MOMENT.</span></h1><p class="intro">A shared space for creators and their people. Bold marks, real moments, and a Wall that keeps its story.</p><p class="muted">supcube naming and the neutral palette follow the current user brief. All creators, states and share cards below are design specimens.</p>
 <section id="directions"><h2>Three visual directions</h2><div class="grid"><article class="panel direction archive"><p class="label">01 · Original alternative</p><h3>Living archive</h3><p class="sample">Make a mark.</p><p>Warm paper, deep green, editorial type. The original calm archive direction.</p></article><article class="panel direction live"><p class="label">02 · User-selected palette</p><h3>Ink & cobalt</h3><p class="sample" style="font-family:system-ui">ON AIR / 10</p><p>Charcoal green, soft white, periwinkle accents. Bold sans type and generous portrait-card spacing; energy without checkout pressure.</p></article><article class="panel direction gridstyle"><p class="label">03 · Alternative</p><h3>Open grid</h3><p class="sample" style="font-family:monospace">[ your mark ]</p><p>Modular mint grid and utility typography. Clear mechanics; less expressive social identity.</p></article></div></section>
-<section id="system"><h2>One coherent system</h2><div class="assets"><img src="assets/wordmark.svg" alt="Provisional Destka wordmark"><img src="assets/mark.svg" width="64" alt="Platform mark"><img src="assets/mark-reverse.svg" width="64" alt="Reverse platform mark"></div><p class="rule">The square frame is a place; the continuous stroke is a mark. Keep one symbol-width of clear space around the lockup. Minimum symbol 24px; favicon 16px is a dedicated exception. Never stretch, rotate or recolor the mark with creator colors.</p><div class="swatches">${[
+<section id="system"><h2>One coherent system</h2><div class="assets"><img src="assets/wordmark.svg" alt="Provisional supcube wordmark"><img src="assets/mark.svg" width="64" alt="Platform mark"><img src="assets/mark-reverse.svg" width="64" alt="Reverse platform mark"></div><p class="rule">The isometric cube connects a personal mark with a shared space. Keep one symbol-width of clear space around the lockup. Minimum symbol 24px; favicon 16px is a dedicated exception. Never stretch, rotate or recolor the mark with creator colors.</p><div class="swatches">${[
   ['paper', 'ink'],
   ['primary', 'onPrimary'],
   ['primarySoft', 'primary'],

@@ -70,8 +70,9 @@ export const messages: Record<string, string> = {
   'No account needed': 'Без регистрации',
   'Go to studio': 'В студию',
   'Open an invitation': 'Открыть приглашение',
-  'Paste your Destka invitation link': 'Вставь ссылку из приглашения Destka',
-  'Paste a link to a Wall on destka.ru.': 'Вставь ссылку на стену с destka.ru.',
+  'Paste your supcube invitation link': 'Вставь ссылку из приглашения supcube',
+  'Paste the Wall link from your invitation.':
+    'Вставь ссылку на стену из приглашения.',
   Home: 'Главная',
   Studio: 'Студия',
   Create: 'Создание',
@@ -79,7 +80,7 @@ export const messages: Record<string, string> = {
   'Studio progress': 'Этапы создания',
   'Try drawing without signing in': 'Попробовать рисовать без входа',
   Close: 'Закрыть',
-  'Product navigation': 'Навигация Destka',
+  'Product navigation': 'Навигация supcube',
   '10 places': '10 мест',
   'From drawing to Wall': 'Как разместить автограф',
   'With an approved autograph, you can use one free placement on each Wall that has room.':
@@ -668,8 +669,8 @@ export const messages: Record<string, string> = {
   'My public links': 'Мои публичные ссылки',
   'Manage the share cards you created on Walls, including links created before this visit.':
     'Здесь можно управлять созданными тобой карточками стен, в том числе из прошлых посещений.',
-  'Revoking a link stops it opening in Destka. Copies already saved by social networks may remain.':
-    'После отзыва ссылка перестанет открываться в Destka. Копии, уже сохранённые соцсетями, могут остаться.',
+  'Revoking a link stops it opening in supcube. Copies already saved by social networks may remain.':
+    'После отзыва ссылка перестанет открываться в supcube. Копии, уже сохранённые соцсетями, могут остаться.',
   'Refresh links': 'Обновить ссылки',
   'Loading public links…': 'Загружаем публичные ссылки…',
   'No public links yet. Create a share card on a Wall to find it here.':
@@ -766,10 +767,10 @@ export const messages: Record<string, string> = {
   'Check saved payment status': 'Проверить сохранённый статус платежа',
   'Refresh payment status': 'Обновить статус оплаты',
   'Legal documents': 'Юридические документы',
-  'Destka legal documents': 'Юридические документы Destka',
+  'supcube legal documents': 'Юридические документы supcube',
   'Legal information': 'Юридическая информация',
   'Other documents': 'Другие документы',
-  'Destka documents': 'Документы Destka',
+  'supcube documents': 'Документы supcube',
   'Documents temporarily unavailable': 'Документы временно недоступны',
   'Could not load the published documents. Try refreshing this page later.':
     'Не удалось загрузить опубликованные документы. Попробуйте обновить страницу позже.',
@@ -791,7 +792,7 @@ export const messages: Record<string, string> = {
   'Published documents are provided in their original Russian. Changing the interface language does not translate the legal text.':
     'Опубликованные документы представлены в оригинале на русском языке. Переключение языка интерфейса не переводит юридический текст.',
   'Before your first action': 'Перед первым действием',
-  'Confirmations for Destka': 'Подтверждения для Destka',
+  'Confirmations for supcube': 'Подтверждения для supcube',
   'Confirm your age and read the service terms before creating an autograph or placing it on a Wall. Signing in with Google or Telegram does not mean accepting the terms.':
     'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход через Google или Telegram не означает принятия условий.',
   'An autograph is decorative content, not a legal signature. Do not upload a bank, official or other sensitive signature.':
@@ -877,8 +878,8 @@ export const messages: Record<string, string> = {
   'Checking order…': 'Проверяем заказ…',
   'Confirm order and continue to payment':
     'Подтвердить заказ и перейти к оплате',
-  'Payment details are entered only on the secure YooKassa page. Destka never asks for card numbers, CVV/CVC, bank passwords or SMS codes.':
-    'Платёжные реквизиты вводятся только на защищённой странице ЮKassa. Destka не запрашивает номер карты, CVV/CVC, банковские пароли или SMS-коды.',
+  'Payment details are entered only on the secure YooKassa page. supcube never asks for card numbers, CVV/CVC, bank passwords or SMS codes.':
+    'Платёжные реквизиты вводятся только на защищённой странице ЮKassa. supcube не запрашивает номер карты, CVV/CVC, банковские пароли или SMS-коды.',
   'This confirmation is not consent to personal data processing or dissemination, and does not replace the 18+ declaration or Terms of use.':
     'Это подтверждение не является согласием на обработку или распространение персональных данных и не заменяет декларацию 18+ и Пользовательское соглашение.',
   'Checking terms…': 'Проверяем условия…',
@@ -961,9 +962,9 @@ export const messages: Record<string, string> = {
   'Personal data dissemination consent':
     'Согласие на распространение персональных данных',
   'Vulnerability disclosure policy': 'Политика сообщения об уязвимостях',
-  'Security | Destka': 'Безопасность | Destka',
-  'Documents | Destka': 'Документы | Destka',
-  'Before your first action | Destka': 'Перед первым действием | Destka',
+  'Security | supcube': 'Безопасность | supcube',
+  'Documents | supcube': 'Документы | supcube',
+  'Before your first action | supcube': 'Перед первым действием | supcube',
   'Profile changes are temporarily unavailable.':
     'Изменение профиля временно недоступно.',
   'Use at most 200 characters for your display name.':

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 // Until owner approval, no legal route is indexed, including empty/unavailable SSR.
 const pageMetadata: Metadata = {
   robots: { index: false, follow: false },
-  title: { default: 'Документы | Destka', template: '%s | Destka' },
+  title: { default: 'Документы | supcube', template: '%s | supcube' },
 };
 export async function generateMetadata() {
   return localizeMetadata(pageMetadata);

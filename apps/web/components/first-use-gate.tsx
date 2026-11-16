@@ -139,7 +139,7 @@ export function FirstUseGate({
       aria-labelledby="first-use-heading"
       aria-busy={busy}
     >
-      <p className="eyebrow">{t('Destka')}</p>
+      <p className="eyebrow">{t('supcube')}</p>
       <h2 id="first-use-heading" ref={heading} tabIndex={-1}>
         {t('Перед первым действием')}
       </h2>

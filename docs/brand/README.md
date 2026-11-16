@@ -1,3 +1,11 @@
+# Product name update — 16 November 2026
+
+The product name is **supcube**, written in lowercase, following the user's
+explicit naming decision. Current UI text, metadata and regenerated brand exports
+use supcube. The proposed symbol is an isometric cube; the two local homepage
+directions are at `/design-lab`. See [the design brief](../design/supcube-directions.md).
+The earlier naming and palette notes below are historical.
+
 # Product palette update — 27 October 2026
 
 The user explicitly rejected green/mint for the current interface. `tokens.json` now uses graphite/periwinkle, and generated brand assets use that neutral palette. The application adds light/dark semantic themes in `apps/web/app/interface-tokens.css`. The current UI direction, source review and theme behavior are documented in [interface-refresh.md](../design/interface-refresh.md). The historic rationale below describes the earlier proposal, not the current color choice. The user confirmed the product name **Destka**; current interface, metadata and generated brand exports use Destka. Historic naming notes below are superseded.

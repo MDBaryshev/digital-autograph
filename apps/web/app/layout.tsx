@@ -10,13 +10,13 @@ import { LocaleProvider } from '../components/locale-provider';
 
 const pageMetadata: Metadata = {
   title: {
-    default: 'Destka',
-    template: '%s | Destka',
+    default: 'supcube',
+    template: '%s | supcube',
   },
   description:
     'Create a private digital autograph and leave your mark on a creator’s Wall.',
   openGraph: {
-    title: 'Destka',
+    title: 'supcube',
     description:
       'Create a private digital autograph and leave your mark on a creator’s Wall.',
     type: 'website',
@@ -48,11 +48,11 @@ export default async function RootLayout({
           <footer className="siteFooter">
             <div className="footerInner">
               <a className="footerBrand" href="/">
-                {t('Destka.')}
+                {t('supcube.')}
               </a>
               <p>{t('A little ink. A shared story.')}</p>
               <nav aria-label={t('Юридическая информация')}>
-                <a href="/legal">{t('Юридические документы Destka')}</a>
+                <a href="/legal">{t('Юридические документы supcube')}</a>
               </nav>
             </div>
           </footer>

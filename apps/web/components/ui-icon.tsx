@@ -53,9 +53,9 @@ export function BrandMark() {
       fill="none"
       aria-hidden="true"
     >
-      <rect width="36" height="36" rx="11" fill="currentColor" />
+      <path d="m18 2 14 8v16l-14 8-14-8V10Z" fill="currentColor" />
       <path
-        d="M8 24C12 19 16 9 19 9c4 0-6 20-3 18 2-1 5-12 8-11 2 1-2 6 0 6l5-4M9 28l18-3"
+        d="m4 10 14 8 14-8M18 18v16M11 6l14 8"
         stroke="var(--brand-color-onPrimary)"
         strokeWidth="1.8"
         strokeLinecap="round"

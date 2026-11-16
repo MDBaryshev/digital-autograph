@@ -19,19 +19,19 @@ it('uses the saved language for server-rendered text and metadata', async () => 
   );
   expect(
     await localizeMetadata({
-      title: 'Документы | Destka',
+      title: 'Документы | supcube',
       description: 'Юридические документы',
     }),
   ).toMatchObject({
-    title: 'Documents | Destka',
+    title: 'Documents | supcube',
     description: 'Legal documents',
   });
   settings.value = 'ru';
   expect(
     await localizeMetadata({
-      title: { default: 'Your account', template: '%s | Destka' },
+      title: { default: 'Your account', template: '%s | supcube' },
     }),
   ).toMatchObject({
-    title: { default: 'Ваш аккаунт', template: '%s | Destka' },
+    title: { default: 'Ваш аккаунт', template: '%s | supcube' },
   });
 });
