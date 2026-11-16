@@ -1,12 +1,14 @@
-import { getTranslator } from '../lib/i18n-server';
+import { getLocale, getTranslator } from '../lib/i18n-server';
 import { Icon } from '../components/ui-icon';
 import { CobaltSignature } from '../components/cobalt-signature';
 import { TryWall } from '../components/try-wall';
 import { OpenInvitation } from '../components/open-invitation';
+import { CommunityCubeHome } from '../components/community-cube-home';
 import styles from './page.module.css';
 
 export default async function HomePage() {
   const t = await getTranslator();
+  const locale = await getLocale();
   const steps = [
     [
       'Make an autograph',
@@ -60,6 +62,8 @@ export default async function HomePage() {
           <OpenInvitation />
         </aside>
       </div>
+
+      <CommunityCubeHome locale={locale} />
 
       <section className={styles.process} aria-labelledby="how-it-works">
         <div className={styles.sectionHeading}>
