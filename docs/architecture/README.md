@@ -1,5 +1,8 @@
 # Architecture boundaries
 
+[Product analytics export foundation](product-analytics.md) describes the shared
+event contracts, offline funnels and provenance/privacy limits (EGO-187/EGO-112).
+
 [Proposed post-publication moderation](post-publication-moderation.md) defines
 future report/appeal request boundaries and the transaction/privacy/test plan;
 reporting, actions and persistence are not implemented by those contracts.
