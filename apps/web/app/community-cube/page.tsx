@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { CommunityCube } from '../../components/community-cube';
+import { SupcubeDesignLab } from '../../components/supcube-design-lab';
 
 export const metadata: Metadata = {
   title: 'Общий куб · локальный концепт',
@@ -12,6 +12,9 @@ export default async function CommunityCubePage({
   searchParams: Promise<{ create?: string | string[] }>;
 }) {
   return (
-    <CommunityCube initialCreating={(await searchParams).create === '1'} />
+    <SupcubeDesignLab
+      standalone
+      initialCube={(await searchParams).create === '1' ? 'create' : 'view'}
+    />
   );
 }

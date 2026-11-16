@@ -7,6 +7,73 @@
   background: #e4e0d9;
   color: #322a23;
 }
+.homepage {
+  padding: 0;
+  background: #f7f3eb;
+}
+.homepage > .preview {
+  max-width: 1440px;
+  box-shadow: none;
+}
+.workflow {
+  width: min(1180px, calc(100vw - 1.5rem));
+  height: min(860px, calc(100dvh - 1.5rem));
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #bfa78c;
+  border-radius: 1rem;
+  box-shadow: 0 30px 90px #24150b55;
+}
+.workflow[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.workflow::backdrop {
+  background: #30221794;
+  backdrop-filter: blur(8px);
+}
+.workflowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #dbccba;
+}
+.workflowHeader > div {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.workflowHeader > div > svg {
+  color: #91482f;
+  width: 32px;
+  height: 32px;
+}
+.workflowHeader strong {
+  font-size: 0.9rem;
+  letter-spacing: -0.05em;
+}
+.workflowHeader h2 {
+  margin: 0.15rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #75614f;
+}
+.workflowHeader button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #b99e83;
+  border-radius: 0.5rem;
+  background: #f7f3eb;
+  color: #65452e;
+  font-size: 0.75rem;
+}
 :global(body:has([data-design-lab]) > header),
 :global(body:has([data-design-lab]) .siteFooter) {
   display: none;

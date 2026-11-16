@@ -915,6 +915,58 @@
   color: var(--brand-color-muted);
   margin: 0.6rem 0 0;
 }
+.page[data-embedded] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0.65rem 1rem 1rem;
+  overflow: hidden;
+}
+.page[data-embedded]
+  > :is(.topline, .liveRow, .growth, .manifesto, .announcement) {
+  display: none;
+}
+.page[data-embedded] .hero {
+  display: contents;
+}
+.page[data-embedded] .intro {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0;
+}
+.page[data-embedded] .intro > :not(.primary) {
+  display: none;
+}
+.page[data-embedded] .intro > .primary {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  font-size: 0.76rem;
+}
+.page[data-embedded] .exhibit {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+.page[data-embedded] .scene {
+  height: 100%;
+  min-height: 0;
+}
+.page[data-embedded] .exhibitBottom {
+  display: none;
+}
+.page[data-embedded] .exhibitHeader {
+  padding: 0.6rem 0.8rem;
+}
+.page[data-embedded] .faceTabs {
+  padding: 0.5rem;
+}
 .inspectGrid {
   height: clamp(260px, 49svh, 500px);
   margin: 0 auto;
@@ -1310,15 +1362,17 @@
 /* Desktop is defined by mouse input, not width: a narrow desktop panel still
    gets a full-height viewer. Touch devices retain the scrolling presentation. */
 @media (hover: hover) and (pointer: fine) {
-  :global(body:has([data-community-workspace])) {
+  :global(body:has([data-community-workspace]:not([data-embedded]))) {
     height: 100dvh;
     overflow: hidden;
   }
-  :global(body:has([data-community-workspace]) > header),
-  :global(body:has([data-community-workspace]) .siteFooter) {
+  :global(body:has([data-community-workspace]:not([data-embedded])) > header),
+  :global(
+    body:has([data-community-workspace]:not([data-embedded])) .siteFooter
+  ) {
     display: none;
   }
-  :global(#main-content:has([data-community-workspace])) {
+  :global(#main-content:has([data-community-workspace]:not([data-embedded]))) {
     height: 100dvh;
     min-height: 0;
   }

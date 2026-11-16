@@ -247,8 +247,16 @@ function SignDialog({
 
 export function CommunityCube({
   initialCreating = false,
+  embedded = false,
+  creationRequest = 0,
+  focusRequest = 0,
+  onPlaced,
 }: {
   initialCreating?: boolean;
+  embedded?: boolean;
+  creationRequest?: number;
+  focusRequest?: number;
+  onPlaced?: () => void;
 }) {
   const [count, setCount] = useState(96);
   const [personal, setPersonal] = useState<PersonalMark | null>(null);
@@ -266,6 +274,9 @@ export function CommunityCube({
     setRotation,
   });
   const [signing, setSigning] = useState(initialCreating);
+  useEffect(() => {
+    if (creationRequest > 0) setSigning(true);
+  }, [creationRequest]);
   const [about, setAbout] = useState(false);
   const modalScene = useRef<HTMLDivElement>(null);
   const [inspecting, setInspecting] = useState(false);
@@ -402,6 +413,7 @@ export function CommunityCube({
     turn.cancel();
     const id = count + 1;
     setPersonal({ id, slot, strokes: draft });
+    onPlaced?.();
     setCount(id);
     setPlacing(false);
     setDraft([]);
@@ -421,6 +433,11 @@ export function CommunityCube({
           : 'smooth',
       });
   };
+  const focusAction = useRef(findMine);
+  focusAction.current = findMine;
+  useEffect(() => {
+    if (focusRequest > 0) focusAction.current();
+  }, [focusRequest]);
   const cubeOverview = (
     <>
       <span className={styles.watermark} aria-hidden="true">
@@ -465,8 +482,13 @@ export function CommunityCube({
       </div>
     </>
   );
+  const Root = embedded ? 'div' : 'main';
   return (
-    <main className={styles.page} data-community-workspace>
+    <Root
+      className={styles.page}
+      data-community-workspace
+      data-embedded={embedded || undefined}
+    >
       <div className={styles.topline}>
         <a href="/">
           <Icon name="arrow" size={16} /> К стенам авторов
@@ -512,7 +534,11 @@ export function CommunityCube({
             }}
           >
             <Icon name="pen" size={19} />
-            {personal ? 'К моему автографу' : 'Оставить свой автограф'}
+            {personal
+              ? 'К моему автографу'
+              : embedded
+                ? 'Создать автограф'
+                : 'Оставить свой автограф'}
             <Icon name="arrow" size={18} />
           </button>
           <span className={styles.ctaHint}>
@@ -858,6 +884,6 @@ export function CommunityCube({
           </div>
         </Modal>
       )}
-    </main>
+    </Root>
   );
 }

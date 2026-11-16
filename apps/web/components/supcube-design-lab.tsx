@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import { BrandMark, Icon } from './ui-icon';
 import { SignatureArt } from './signature-art';
 import { CommunityCubeArtwork } from './community-cube-home';
 import { TryWall } from './try-wall';
+import { OpenInvitation } from './open-invitation';
+import { CommunityCube } from './community-cube';
 import styles from './supcube-design-lab.module.css';
 
 function PersonalCube({ variant = 0 }: { variant?: number }) {
@@ -26,66 +28,118 @@ function PersonalCube({ variant = 0 }: { variant?: number }) {
   );
 }
 
-export function SupcubeDesignLab() {
+export function SupcubeDesignLab({
+  standalone = false,
+  initialCube,
+}: {
+  standalone?: boolean;
+  initialCube?: 'create' | 'view';
+}) {
   const [direction, setDirection] = useState<'community' | 'cube'>('community');
   const [mobile, setMobile] = useState(false);
   const bold = direction === 'cube';
+  const workflow = useRef<HTMLDialogElement>(null);
+  const [cubeOpen, setCubeOpen] = useState(Boolean(initialCube));
+  const [cubeMounted, setCubeMounted] = useState(Boolean(initialCube));
+  const [creationRequest, setCreationRequest] = useState(
+    initialCube === 'create' ? 1 : 0,
+  );
+  const [focusRequest, setFocusRequest] = useState(0);
+  const [hasPersonal, setHasPersonal] = useState(false);
+  useLayoutEffect(() => {
+    const node = workflow.current;
+    if (!node || !cubeOpen) return;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    node.showModal();
+    return () => {
+      node.close();
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
+        previousFocus.focus({ preventScroll: true });
+    };
+  }, [cubeOpen]);
+  const openCube = (event: MouseEvent<HTMLAnchorElement>, create = false) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    event.preventDefault();
+    setCubeMounted(true);
+    if (create) {
+      if (hasPersonal) setFocusRequest((value) => value + 1);
+      else setCreationRequest((value) => value + 1);
+    }
+    setCubeOpen(true);
+  };
 
   return (
-    <main className={styles.lab} data-design-lab>
-      <div className={styles.tools}>
-        <div className={styles.labIdentity}>
-          <a href="/" aria-label="Вернуться на основную главную">
-            <Icon name="arrow" size={18} />
-          </a>
-          <div>
-            <strong>supcube</strong>
-            <span>ДИЗАЙН-СТУДИЯ / 01</span>
+    <main
+      className={`${styles.lab} ${standalone ? styles.homepage : ''}`}
+      data-design-lab
+    >
+      {!standalone && (
+        <>
+          <div className={styles.tools}>
+            <div className={styles.labIdentity}>
+              <a href="/" aria-label="Вернуться на основную главную">
+                <Icon name="arrow" size={18} />
+              </a>
+              <div>
+                <strong>supcube</strong>
+                <span>ДИЗАЙН-СТУДИЯ / 01</span>
+              </div>
+            </div>
+            <div
+              className={styles.switcher}
+              role="group"
+              aria-label="Направление дизайна"
+            >
+              <button
+                type="button"
+                aria-pressed={!bold}
+                onClick={() => setDirection('community')}
+              >
+                <span>A</span> Куб как часть сайта
+              </button>
+              <button
+                type="button"
+                aria-pressed={bold}
+                onClick={() => setDirection('cube')}
+              >
+                <span>B</span> Куб в центре
+              </button>
+            </div>
+            <button
+              className={styles.mobileToggle}
+              type="button"
+              aria-pressed={mobile}
+              onClick={() => setMobile(!mobile)}
+            >
+              {mobile ? 'Полная ширина' : 'Мобильный вид'}
+            </button>
           </div>
-        </div>
-        <div
-          className={styles.switcher}
-          role="group"
-          aria-label="Направление дизайна"
-        >
-          <button
-            type="button"
-            aria-pressed={!bold}
-            onClick={() => setDirection('community')}
-          >
-            <span>A</span> Куб как часть сайта
-          </button>
-          <button
-            type="button"
-            aria-pressed={bold}
-            onClick={() => setDirection('cube')}
-          >
-            <span>B</span> Куб в центре
-          </button>
-        </div>
-        <button
-          className={styles.mobileToggle}
-          type="button"
-          aria-pressed={mobile}
-          onClick={() => setMobile(!mobile)}
-        >
-          {mobile ? 'Полная ширина' : 'Мобильный вид'}
-        </button>
-      </div>
 
-      <div className={styles.context} aria-live="polite">
-        <p>
-          <b>
-            {bold
-              ? 'B / Куб — главный образ supcube.'
-              : 'A / Выбрано: твой автограф сразу на общем кубе.'}
-          </b>{' '}
-          {bold
-            ? 'Больше пространства, объёма и общего движения. Проверяем, понятен ли первый шаг.'
-            : 'Первое действие — нарисовать автограф и самому выбрать свободную ячейку. Стены авторов остаются следующим шагом.'}
-        </p>
-        <span>Локальный макет · все примеры — демо</span>
-      </div>
+          <div className={styles.context} aria-live="polite">
+            <p>
+              <b>
+                {bold
+                  ? 'B / Куб — главный образ supcube.'
+                  : 'A / Выбрано: твой автограф сразу на общем кубе.'}
+              </b>{' '}
+              {bold
+                ? 'Больше пространства, объёма и общего движения. Проверяем, понятен ли первый шаг.'
+                : 'Первое действие — нарисовать автограф и самому выбрать свободную ячейку. Стены авторов остаются следующим шагом.'}
+            </p>
+            <span>Локальный макет · все примеры — демо</span>
+          </div>
+        </>
+      )}
 
       <div className={styles.preview} data-mobile={mobile || undefined}>
         <div className={styles.website} data-direction={direction}>
@@ -94,9 +148,9 @@ export function SupcubeDesignLab() {
               <BrandMark />
               <span>supcube</span>
             </a>
-            <nav aria-label="Навигация макета">
+            <nav aria-label="Навигация supcube">
               <a href="#design-wall">Стены авторов</a>
-              <a href="/community-cube">
+              <a href="/community-cube" onClick={(event) => openCube(event)}>
                 Общий куб <span>↗</span>
               </a>
             </nav>
@@ -143,10 +197,18 @@ export function SupcubeDesignLab() {
                   : 'Нарисуй автограф, выбери любое свободное место на общем кубе и стань частью общей истории. А потом оставляй свой почерк у любимых авторов.'}
               </p>
               <div className={styles.actions}>
-                <a className={styles.primary} href="/community-cube?create=1">
-                  Создать автограф <Icon name="arrow" size={18} />
+                <a
+                  className={styles.primary}
+                  href="/community-cube?create=1"
+                  onClick={(event) => openCube(event, true)}
+                >
+                  {hasPersonal ? 'К моему автографу' : 'Создать автограф'}{' '}
+                  <Icon name="arrow" size={18} />
                 </a>
-                <a href={bold ? '/community-cube' : '#design-wall'}>
+                <a
+                  href={bold ? '/community-cube' : '#design-wall'}
+                  onClick={bold ? (event) => openCube(event) : undefined}
+                >
                   {bold ? 'Исследовать куб' : 'Попробовать на демостене'}{' '}
                   <span>↗</span>
                 </a>
@@ -229,6 +291,7 @@ export function SupcubeDesignLab() {
               </p>
             </div>
             <TryWall />
+            <OpenInvitation />
           </section>
 
           <section
@@ -247,7 +310,11 @@ export function SupcubeDesignLab() {
                 месте, которое выберешь ты. Когда куб заполнится, все автографы
                 останутся на лицевой грани следующего.
               </p>
-              <a className={styles.primary} href="/community-cube">
+              <a
+                className={styles.primary}
+                href="/community-cube"
+                onClick={(event) => openCube(event)}
+              >
                 Покрутить общий куб <Icon name="arrow" size={18} />
               </a>
               <small>Прототип: примеры и счётчики демонстрационные.</small>
@@ -279,7 +346,8 @@ export function SupcubeDesignLab() {
                 <span>01</span>
                 <h3>Создай автограф</h3>
                 <p>
-                  Нарисуй его или загрузи фото. Оригинал останется приватным.
+                  Нарисуй свой автограф от руки — именно он появится на
+                  выбранном месте общего куба.
                 </p>
               </li>
               <li>
@@ -310,25 +378,65 @@ export function SupcubeDesignLab() {
         </div>
       </div>
 
-      <aside className={styles.decision}>
-        <div>
-          <span>В РАБОТЕ: ВАРИАНТ A</span>
-          <h2>
-            {bold
-              ? 'Выразительность B. Ясность A.'
-              : 'Создание и первое размещение — один путь.'}
-          </h2>
-        </div>
-        <p>
-          В прототипе после рисования пользователь сам выбирает свободное место
-          на любой грани. Занятые ячейки недоступны. Реальные аккаунты,
-          модерация и защита от одновременного выбора места подключаются на
-          сервере отдельно.
-        </p>
-        <a href="/community-cube">
-          Открыть сохранённый прототип <Icon name="arrow" size={18} />
-        </a>
-      </aside>
+      {!standalone && (
+        <aside className={styles.decision}>
+          <div>
+            <span>В РАБОТЕ: ВАРИАНТ A</span>
+            <h2>
+              {bold
+                ? 'Выразительность B. Ясность A.'
+                : 'Создание и первое размещение — один путь.'}
+            </h2>
+          </div>
+          <p>
+            В прототипе после рисования пользователь сам выбирает свободное
+            место на любой грани. Занятые ячейки недоступны. Реальные аккаунты,
+            модерация и защита от одновременного выбора места подключаются на
+            сервере отдельно.
+          </p>
+          <a href="/community-cube" onClick={(event) => openCube(event)}>
+            Открыть сохранённый прототип <Icon name="arrow" size={18} />
+          </a>
+        </aside>
+      )}
+      <dialog
+        ref={workflow}
+        className={`${styles.workflow} ${styles.website}`}
+        aria-labelledby="cube-workflow-title"
+        onCancel={(event) => {
+          if (event.target !== event.currentTarget) return;
+          event.preventDefault();
+          setCubeOpen(false);
+        }}
+      >
+        <header className={styles.workflowHeader}>
+          <div>
+            <BrandMark />
+            <div>
+              <strong>supcube</strong>
+              <h2 id="cube-workflow-title">
+                {hasPersonal ? 'Твоё место в общей истории' : 'Общий куб'}
+              </h2>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCubeOpen(false)}
+            aria-label="Вернуться на главную"
+          >
+            На главную <Icon name="close" size={18} />
+          </button>
+        </header>
+        {cubeMounted && (
+          <CommunityCube
+            embedded
+            initialCreating={creationRequest > 0}
+            creationRequest={creationRequest}
+            focusRequest={focusRequest}
+            onPlaced={() => setHasPersonal(true)}
+          />
+        )}
+      </dialog>
     </main>
   );
 }
