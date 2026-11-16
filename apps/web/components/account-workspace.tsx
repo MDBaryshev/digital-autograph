@@ -129,8 +129,11 @@ export function AccountWorkspace({
   const accountPath = section === 'overview' ? '/me' : `/me/${section}`;
   const returnTo =
     section === 'autographs' && wallId
-      ? `${accountPath}?wall=${wallId}`
+      ? `${accountPath}?wall=${encodeURIComponent(wallId)}`
       : accountPath;
+  const studioPath = wallId
+    ? `/autograph/create?wall=${encodeURIComponent(wallId)}`
+    : '/autograph/create';
   if (error === 'SIGN_IN')
     return (
       <div className={styles.workspace}>
@@ -234,7 +237,7 @@ export function AccountWorkspace({
               'Original uploads stay private. Only you can review these previews.',
             )}
           </p>
-          <a className={styles.primary} href="/autograph/create">
+          <a className={styles.primary} href={studioPath}>
             {t('Create autograph')}
           </a>
           {data.autographs.length === 0 ? (
@@ -289,6 +292,8 @@ export function AccountWorkspace({
                   api={autographApi(apiOrigin)}
                   initialPreview={preview}
                   onStartOver={() => setPreview(null)}
+                  wallId={wallId}
+                  studioPath={returnTo}
                 />
               ) : (
                 <img

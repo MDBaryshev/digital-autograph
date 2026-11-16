@@ -261,3 +261,121 @@ it.each([
     ).toBeTruthy();
   },
 );
+
+const wallId = '11111111-1111-4111-8111-111111111111';
+const approvalPreview = {
+  assetId: 'cleaned-asset',
+  url: 'https://private.example.test/preview',
+  expiresAt: '2099-01-01T00:00:00Z',
+};
+
+function mockResumedApproval(legalRequired = false) {
+  const fetcher = vi.fn<
+    (input: string, init?: RequestInit) => Promise<Response>
+  >(async (input) => {
+    if (input.endsWith('/autographs/own/preview'))
+      return new Response(JSON.stringify(approvalPreview));
+    if (input.endsWith('/autographs/own/approve'))
+      return legalRequired
+        ? new Response(
+            JSON.stringify({ error: { code: 'FIRST_USE_REQUIRED' } }),
+            { status: 409 },
+          )
+        : new Response(
+            JSON.stringify({
+              id: 'own',
+              status: 'awaiting_moderation',
+              approvedAt: '2026-11-14T09:00:00Z',
+            }),
+          );
+    return new Response(
+      JSON.stringify({
+        ...data,
+        autographs: [{ ...data.autographs[0], status: 'awaiting_approval' }],
+      }),
+    );
+  });
+  vi.stubGlobal('fetch', fetcher);
+  return fetcher;
+}
+
+it.each([wallId, undefined])(
+  'preserves the optional Wall context when creating or resuming an autograph (%s)',
+  async (context) => {
+    const fetcher = mockResumedApproval();
+    render(
+      <AccountWorkspace
+        apiOrigin="https://api.example.test"
+        section="autographs"
+        wallId={context}
+      />,
+    );
+    expect(
+      (
+        await screen.findByRole('link', { name: 'Create autograph' })
+      ).getAttribute('href'),
+    ).toBe(context ? `/autograph/create?wall=${context}` : '/autograph/create');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Open private preview' }),
+    );
+    fireEvent.load(
+      await screen.findByAltText('Cleaned digital autograph preview'),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Approve and submit for moderation' }),
+    );
+    expect(
+      (
+        await screen.findByRole('link', { name: 'Check moderation status' })
+      ).getAttribute('href'),
+    ).toBe(context ? `/me/autographs?wall=${context}` : '/me/autographs');
+    if (context)
+      expect(
+        screen
+          .getByRole('link', { name: 'Back to the Wall' })
+          .getAttribute('href'),
+      ).toBe(`/walls/${context}`);
+    else
+      expect(
+        screen.queryByRole('link', { name: 'Back to the Wall' }),
+      ).toBeNull();
+    const approvalCall = fetcher.mock.calls.find(([url]) =>
+      url.endsWith('/autographs/own/approve'),
+    );
+    expect(JSON.parse(approvalCall?.[1]?.body as string)).toEqual({
+      reviewedAssetId: approvalPreview.assetId,
+    });
+  },
+);
+
+it.each([wallId, undefined])(
+  'returns consent confirmation to the account with its optional Wall context (%s)',
+  async (context) => {
+    mockResumedApproval(true);
+    render(
+      <AccountWorkspace
+        apiOrigin="https://api.example.test"
+        section="autographs"
+        wallId={context}
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open private preview' }),
+    );
+    fireEvent.load(
+      await screen.findByAltText('Cleaned digital autograph preview'),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Approve and submit for moderation' }),
+    );
+    const confirmation = await screen.findByRole('link', {
+      name: 'Открыть подтверждения в новой вкладке',
+    });
+    const returnTo = context
+      ? `/me/autographs?wall=${context}`
+      : '/me/autographs';
+    expect(confirmation.getAttribute('href')).toBe(
+      `/legal/first-use?returnTo=${encodeURIComponent(returnTo)}`,
+    );
+  },
+);
