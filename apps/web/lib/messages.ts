@@ -1,5 +1,124 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  Gold: 'Золото',
+  Silver: 'Серебро',
+  Bronze: 'Бронза',
+  'Hover over a place to unfold it. Click an autograph to rotate.':
+    'Наведи на место — оно раскроется в куб. Нажми на автограф, чтобы покрутить.',
+  'Tap an autograph to rotate its cube. Or sign a free place.':
+    'Нажми на автограф, чтобы покрутить куб. Или подпиши свободное место.',
+  Profile: 'Профиль',
+  Autograph: 'Автограф',
+  Website: 'Сайт',
+  Place: 'Место',
+  Links: 'Ссылки',
+  'Free place': 'Свободно',
+  'Your autograph': 'Твой автограф',
+  'Explore cube in slot {place}': 'Рассмотреть куб на месте {place}',
+  'Explore demo cube in place {place}': 'Рассмотреть демокуб на месте {place}',
+  'Place {place} of 10.': 'Место {place} из 10.',
+  'The author has not published any links here.':
+    'Автор пока не опубликовал здесь свои ссылки.',
+  'Telegram, YouTube and a website: example channels, not real accounts.':
+    'Telegram, YouTube и сайт — примеры каналов для этой грани, а не реальные аккаунты.',
+  'The author has not published a profile here.':
+    'Автор пока не опубликовал здесь свой профиль.',
+  'The autograph on the front of this cube.': 'Автограф на лицевой грани куба.',
+  'Cube faces': 'Грани куба',
+  'Turn right': 'Повернуть вправо',
+  'Turn left': 'Повернуть влево',
+  'Drag to rotate. Or use the arrow keys.':
+    'Вращай пальцем, мышью или стрелками.',
+  'Rotate cube': 'Покрутить куб',
+  'Demo profile · @{name}': 'Демопрофиль · @{name}',
+  'Cube · place {place}': 'Куб · место {place}',
+  'One of 10 places': 'Одно из 10 мест',
+  'Example channels': 'Примеры каналов',
+  'Added by the author': 'Добавляет автор',
+  'No public links': 'Нет публичных ссылок',
+  'Demo profile': 'Демопрофиль',
+  'Profile not published': 'Профиль не опубликован',
+  'Autograph author': 'Автор автографа',
+  'Your place': 'Твоё место',
+  'Public profile setup is temporarily unavailable.':
+    'Настройка публичного профиля временно недоступна.',
+  'Wall creation is temporarily unavailable':
+    'Создание стены временно недоступно',
+  'A public profile is required to create a Wall. You can still create an autograph.':
+    'Для своей стены нужен публичный профиль. Создать автограф можно уже сейчас.',
+  'Sign in': 'Войти',
+  'Leave your autograph.': 'Оставь свой автограф.',
+  'Draw your autograph and leave it on someone’s Wall. Every Wall has 10 places.':
+    'Нарисуй автограф и оставь его на стене автора. На каждой стене 10 мест.',
+  'Try the Wall': 'Попробуй подписать',
+  'Pick a free place and draw right here.': 'Выбери свободное место и рисуй.',
+  Demo: 'Демо',
+  'Example autograph in place {place}': 'Пример автографа на месте {place}',
+  'Sign demo place {place}': 'Подписать место {place} на демостене',
+  'Move your autograph to place {place}':
+    'Переместить автограф на место {place}',
+  'Move to this place': 'Переместить сюда',
+  'Edit your autograph in place {place}': 'Изменить автограф на месте {place}',
+  'Your autograph · place {place}': 'Твой автограф · место {place}',
+  'This is a demo. Your drawing stays in this tab.':
+    'Это демостена. Рисунок останется в этой вкладке.',
+  'Draw with your finger or mouse. With a keyboard, press Space to start and use the arrow keys.':
+    'Рисуй пальцем или мышью. С клавиатуры: начни пробелом и рисуй стрелками.',
+  'Show on the demo Wall': 'Показать на демостене',
+  'You signed the demo Wall.': 'Ты подписал демостену.',
+  'Your autograph is in place {place}.': 'Твой автограф на месте {place}.',
+  'No account needed': 'Без регистрации',
+  'Go to studio': 'В студию',
+  'Open an invitation': 'Открыть приглашение',
+  'Paste your Destka invitation link': 'Вставь ссылку из приглашения Destka',
+  'Paste a link to a Wall on destka.ru.': 'Вставь ссылку на стену с destka.ru.',
+  Home: 'Главная',
+  Studio: 'Студия',
+  Create: 'Создание',
+  'Private preview': 'Предпросмотр',
+  'Studio progress': 'Этапы создания',
+  'Try drawing without signing in': 'Попробовать рисовать без входа',
+  Close: 'Закрыть',
+  'Product navigation': 'Навигация Destka',
+  '10 places': '10 мест',
+  'From drawing to Wall': 'Как разместить автограф',
+  'With an approved autograph, you can use one free placement on each Wall that has room.':
+    'На каждой стене можно один раз бесплатно разместить одобренный автограф, если есть свободное место.',
+  'Make an autograph': 'Создай автограф',
+  'Draw by hand or upload a photo. Your original upload stays private.':
+    'Нарисуй автограф от руки или загрузи фото. Оригинал останется приватным.',
+  'Review and submit': 'Отправь на проверку',
+  'Check the cleaned preview and send it for moderation. Follow the decision in My autographs.':
+    'Проверь предпросмотр и отправь его на модерацию. Решение появится в разделе «Мои автографы».',
+  'Choose a place': 'Выбери место',
+  'Open the Wall from your invitation and choose an empty place once your autograph is approved.':
+    'Когда автограф одобрят, открой стену по ссылке из приглашения и выбери свободное место.',
+  'A Wall of your own': 'Своя стена',
+  'With a public profile, you can prepare a private draft and publish your Wall when it’s ready to share.':
+    'После настройки публичного профиля можно создать черновик стены. Когда она готова, опубликуй её и поделись ссылкой.',
+  'Autograph studio': 'Студия автографа',
+  'Trouble signing in?': 'Не получается войти?',
+  'Back to the Wall': 'Вернуться на стену',
+  'Draw an autograph or upload a photo.': 'Нарисуй автограф или загрузи фото.',
+  'Autograph privacy': 'О приватности автографа',
+  'The approved autograph can become public when you place it on a Wall. Do not use a bank, legal or other sensitive signature.':
+    'Одобренный автограф может стать публичным после размещения на стене. Не используй банковскую, юридическую или другую конфиденциальную подпись.',
+  'Switching methods will clear your current work.':
+    'При смене способа текущий набросок или фото пропадут.',
+  'Switch method and clear': 'Сменить способ и очистить',
+  'Keep editing': 'Продолжить редактирование',
+  'Follow the decision in My autographs. You can place this autograph once it is approved.':
+    'Решение появится в разделе «Мои автографы». После одобрения автограф можно разместить на стене.',
+  'Check moderation status': 'Проверить статус модерации',
+  'Find a place': 'Выбрать место',
+  'Back to places': 'Вернуться к местам',
+  'Places occupied': 'Занято мест',
+  'of {total}': 'из {total}',
+  'Choose an empty place to sign in. You’ll need an approved autograph to place it for free.':
+    'Выбери свободное место, чтобы войти. Для бесплатного размещения нужен одобренный автограф.',
+  'Back to sign-in': 'Вернуться ко входу',
+  'Return to sign-in and try again or choose another sign-in method.':
+    'Вернись ко входу и повтори попытку или выбери другой способ.',
   'Manage this Wall': 'Управление стеной',
   'Return Wall to draft': 'Вернуть стену в черновик',
   'Pause Wall': 'Приостановить стену',
@@ -527,11 +646,50 @@ export const messages: Record<string, string> = {
     'Одобрено. Автограф готов, но остаётся приватным.',
   'Rejected. The owner can see the reason code.':
     'Отклонено. Владелец видит код причины.',
+  'View rejection details': 'Посмотреть причину отклонения',
+  'Rejection details': 'Подробности отклонения',
+  'Loading rejection details…': 'Загружаем причину отклонения…',
+  'Decision date': 'Дата решения',
+  'This decision is final for this autograph. You can create a new autograph for another review.':
+    'Для этого автографа решение окончательное. Для новой проверки можно создать другой автограф.',
+  'Your session expired. Sign in to read rejection details.':
+    'Сессия истекла. Войди, чтобы посмотреть причину отклонения.',
+  'Rejection details are no longer available to this account.':
+    'Подробности отклонения больше недоступны этому аккаунту.',
+  'Rejection details could not be loaded. Try again.':
+    'Не удалось загрузить причину отклонения. Повтори попытку.',
+  'Retry rejection details': 'Загрузить причину снова',
+  'Close rejection details': 'Закрыть подробности отклонения',
   'Another moderator already made a different decision. Refresh the queue.':
     'Другой модератор уже принял другое решение. Обнови очередь.',
   'Decision could not be confirmed. Retry safely.':
     'Не удалось подтвердить решение. Повторная попытка безопасна.',
   'Sharing and Wall notifications': 'Карточки и уведомления стены',
+  'My public links': 'Мои публичные ссылки',
+  'Manage the share cards you created on Walls, including links created before this visit.':
+    'Здесь можно управлять созданными тобой карточками стен, в том числе из прошлых посещений.',
+  'Revoking a link stops it opening in Destka. Copies already saved by social networks may remain.':
+    'После отзыва ссылка перестанет открываться в Destka. Копии, уже сохранённые соцсетями, могут остаться.',
+  'Refresh links': 'Обновить ссылки',
+  'Loading public links…': 'Загружаем публичные ссылки…',
+  'No public links yet. Create a share card on a Wall to find it here.':
+    'Публичных ссылок пока нет. Создай карточку на стене, и она появится здесь.',
+  'Sign in to manage your public links.':
+    'Войди, чтобы управлять своими публичными ссылками.',
+  'Your public links are no longer available to this account.':
+    'Публичные ссылки больше недоступны этому аккаунту.',
+  'Could not load your public links. Refresh to try again.':
+    'Не удалось загрузить публичные ссылки. Обнови список, чтобы повторить попытку.',
+  'Revocation could not be confirmed. Refresh links before trying again.':
+    'Не удалось подтвердить отзыв ссылки. Обнови список перед новой попыткой.',
+  'Public link revoked.': 'Публичная ссылка отозвана.',
+  Revoked: 'Отозвана',
+  'Not revoked': 'Не отозвана',
+  'Confirm link revocation': 'Подтверждение отзыва ссылки',
+  'Revoke this public link?': 'Отозвать эту публичную ссылку?',
+  'Confirm revocation': 'Подтвердить отзыв',
+  'Cancel revocation': 'Отменить отзыв',
+  'Load more links': 'Загрузить ещё ссылки',
   'Share your place': 'Поделись своим местом',
   'Create a card for your own placement. After the Wall ends, leave the slot blank to share the final Wall. Sign in first.':
     'Создай карточку своего размещения. После завершения стены оставь поле места пустым, чтобы поделиться итоговой стеной. Сначала войди в аккаунт.',
@@ -597,6 +755,15 @@ export const messages: Record<string, string> = {
   'Payment requires review.': 'Платёж требует проверки.',
   'Unable to check payment status. Check your connection and retry.':
     'Не удалось проверить статус платежа. Проверь соединение и повтори попытку.',
+  'Returning from checkout does not confirm payment. Refresh the payment status to request a new check.':
+    'Возврат со страницы оплаты не подтверждает платёж. Обнови статус оплаты, чтобы запросить новую проверку.',
+  'Payment received. Placement is not confirmed yet.':
+    'Платёж получен. Размещение ещё не подтверждено.',
+  'Payment is unavailable for this account.':
+    'Платёж недоступен для этого аккаунта.',
+  'Unable to confirm payment status. Check its saved status before retrying.':
+    'Не удалось подтвердить статус платежа. Проверь сохранённый статус перед повторной попыткой.',
+  'Check saved payment status': 'Проверить сохранённый статус платежа',
   'Refresh payment status': 'Обновить статус оплаты',
   'Legal documents': 'Юридические документы',
   'Destka legal documents': 'Юридические документы Destka',

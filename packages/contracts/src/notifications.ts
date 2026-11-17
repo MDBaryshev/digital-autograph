@@ -8,6 +8,32 @@ export const notificationPreferencesBody = z
   })
   .strict();
 export const notificationIdParams = z.object({ id: z.uuid() }).strict();
+export const ownerSharesQuery = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+    cursor: z.uuid().optional(),
+  })
+  .strict();
+export const ownerSharesPageSchema = z
+  .object({
+    items: z
+      .array(
+        z
+          .object({
+            id: z.uuid(),
+            wallId: z.uuid(),
+            slotNumber: z.number().int().min(1).max(10).nullable(),
+            event: z.enum(['slot_claimed', 'takeover', 'final_wall']),
+            publicAlias: z.string().min(1).max(40).nullable(),
+            createdAt: z.iso.datetime(),
+            revokedAt: z.iso.datetime().nullable(),
+          })
+          .strict(),
+      )
+      .max(50),
+    nextCursor: z.uuid().nullable(),
+  })
+  .strict();
 export const notificationFollowBody = z
   .object({ enabled: z.boolean() })
   .strict();

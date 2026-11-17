@@ -32,9 +32,9 @@ it('highlights only the first three places and labels every remaining place with
     'Silver place',
     'Bronze place',
   ].entries()) {
-    expect(places[i]!.querySelector('svg')?.getAttribute('aria-label')).toBe(
-      label,
-    );
+    expect(
+      places[i]!.querySelector('svg[role="img"]')?.getAttribute('aria-label'),
+    ).toBe(label);
     expect(places[i]!.getAttribute('data-podium')).toBe(
       ['gold', 'silver', 'bronze'][i],
     );
@@ -73,9 +73,7 @@ it('keeps paid takeover disabled without requests, and retries failed public med
     creatorDashboard: false,
     notifications: true,
   });
-  const paid = screen.getByRole('button', { name: 'Paid takeover' });
-  expect(paid).toHaveProperty('disabled', true);
-  fireEvent.click(paid);
+  expect(screen.queryByRole('button', { name: 'Paid takeover' })).toBeNull();
   expect(onAction).not.toHaveBeenCalled();
   fireEvent.error(
     screen.getByRole('img', { name: 'Digital autograph in slot 1' }),
