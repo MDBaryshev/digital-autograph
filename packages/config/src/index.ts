@@ -47,6 +47,10 @@ const apiSchema = databaseSchema
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    COMMUNITY_CUBE_PUBLICATION_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
     FIRST_USE_ENFORCEMENT_ENABLED: z
       .enum(['true', 'false'])
       .default('false')
@@ -121,6 +125,16 @@ const apiSchema = databaseSchema
       .default(120),
   })
   .superRefine((config, context) => {
+    if (
+      config.COMMUNITY_CUBE_PUBLICATION_ENABLED &&
+      !config.FIRST_USE_ENFORCEMENT_ENABLED
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['COMMUNITY_CUBE_PUBLICATION_ENABLED'],
+        message: 'requires first-use enforcement',
+      });
+    }
     if (
       Boolean(config.S3_ACCESS_KEY_ID) !== Boolean(config.S3_SECRET_ACCESS_KEY)
     ) {

@@ -16,6 +16,11 @@ export {
 export { createPgPlacementHistoryRepository } from './placement-history-repository';
 export { createPgFreeClaimRepository } from './free-claim-repository';
 export { createPgPublicPlacementMediaRepository } from './public-placement-media-repository';
+export {
+  CommunityCubeError,
+  createPgCommunityCubeRepository,
+  type CommunityCubeRepository,
+} from './community-cube-repository';
 export { createPgPricingRepository } from './pricing-repository';
 export { createPgTakeoverReservationRepository } from './takeover-reservation-repository';
 export {

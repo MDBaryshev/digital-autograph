@@ -5,6 +5,7 @@ import {
 import { importProviderAvatar } from '@digital-autograph/integrations';
 import { registerAppearance } from './appearance';
 import { registerWallDesignRoutes } from './walls/design-http';
+import { registerCommunityCubeRoutes } from './community-cube';
 import { registerAiAutographs } from './ai-autographs';
 import { registerAccountWorkspace } from './account-workspace';
 import { loadApiStartupConfig } from './startup-config';
@@ -43,6 +44,7 @@ import {
   createPgTakeoverReservationRepository,
   createPgAutographRepository,
   createPgAutographModerationRepository,
+  createPgCommunityCubeRepository,
 } from '@digital-autograph/db';
 import {
   AutographService,
@@ -297,6 +299,12 @@ export async function startApi(
     app,
     createPgWallDesignRepository(database.pool),
     config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+  );
+  registerCommunityCubeRoutes(
+    app,
+    createPgCommunityCubeRepository(database.pool),
+    storage,
+    config.COMMUNITY_CUBE_PUBLICATION_ENABLED,
   );
   let closing = false;
 

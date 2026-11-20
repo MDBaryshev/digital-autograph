@@ -51,9 +51,11 @@ function PersonalCube({
 export function SupcubeDesignLab({
   standalone = false,
   initialCube,
+  publicCubeEnabled = false,
 }: {
   standalone?: boolean;
   initialCube?: 'create' | 'view';
+  publicCubeEnabled?: boolean;
 }) {
   const [direction, setDirection] = useState<'community' | 'cube'>('community');
   const [mobile, setMobile] = useState(false);
@@ -201,7 +203,14 @@ export function SupcubeDesignLab({
               <a href="#design-wall" onClick={() => setMenuOpen(false)}>
                 Стены авторов
               </a>
-              <a href="/community-cube" onClick={(event) => openCube(event)}>
+              <a
+                href={
+                  publicCubeEnabled ? '/community-cube/live' : '/community-cube'
+                }
+                onClick={
+                  publicCubeEnabled ? undefined : (event) => openCube(event)
+                }
+              >
                 Общий куб <span>↗</span>
               </a>
               <a href="#how-it-works" onClick={() => setMenuOpen(false)}>
@@ -271,7 +280,11 @@ export function SupcubeDesignLab({
                   href="/community-cube?create=1"
                   onClick={(event) => openCube(event, true)}
                 >
-                  {hasPersonal ? 'К моему автографу' : 'Создать автограф'}{' '}
+                  {hasPersonal
+                    ? 'К моему автографу'
+                    : publicCubeEnabled
+                      ? 'Создать демо-автограф'
+                      : 'Создать автограф'}{' '}
                   <Icon name="arrow" size={18} />
                 </a>
                 <a
@@ -282,9 +295,11 @@ export function SupcubeDesignLab({
                 >
                   {bold
                     ? 'Исследовать куб'
-                    : standalone
-                      ? 'Открыть общий куб'
-                      : 'Попробовать на демостене'}{' '}
+                    : publicCubeEnabled
+                      ? 'Открыть демо'
+                      : standalone
+                        ? 'Открыть общий куб'
+                        : 'Попробовать на демостене'}{' '}
                   <span>↗</span>
                 </a>
               </div>
@@ -406,8 +421,12 @@ export function SupcubeDesignLab({
               </p>
               <a
                 className={styles.primary}
-                href="/community-cube"
-                onClick={(event) => openCube(event)}
+                href={
+                  publicCubeEnabled ? '/community-cube/live' : '/community-cube'
+                }
+                onClick={
+                  publicCubeEnabled ? undefined : (event) => openCube(event)
+                }
               >
                 {standalone ? 'Открыть общий куб' : 'Покрутить общий куб'}{' '}
                 <Icon name="arrow" size={18} />

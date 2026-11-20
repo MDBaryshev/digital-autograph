@@ -1117,4 +1117,65 @@ export const messages: Record<string, string> = {
   'Generation has not finished. Retry with the same nickname to avoid another API charge.':
     'Генерация ещё не завершилась. Повтори запрос с тем же ником: повторной оплаты API не будет.',
   'Generation is unavailable.': 'Генерация недоступна.',
+  'Community cube': 'Общий куб',
+  'Try the cube demo': 'Открыть демо куба',
+  'Cube {generation} · {used} of {capacity} places occupied':
+    'Куб {generation} · занято {used} из {capacity} мест',
+  'Choose a cube face': 'Выбери грань куба',
+  'Front face': 'Лицевая грань',
+  'Right face': 'Правая грань',
+  'Back face': 'Обратная грань',
+  'Left face': 'Левая грань',
+  'Top face': 'Верхняя грань',
+  'Bottom face': 'Нижняя грань',
+  'Refresh cube': 'Обновить куб',
+  'Place {cell} · Your autograph': 'Место {cell} · Твой автограф',
+  'Place {cell} · Occupied': 'Место {cell} · Занято',
+  'Place {cell} · Free': 'Место {cell} · Свободно',
+  'Pages of cube places': 'Страницы мест на грани',
+  Previous: 'Назад',
+  Next: 'Вперёд',
+  'Page {current} of {total}': 'Страница {current} из {total}',
+  'The community cube is closed': 'Общий куб закрыт',
+  'Cube places': 'Места на кубе',
+  'Loading the cube…': 'Загружаем куб…',
+  'You can explore the cube in the demo while publication is closed.':
+    'Пока публикация закрыта, куб можно посмотреть в демо.',
+  'The cube could not be loaded. Check your connection and try again.':
+    'Не удалось загрузить куб. Проверь подключение и попробуй ещё раз.',
+  'Your place in the cube': 'Твоё место на кубе',
+  'Your cube placement could not be loaded. Refresh the cube to try again.':
+    'Не удалось загрузить твоё место. Обнови куб и попробуй ещё раз.',
+  'Your autograph is saved at place {cell}.':
+    'Твой автограф сохранён на месте {cell}.',
+  'Find my autograph': 'Найти мой автограф',
+  'Withdraw autograph': 'Убрать автограф',
+  'Withdraw this autograph from the cube? It will stay in your account.':
+    'Убрать этот автограф с куба? Он останется в твоём аккаунте.',
+  'Confirm withdrawal': 'Убрать с куба',
+  'Your autograph was withdrawn from the cube.': 'Автограф убран с куба.',
+  'Publish an autograph': 'Публикация автографа',
+  'You can publish an autograph after it passes moderation.':
+    'Автограф можно опубликовать после модерации.',
+  'Selected place {cell}': 'Выбрано место {cell}',
+  'Choose a free place on any face.': 'Выбери свободное место на любой грани.',
+  'Publishing will show this approved autograph on the public cube. You can withdraw it later.':
+    'После публикации одобренный автограф увидят все посетители куба. Потом его можно убрать.',
+  'Publishing…': 'Публикуем…',
+  'Publish autograph': 'Опубликовать автограф',
+  'The cube grew. Choose a place on the current cube.':
+    'Куб вырос. Выбери место на новом кубе.',
+  'Someone took that place. Choose another place.':
+    'Это место уже заняли. Выбери другое.',
+  'Your account already has a place in the cube.':
+    'У твоего аккаунта уже есть место на кубе.',
+  'The cube is full. You can still view the autographs.':
+    'Все места заняты. Автографы по-прежнему можно посмотреть.',
+  'That request has already been used. Choose a place again.':
+    'Этот запрос уже обработан. Выбери место заново.',
+  'That autograph is no longer available to publish.':
+    'Этот автограф больше нельзя опубликовать.',
+  'Could not confirm the change. Check your placement and try again.':
+    'Не удалось подтвердить изменение. Проверь своё место и попробуй снова.',
+  'Your autograph is published.': 'Твой автограф опубликован.',
 };
