@@ -316,7 +316,7 @@ export function AccountWorkspace({
       {section === 'walls' && (
         <>
           {profile && data.canEditProfile && (
-            <a href="/me/settings">{t('Edit Wall appearance')}</a>
+            <a href="/me/walls/design">{t('Wall Design Studio')} →</a>
           )}
           {!profile && !data.canEditProfile ? (
             <section className={styles.card}>

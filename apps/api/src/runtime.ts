@@ -1,6 +1,10 @@
-import { createPgAppearanceRepository } from '@digital-autograph/db';
+import {
+  createPgAppearanceRepository,
+  createPgWallDesignRepository,
+} from '@digital-autograph/db';
 import { importProviderAvatar } from '@digital-autograph/integrations';
 import { registerAppearance } from './appearance';
+import { registerWallDesignRoutes } from './walls/design-http';
 import { registerAiAutographs } from './ai-autographs';
 import { registerAccountWorkspace } from './account-workspace';
 import { loadApiStartupConfig } from './startup-config';
@@ -289,6 +293,11 @@ export async function startApi(
     config.CREATOR_PROFILE_PUBLICATION_APPROVED,
   );
   registerAiAutographs(app, database.pool, storage, openRouter);
+  registerWallDesignRoutes(
+    app,
+    createPgWallDesignRepository(database.pool),
+    config.CREATOR_PROFILE_PUBLICATION_APPROVED,
+  );
   let closing = false;
 
   const shutdown = async (): Promise<void> => {

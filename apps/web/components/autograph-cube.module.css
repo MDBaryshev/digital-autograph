@@ -5,7 +5,7 @@
   width: 100%;
   height: var(--slot-height, clamp(6.3rem, 12vw, 9.4rem));
   place-items: center;
-  perspective: 1000px;
+  perspective: 900px;
   pointer-events: none;
 }
 .preview .object {
@@ -14,17 +14,12 @@
   height: 100%;
   transform: rotateX(0deg) rotateY(0deg);
 }
-.preview .face {
-  border-radius: 0.7rem;
-}
 .preview .front {
   padding: 0.65rem;
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--face-ink) 30%, transparent);
-}
-.preview .face:not(.front),
-.preview .shadow {
-  opacity: 0;
+  border-radius: var(--custom-cube-rounding, 0.7rem);
+  box-shadow:
+    inset 0 0 0 1px var(--cube-frame),
+    var(--finish-depth, inset 0 0 0 transparent);
 }
 .preview .faceIndex {
   top: 0.45rem;
@@ -39,43 +34,134 @@
   height: 68%;
 }
 
-button:focus-visible > .preview .object {
-  --cube-half: calc(var(--cube-size) / 2);
-  width: var(--cube-size);
-  height: var(--cube-size);
-  transform: rotateX(-16deg) rotateY(-28deg);
+.previewCrown {
+  display: none;
 }
-button:focus-visible > .preview .object[data-material='gold'] {
-  translate: 0 calc(var(--cube-size) * 0.12);
-}
-button:focus-visible > .preview .face {
-  border-radius: 0;
-}
-button:focus-visible > .preview :is(.face:not(.front), .shadow) {
-  opacity: 1;
-}
-@media (hover: hover) and (pointer: fine) {
-  button:hover > .preview .object {
-    --cube-half: calc(var(--cube-size) / 2);
-    width: var(--cube-size);
-    height: var(--cube-size);
-    transform: rotateX(-16deg) rotateY(-28deg);
-  }
-  button:hover > .preview .object[data-material='gold'] {
-    translate: 0 calc(var(--cube-size) * 0.12);
-  }
-  button:hover > .preview .face {
-    border-radius: 0;
-  }
-  button:hover > .preview :is(.face:not(.front), .shadow) {
-    opacity: 1;
+
+/* Decorative geometry animates without changing the card layout. */
+@supports (scale: calc(1px / 1px)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .preview {
+      container-type: size;
+      --preview-reveal: 0;
+    }
+
+    button:focus-visible > .preview {
+      --preview-reveal: 1;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      :is(button, li):hover > .preview {
+        --preview-reveal: 1;
+      }
+    }
+
+    .preview .object {
+      --preview-edge: min(var(--cube-size), 76cqw, 73cqh);
+      --preview-depth: calc(var(--preview-edge) / 2);
+      --preview-flat: calc(1 - var(--preview-reveal));
+      --preview-front-x: calc(
+        var(--preview-flat) + var(--preview-reveal) * var(--preview-edge) /
+          100cqw
+      );
+      --preview-front-y: calc(
+        var(--preview-flat) + var(--preview-reveal) * var(--preview-edge) /
+          100cqh
+      );
+      transform: translateY(calc(-4px * var(--preview-reveal)))
+        rotateX(calc(-18deg * var(--preview-reveal)))
+        rotateY(calc(-28deg * var(--preview-reveal)));
+    }
+
+    .preview .front {
+      transform: translateZ(calc(var(--preview-depth) * var(--preview-reveal)))
+        scale(var(--preview-front-x), var(--preview-front-y));
+      transition: transform 230ms cubic-bezier(0.2, 0.75, 0.25, 1);
+    }
+
+    .preview .object::before,
+    .preview .object::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      width: var(--preview-edge);
+      height: var(--preview-edge);
+      margin: auto;
+      background:
+        var(--finish, var(--default-finish)),
+        var(--finish-paper, var(--face-paper));
+      box-shadow: inset 0 0 0 1px var(--cube-frame);
+      backface-visibility: hidden;
+      opacity: var(--preview-reveal);
+      transition: opacity 190ms ease;
+    }
+
+    .preview .object::before {
+      transform: rotateY(90deg) translateZ(var(--preview-depth));
+    }
+
+    .preview .object::after {
+      transform: rotateX(90deg) translateZ(var(--preview-depth));
+    }
+
+    .previewCrown {
+      position: absolute;
+      display: block;
+      top: 50%;
+      left: 50%;
+      width: calc(var(--preview-edge) * 0.78);
+      color: var(--face-ink);
+      opacity: var(--preview-reveal);
+      transform: translate3d(
+          -50%,
+          calc(-88% - var(--preview-depth) * var(--preview-reveal)),
+          calc(var(--preview-edge) * 0.16)
+        )
+        scaleY(calc(0.55 + 0.45 * var(--preview-reveal)));
+      transform-origin: center 88%;
+      transition:
+        transform 230ms cubic-bezier(0.2, 0.75, 0.25, 1),
+        opacity 190ms ease;
+    }
+
+    .preview .object[data-glass] .glassInterior {
+      display: flex;
+      inset: 50% auto auto 50%;
+      width: var(--preview-edge);
+      height: var(--preview-edge);
+      transform: translate(-50%, -50%) var(--face-turn)
+        translateZ(calc(var(--preview-depth) - 1px)) rotateY(180deg) scaleX(-1);
+      opacity: calc(var(--glass-etch-opacity) * var(--preview-reveal));
+      transition: opacity 190ms ease;
+    }
+
+    .preview::before {
+      content: '';
+      position: absolute;
+      inset: auto 18% 4% 18%;
+      height: 16%;
+      background: radial-gradient(ellipse, var(--cube-shadow), transparent 73%);
+      opacity: var(--preview-reveal);
+      transition: opacity 190ms ease;
+    }
   }
 }
 
 .object {
   --cube-half: calc(var(--cube-size) / 2);
-  --face-paper: var(--cube-paper);
-  --face-ink: var(--cube-ink);
+  --legacy-paper: var(--cube-paper);
+  --legacy-text: var(--cube-ink);
+  --face-paper: var(--custom-cube-side, var(--legacy-paper));
+  --face-ink: var(--custom-cube-side-text, var(--legacy-text));
+  --default-finish: linear-gradient(
+    145deg,
+    var(--cube-highlight),
+    transparent 55%
+  );
+  --cube-frame: var(
+    --custom-cube-frame,
+    color-mix(in srgb, var(--face-ink) 28%, transparent)
+  );
   position: relative;
   display: block;
   width: var(--cube-size);
@@ -84,27 +170,230 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
   transform: rotateX(var(--rx)) rotateY(var(--ry));
 }
 
+.finishSample {
+  display: block;
+  overflow: hidden;
+  border-radius: 0.45rem;
+}
+.finishSample:has([data-glass]) {
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0 43%,
+      #83b6d5 43% 58%,
+      transparent 58%
+    ),
+    linear-gradient(23deg, #101d2d, #364d61);
+}
+.finishSwatch {
+  --face-paper: #777f8c;
+  --cube-frame: #39424e;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 2.75;
+  border-radius: 0.45rem;
+  background: var(--finish), var(--finish-paper, var(--face-paper));
+  box-shadow:
+    inset 0 0 0 1px var(--cube-frame),
+    var(--finish-depth, inset 0 0 0 transparent);
+}
+.finishSwatch::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--finish-rim, transparent);
+  border-radius: 0.28rem;
+}
+
+:is(.object, .finishSwatch)[data-cube-finish='metallic'] {
+  --finish: linear-gradient(
+    153deg,
+    #fbf7f342 0%,
+    #ffffff12 25%,
+    #12192236 48%,
+    #12192243 60%,
+    #ffffff5c 72%,
+    #ffffff0d 83%,
+    #0b122330 100%
+  );
+  --finish-depth: inset 0 1px #fff9ec72, inset 0 -1px #121b2e59;
+}
+:is(.object, .finishSwatch)[data-cube-finish='brushed'] {
+  --finish:
+    repeating-linear-gradient(
+      90deg,
+      #ffffff19 0 1px,
+      #0814221e 1px 2px,
+      transparent 2px 3px,
+      #0915260b 3px 5px
+    ),
+    linear-gradient(105deg, #111d2d33, #ffffff49 31%, #e1e8ef13 63%, #1423353d);
+  --finish-depth: inset 0 1px #eff7fd55, inset 0 -1px #1124394a;
+}
+:is(.object, .finishSwatch)[data-glass] {
+  --glass-tint-strength: 12%;
+  --glass-etch-opacity: 0.24;
+  --glass-etch-blur: 0.3px;
+  --finish: linear-gradient(
+    145deg,
+    #f6fcff30 0%,
+    #e6f4ff0b 24%,
+    transparent 42% 76%,
+    #deedff0b 91%,
+    #deedff2c 100%
+  );
+  --finish-depth:
+    inset 0 1px #ffffffa3, inset 1px 0 #ecf6ff7c, inset 0 -1px #deedff64,
+    inset -1px 0 #e6f3ff48, inset 0 0 9px #ddecff26;
+}
+:is(.object, .finishSwatch)[data-cube-finish='satin-glass'] {
+  --glass-tint-strength: 39%;
+  --glass-etch-opacity: 0.16;
+  --glass-etch-blur: 1.15px;
+  --finish:
+    radial-gradient(ellipse at 24% 14%, #eff7ff36, transparent 76%),
+    linear-gradient(156deg, #fafbff14, #eef3ff0c 58%, #e8f1ff25);
+  --finish-depth: inset 0 1px #f3f9ff91, inset 0 0 13px #d6e5ff50;
+}
+:is(.object, .finishSwatch)[data-cube-finish='smoked-glass'] {
+  --glass-tint-strength: 31%;
+  --glass-etch-opacity: 0.15;
+  --glass-etch-blur: 0.65px;
+  --finish: linear-gradient(
+    148deg,
+    #e1e8fc24,
+    #0a152a10 25%,
+    #0b12254c 72%,
+    #08132326
+  );
+  --finish-depth: inset 0 1px #f3f9ff66, inset 0 0 9px #14213f60;
+}
+.object[data-glass]:is(
+    [data-material='gold'],
+    [data-material='silver'],
+    [data-material='bronze']
+  ) {
+  --podium-glass-tint: 9%;
+  --glass-rim-accent: var(--legacy-paper);
+}
+.object[data-glass] .face,
+.preview .object[data-glass]::before,
+.preview .object[data-glass]::after,
+.finishSwatch[data-glass] {
+  --finish-paper: color-mix(
+    in srgb,
+    var(--face-paper)
+      calc(var(--glass-tint-strength) + var(--podium-glass-tint, 0%)),
+    transparent
+  );
+  --finish-rim: var(
+    --glass-rim-accent,
+    color-mix(in srgb, var(--face-paper) 56%, #e9f8ff7a)
+  );
+}
+.object[data-glass] .face {
+  color: var(--glass-label, var(--wall-surface-text, var(--color-ink)));
+}
+.object[data-glass] .face::before {
+  inset: 3px;
+}
+
+/* A face seen from inside keeps its markings in the same physical plane. */
+.object[data-glass] .glassInterior {
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+  opacity: var(--glass-etch-opacity);
+  filter: blur(var(--glass-etch-blur));
+  transform: var(--face-turn) translateZ(calc(var(--cube-half) - 1px))
+    rotateY(180deg) scaleX(-1);
+}
+.object[data-glass] .glassInterior::before {
+  opacity: 0.6;
+}
+:where(.preview) .glassInterior {
+  display: none;
+}
+.manipulator .object[data-glass] .front .artwork {
+  filter: drop-shadow(0 1px 0 #182b415c);
+}
+:is(.object, .finishSwatch)[data-cube-finish='matte'] {
+  --finish:
+    repeating-linear-gradient(113deg, #ffffff07 0 1px, transparent 1px 3px),
+    linear-gradient(145deg, #fffaf21a, transparent 54%, #0a152328);
+  --finish-depth: inset 0 1px #ffffff29, inset 0 -1px #15223640;
+}
+:is(.object, .finishSwatch)[data-cube-finish='enamel'] {
+  --finish:
+    linear-gradient(163deg, #fffafa65, #fffafa22 20%, transparent 42%),
+    linear-gradient(37deg, #ffffff26, #10172523 27%, transparent 69%, #ffffff28);
+  --finish-depth: inset 0 1px 2px #ffffff8c, inset 0 -1px 2px #131c344f;
+}
+:is(.object, .finishSwatch)[data-cube-finish='stone'] {
+  --finish:
+    radial-gradient(
+        ellipse 1.8px 0.9px at 24% 31%,
+        #f5e9d76e 34%,
+        transparent 85%
+      )
+      0 0 / 19px 17px,
+    radial-gradient(
+        ellipse 0.9px 2.2px at 72% 56%,
+        #14222f52 40%,
+        transparent 90%
+      )
+      3px 1px / 23px 19px,
+    radial-gradient(
+        ellipse 3px 1.7px at 52% 76%,
+        #dfc8a341 35%,
+        transparent 100%
+      )
+      2px 4px / 33px 23px,
+    linear-gradient(142deg, #f2e9da22, #19253527);
+  --finish-depth: inset 0 1px #fff6e147, inset 0 -1px #1926363f;
+}
+:is(.object, .finishSwatch)[data-cube-finish='weave'] {
+  --finish:
+    repeating-linear-gradient(
+      35deg,
+      #171f3038 0 1px,
+      #ffffff0d 1px 2px,
+      transparent 2px 4px
+    ),
+    repeating-linear-gradient(
+      125deg,
+      #0e20342e 0 2px,
+      #ffffff15 2px 3px,
+      transparent 3px 6px
+    ),
+    linear-gradient(148deg, #e3e8fa24, transparent 46%, #0b182d26);
+  --finish-depth: inset 0 1px #e8ecf34f, inset 0 -1px #0d20334d;
+}
+
 .object[data-material='gold'] {
-  --face-paper: var(--podium-gold-paper);
-  --face-ink: var(--cube-gold-ink);
+  --legacy-paper: var(--podium-gold-paper);
+  --legacy-text: var(--cube-gold-ink);
 }
 
 .object[data-material='silver'] {
-  --face-paper: var(--podium-silver-paper);
-  --face-ink: var(--cube-silver-ink);
+  --legacy-paper: var(--podium-silver-paper);
+  --legacy-text: var(--cube-silver-ink);
 }
 
 .object[data-material='bronze'] {
-  --face-paper: var(--podium-bronze-paper);
-  --face-ink: var(--cube-bronze-ink);
+  --legacy-paper: var(--podium-bronze-paper);
+  --legacy-text: var(--cube-bronze-ink);
 }
 
 .object[data-material='empty'] {
-  --face-paper: var(--ui-surface-subtle);
-  --face-ink: var(--cube-empty-ink);
+  --legacy-paper: var(--ui-surface-subtle);
+  --legacy-text: var(--cube-empty-ink);
 }
 
 .face {
+  --face-turn: rotateY(0deg);
+  transform: var(--face-turn) translateZ(var(--cube-half));
   position: absolute;
   inset: 0;
   display: flex;
@@ -115,71 +404,69 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   background:
-    linear-gradient(145deg, var(--cube-highlight), transparent 55%),
-    var(--face-paper);
+    var(--finish, var(--default-finish)), var(--finish-paper, var(--face-paper));
   color: var(--face-ink);
-  box-shadow:
+  box-shadow: var(
+    --finish-depth,
     inset 0 1px 1px #ffffff70,
-    inset 0 -1px 1px #00000026;
+    inset 0 -1px 1px #00000026
+  );
   font-size: calc(var(--cube-size) * 0.073);
   line-height: 1.3;
   overflow: hidden;
 }
 
 .front {
-  transform: translateZ(var(--cube-half));
-  background:
-    linear-gradient(145deg, var(--cube-highlight), transparent 55%),
-    var(--face-paper);
-  color: var(--face-ink);
+  --face-paper: var(--custom-cube-front, var(--legacy-paper));
+  --face-ink: var(--custom-cube-front-text, var(--legacy-text));
+  --cube-frame: var(
+    --custom-cube-frame,
+    color-mix(in srgb, var(--face-ink) 28%, transparent)
+  );
 }
 
-/* The first three places carry a metal finish even before they are claimed. */
+/* Podium colors are fixed by rank; the palette only adds a tint. */
+.object:is(
+  [data-material='gold'],
+  [data-material='silver'],
+  [data-material='bronze']
+) {
+  --face-paper: color-mix(
+    in srgb,
+    var(--legacy-paper) 88%,
+    var(--custom-cube-side, var(--legacy-paper))
+  );
+  --face-ink: var(--legacy-text);
+  --default-finish: linear-gradient(
+    118deg,
+    #ffffff40 0%,
+    transparent 22%,
+    #ffffff50 40%,
+    transparent 57%,
+    #0000000a 75%,
+    #ffffff30 100%
+  );
+}
 .object:is(
     [data-material='gold'],
     [data-material='silver'],
     [data-material='bronze']
   )
-  .face {
-  background:
-    linear-gradient(
-      118deg,
-      #ffffff40 0%,
-      transparent 22%,
-      #ffffff50 40%,
-      transparent 57%,
-      #0000000a 75%,
-      #ffffff30 100%
-    ),
-    var(--face-paper);
-  box-shadow:
-    inset 0 1px 1px #ffffffc0,
-    inset 0 -2px 2px #00000020;
+  .front {
+  --face-paper: color-mix(
+    in srgb,
+    var(--legacy-paper) 88%,
+    var(--custom-cube-front, var(--legacy-paper))
+  );
+  --face-ink: var(--legacy-text);
 }
+
 .face::before {
   content: '';
   position: absolute;
   inset: 6px;
-  border: 1px solid color-mix(in srgb, var(--face-ink) 28%, transparent);
-  border-radius: 0.35rem;
-  pointer-events: none;
-}
-.object:is(
-    [data-material='gold'],
-    [data-material='silver'],
-    [data-material='bronze']
-  )
-  .front::after {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  background: linear-gradient(
-    115deg,
-    transparent 42%,
-    #ffffff66 50%,
-    transparent 58%
-  );
-  transform: translateX(-100%);
+  border: 1px solid var(--finish-rim, var(--cube-frame));
+  border-radius: var(--custom-cube-rounding, 0.35rem);
   pointer-events: none;
 }
 .preview
@@ -414,21 +701,6 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
   );
   pointer-events: none;
 }
-.preview :is(.crown, .plaque) {
-  visibility: hidden;
-  transform: translate(-50%, -100%) scaleY(0);
-}
-button:focus-visible > .preview :is(.crown, .plaque) {
-  visibility: visible;
-  transform: translate(-50%, -100%);
-}
-@media (hover: hover) and (pointer: fine) {
-  button:hover > .preview :is(.crown, .plaque) {
-    visibility: visible;
-    transform: translate(-50%, -100%);
-  }
-}
-
 .object:is(
     [data-material='gold'],
     [data-material='silver'],
@@ -451,23 +723,17 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   height: 70%;
   margin-top: 0.4rem;
 }
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  button:hover > .preview .front::after {
-    transform: translateX(100%);
-    transition: transform 850ms ease-out;
-  }
-}
 .right {
-  transform: rotateY(90deg) translateZ(var(--cube-half));
+  --face-turn: rotateY(90deg);
 }
 .back {
-  transform: rotateY(180deg) translateZ(var(--cube-half));
+  --face-turn: rotateY(180deg);
 }
 .left {
-  transform: rotateY(-90deg) translateZ(var(--cube-half));
+  --face-turn: rotateY(-90deg);
 }
 .top {
-  transform: rotateX(90deg) translateZ(var(--cube-half));
+  --face-turn: rotateX(90deg);
   color: var(--face-ink);
   flex-direction: row;
   justify-content: space-between;
@@ -475,7 +741,7 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   font-weight: 800;
 }
 .bottom {
-  transform: rotateX(-90deg) translateZ(var(--cube-half));
+  --face-turn: rotateX(-90deg);
   font-size: calc(var(--cube-size) * 0.4);
   font-weight: 800;
 }
@@ -497,6 +763,7 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   place-items: center;
   width: 100%;
   height: 65%;
+  color: var(--custom-cube-ink, inherit);
 }
 .artwork > svg,
 .artwork > img {
@@ -504,7 +771,7 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   height: 100%;
   object-fit: contain;
 }
-.artwork > img {
+.artwork > img:not([data-tinted]) {
   mix-blend-mode: multiply;
 }
 .artwork > span {
@@ -559,6 +826,7 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   max-height: calc(100dvh - 2rem);
   padding: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 0;
   border-radius: 1rem;
   background: var(--color-surface);
@@ -602,11 +870,35 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   );
   color: var(--cube-stage-ink);
 }
+.turntable[data-glass-stage] {
+  --glass-label: var(--glass-stage-text, var(--cube-stage-ink));
+  --glass-background: var(--glass-stage-paper, var(--cube-stage-base));
+  color: var(--glass-label);
+  background: radial-gradient(
+    ellipse at 52% 25%,
+    color-mix(in srgb, var(--glass-background), var(--glass-label) 16%),
+    var(--glass-background) 74%
+  );
+}
+.turntable[data-glass-stage] .manipulator::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -35deg,
+    transparent 0 2rem,
+    var(--glass-label) 2rem calc(2rem + 1px),
+    transparent calc(2rem + 1px) 4rem
+  );
+  mask-image: radial-gradient(ellipse at center, #000 8%, transparent 67%);
+  opacity: 0.2;
+  pointer-events: none;
+}
 .manipulator {
-  --cube-size: clamp(8.25rem, 32vw, 13rem);
+  --cube-size: clamp(6.5rem, min(32vw, 27dvh), 13rem);
   display: grid;
   position: relative;
-  height: calc(var(--cube-size) * 2.05);
+  height: calc(var(--cube-size) * 1.75);
   place-items: center;
   perspective: 1200px;
   touch-action: none;
@@ -615,7 +907,7 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   -webkit-user-select: none;
 }
 .manipulator:has([data-material='gold']) {
-  height: calc(var(--cube-size) * 2.3);
+  height: calc(var(--cube-size) * 1.95);
 }
 .manipulator[data-dragging] {
   cursor: grabbing;
@@ -650,6 +942,26 @@ button:focus-visible > .preview :is(.crown, .plaque) {
   color: var(--color-link);
   background: var(--color-surface);
   border: 1px solid var(--brand-color-control);
+}
+.viewer .turntable[data-glass-stage] .rotationControls button {
+  color: var(--glass-label);
+  background: color-mix(
+    in srgb,
+    var(--glass-background) 89%,
+    var(--glass-label)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--glass-background) 68%,
+    var(--glass-label)
+  );
+}
+.viewer .turntable[data-glass-stage] .rotationControls button:hover {
+  background: color-mix(
+    in srgb,
+    var(--glass-background) 78%,
+    var(--glass-label)
+  );
 }
 .rotationControls button:first-child svg {
   transform: rotate(180deg);
@@ -690,28 +1002,10 @@ button:focus-visible > .preview :is(.crown, .plaque) {
 
 @media (prefers-reduced-motion: no-preference) {
   .object {
-    transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 230ms cubic-bezier(0.2, 0.75, 0.25, 1);
   }
   .object[data-dragging] {
     transition: none;
-  }
-  .preview .object {
-    transition:
-      transform 550ms cubic-bezier(0.16, 1, 0.3, 1),
-      width 550ms cubic-bezier(0.16, 1, 0.3, 1),
-      height 550ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .preview .face {
-    transition:
-      transform 550ms cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 250ms,
-      border-radius 300ms;
-  }
-  .preview :is(.crown, .plaque) {
-    transition: transform 550ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .preview .shadow {
-    transition: opacity 300ms;
   }
 }
 @media (max-width: 42rem) {

@@ -56,6 +56,7 @@ export function SupcubeWallsShowcase() {
         <a href="/me/walls">
           Создать свою стену <Icon name="arrow" size={18} />
         </a>
+        <a href="/walls/demo">Попробовать без входа</a>
         <small>Есть приглашение? Открой его ниже.</small>
       </aside>
     </div>

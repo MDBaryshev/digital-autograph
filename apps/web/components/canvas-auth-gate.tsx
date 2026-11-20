@@ -59,9 +59,7 @@ export function CanvasAuthGate({
         <SignInHelp />
         {!wallId && (
           <p>
-            <a href="/#try-wall-heading">
-              {t('Try drawing without signing in')}
-            </a>
+            <a href="/walls/demo">{t('Try drawing without signing in')}</a>
           </p>
         )}
       </section>

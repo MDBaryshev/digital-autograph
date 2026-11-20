@@ -17,16 +17,79 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
     if (['POST', 'PUT', 'PATCH'].includes(request.method()))
       writes.push(request.url());
   });
-  await page.goto('/');
+  await page.goto('/walls/demo');
   const open = page.getByRole('button', {
     name: 'Explore demo cube in place 1',
     exact: true,
   });
+  await page
+    .getByRole('button', { name: 'Polished metal', exact: true })
+    .click();
+  const podium = [1, 2, 3].map((place) =>
+    page
+      .getByRole('button', {
+        name: 'Explore demo cube in place ' + place,
+        exact: true,
+      })
+      .locator('[data-cube-face="front"]'),
+  );
+  const faceColor = (face: (typeof podium)[number]) =>
+    face.evaluate((element) => getComputedStyle(element).backgroundColor);
+  const originalColors = await Promise.all(podium.map(faceColor));
+  await page.getByRole('textbox', { name: 'Cube front, HEX' }).fill('#254c81');
+  await page
+    .getByRole('textbox', { name: 'Other cube faces, HEX' })
+    .fill('#c28a42');
+  await page
+    .getByRole('textbox', { name: 'Autograph ink, HEX' })
+    .fill('#aad550');
+  const newColors = await Promise.all(podium.map(faceColor));
+  expect(new Set(newColors).size).toBe(3);
+  for (const [index, color] of newColors.entries()) {
+    expect(color).not.toBe(originalColors[index]);
+    expect(color).not.toBe('rgb(37, 76, 129)');
+  }
+  await expect(
+    page
+      .getByRole('button', { name: 'Sign demo place 4' })
+      .locator('[data-cube-face="front"]'),
+  ).toHaveCSS('background-color', 'rgb(37, 76, 129)');
   const object = open.locator('[data-cube-object]');
+  await expect(object.locator('[data-cube-face]')).toHaveCount(1);
+  await expect(object.locator('[data-cube-artwork] path')).toHaveCSS(
+    'stroke',
+    'rgb(170, 213, 80)',
+  );
   await expect(object).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+  const front = object.locator('[data-cube-face="front"]');
+  const flatFront = await front.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  const cardSize = await open.boundingBox();
+  const crown = open.locator('[data-preview-crown="1"]');
+  await expect(crown).toHaveCSS('opacity', '0');
+  const otherCrowns = page.locator(
+    '[data-preview-crown="2"], [data-preview-crown="3"]',
+  );
+  await expect(otherCrowns).toHaveCount(2);
+  const restingCrown = await crown.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  const sideOpacity = () =>
+    object.evaluate((element) => getComputedStyle(element, '::before').opacity);
   await open.hover();
   await expect(object).not.toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+  await expect(front).not.toHaveCSS('transform', flatFront);
+  await expect.poll(sideOpacity).toBe('1');
+  await expect(crown).toHaveCSS('opacity', '1');
+  await expect(crown).not.toHaveCSS('transform', restingCrown);
+  await expect(open.locator('[data-solid-crown]')).toHaveCount(0);
+  expect(await open.boundingBox()).toEqual(cardSize);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.mouse.move(0, 0);
+  await expect.poll(sideOpacity).toBe('0');
+  await expect(crown).toHaveCSS('opacity', '0');
+  await expect(front).toHaveCSS('transform', flatFront);
   await expect(object).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
   await open.click();
   const viewer = page.getByRole('dialog', {
@@ -35,6 +98,15 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   });
   const close = viewer.getByRole('button', { name: 'Close', exact: true });
   await expect(close).toBeFocused();
+  await expect(viewer.locator('[data-cube-face]')).toHaveCount(6);
+  await expect(viewer.locator('[data-solid-crown="1"]')).toBeVisible();
+  await expect(viewer.locator('[data-cube-face="front"]')).toHaveCSS(
+    'background-color',
+    newColors[0]!,
+  );
+  const side = viewer.locator('[data-cube-face="right"]');
+  await expect(side).not.toHaveCSS('background-color', 'rgb(194, 138, 66)');
+  await expect(side).not.toHaveCSS('background-color', newColors[0]!);
   const controls = viewer.getByRole('group', {
     name: 'Cube faces',
     exact: true,
@@ -98,7 +170,10 @@ test('cube inspection stays usable on touch screens and with reduced motion', as
       },
     ]);
     const page = await context.newPage();
-    await page.goto(process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000');
+    await page.goto(
+      new URL('/walls/demo', process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000')
+        .href,
+    );
     await page
       .getByRole('button', {
         name: 'Explore demo cube in place 2',
@@ -155,4 +230,123 @@ test('cube inspection stays usable on touch screens and with reduced motion', as
   } finally {
     await context.close();
   }
+});
+
+test('wall materials look distinct and defaults and individual places can be edited', async ({
+  page,
+}) => {
+  await page.goto('/walls/demo');
+  const gold = page.locator('[data-wall-theme] [data-material="gold"]');
+  const front = gold.locator('[data-cube-face="front"]');
+  const baseColor = await front.evaluate((element) =>
+    getComputedStyle(element).getPropertyValue('--face-paper'),
+  );
+  const materials = [
+    ['Polished metal', 'metallic'],
+    ['Brushed metal', 'brushed'],
+    ['Clear glass', 'glass'],
+    ['Satin glass', 'satin-glass'],
+    ['Smoked glass', 'smoked-glass'],
+    ['Matte', 'matte'],
+    ['Glazed enamel', 'enamel'],
+    ['Terrazzo', 'stone'],
+    ['Carbon weave', 'weave'],
+  ];
+  const frontAlpha = (element: Element) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = getComputedStyle(element).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    return context.getImageData(0, 0, 1, 1).data[3]!;
+  };
+  const rendered = new Set<string>();
+  const alphas = new Map<string, number>();
+  for (const [label, value] of materials) {
+    await page.getByRole('button', { name: label, exact: true }).click();
+    await expect(gold).toHaveAttribute('data-cube-finish', value!);
+    const image = await front.evaluate(
+      (element) => getComputedStyle(element).backgroundImage,
+    );
+    expect(image).not.toBe('none');
+    rendered.add(image);
+    alphas.set(value!, await front.evaluate(frontAlpha));
+    expect(
+      await front.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue('--face-paper'),
+      ),
+    ).toBe(baseColor);
+  }
+  expect(rendered.size).toBe(materials.length);
+  expect(alphas.get('glass')).toBeGreaterThan(0);
+  expect(alphas.get('glass')).toBeLessThan(alphas.get('smoked-glass')!);
+  expect(alphas.get('smoked-glass')).toBeLessThan(alphas.get('satin-glass')!);
+  expect(alphas.get('metallic')).toBe(255);
+
+  const target = page.getByRole('combobox', { name: 'Apply material to' });
+  const last = page
+    .getByRole('button', { name: 'Sign demo place 10', exact: true })
+    .locator('[data-cube-object]');
+  await target.selectOption('10');
+  await page.getByRole('button', { name: 'Terrazzo', exact: true }).click();
+  await expect(last).toHaveAttribute('data-cube-finish', 'stone');
+  await expect(gold).toHaveAttribute('data-cube-finish', 'weave');
+  await expect.poll(() => front.evaluate(frontAlpha)).toBe(255);
+  await target.selectOption('1');
+  await page.getByRole('button', { name: 'Clear glass', exact: true }).click();
+  await expect.poll(() => front.evaluate(frontAlpha)).toBeLessThan(100);
+  await expect(gold.locator('[data-glass-interior="back"]')).toHaveCount(1);
+  await page
+    .getByRole('button', { name: 'Explore demo cube in place 1', exact: true })
+    .click();
+  const viewer = page.getByRole('dialog');
+  await expect(viewer.locator('[data-cube-object]')).toHaveAttribute(
+    'data-cube-finish',
+    'glass',
+  );
+  expect(
+    new Set(
+      await viewer
+        .locator('[data-cube-face]')
+        .evaluateAll((faces) =>
+          faces.map((face) => getComputedStyle(face).backgroundImage),
+        ),
+    ),
+  ).toEqual(
+    new Set([
+      await front.evaluate(
+        (element) => getComputedStyle(element).backgroundImage,
+      ),
+    ]),
+  );
+  await expect(viewer.locator('[data-glass-interior]')).toHaveCount(6);
+  for (const name of ['front', 'right', 'back', 'left', 'top', 'bottom']) {
+    const exterior = viewer.locator('[data-cube-face="' + name + '"]');
+    const interior = viewer.locator('[data-glass-interior="' + name + '"]');
+    expect(await interior.textContent()).toBe(await exterior.textContent());
+    await expect(interior).toHaveAttribute('aria-hidden', 'true');
+  }
+  const signOutside = viewer.locator(
+    '[data-cube-face="front"] [data-cube-artwork] path',
+  );
+  const signInside = viewer.locator(
+    '[data-glass-interior="front"] [data-cube-artwork] path',
+  );
+  expect(await signInside.getAttribute('d')).toBe(
+    await signOutside.getAttribute('d'),
+  );
+  const insideFront = viewer.locator('[data-glass-interior="front"]');
+  const orientation = await insideFront.evaluate((element) => {
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+    return { horizontal: matrix.m11, normal: matrix.m33 };
+  });
+  expect(orientation.horizontal).toBeCloseTo(1);
+  expect(orientation.normal).toBeCloseTo(-1);
+  for (const face of await viewer.locator('[data-cube-face]').all()) {
+    expect(await face.evaluate(frontAlpha)).toBeLessThan(100);
+  }
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Use wall default' }).click();
+  await expect(gold).toHaveAttribute('data-cube-finish', 'weave');
+  await expect(last).toHaveAttribute('data-cube-finish', 'stone');
 });

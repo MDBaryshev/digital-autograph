@@ -19,6 +19,7 @@ export type Workspace = {
     createdAt: string;
   }[];
   canModerate: boolean;
+  canManageWallDesigns?: boolean;
   canEditProfile: boolean;
 };
 export async function workspaceRequest<T>(

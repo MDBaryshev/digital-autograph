@@ -4,6 +4,7 @@ import { useLocale } from './locale-provider';
 import { workspaceRequest } from './workspace-api';
 import styles from './workspace.module.css';
 import { FirstUseActionNotice } from './first-use-action-notice';
+import { appearanceImageFile } from '../lib/appearance-image-file';
 
 type Appearance = {
   title: string;
@@ -13,40 +14,6 @@ type Appearance = {
   providerAvatarDataUrl: string | null;
   avatarSource: 'provider' | 'upload' | 'none' | null;
 };
-async function imageFile(file: File, kind: 'avatar' | 'cover') {
-  if (
-    !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) ||
-    file.size > 10 * 1024 * 1024
-  )
-    throw Error();
-  const image = await createImageBitmap(file);
-  try {
-    if (image.width * image.height > 20 * 1024 * 1024) throw Error();
-    const canvas = document.createElement('canvas');
-    canvas.width = kind === 'avatar' ? 256 : 1200;
-    canvas.height = kind === 'avatar' ? 256 : 400;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw Error();
-    const scale = Math.max(
-      canvas.width / image.width,
-      canvas.height / image.height,
-    );
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(
-      image,
-      (canvas.width - image.width * scale) / 2,
-      (canvas.height - image.height * scale) / 2,
-      image.width * scale,
-      image.height * scale,
-    );
-    const result = canvas.toDataURL('image/jpeg', 0.8);
-    if (result.length > 350000) throw Error();
-    return result;
-  } finally {
-    image.close();
-  }
-}
 export function WallAppearanceEditor({
   apiOrigin,
   canEdit,
@@ -206,7 +173,7 @@ export function WallAppearanceEditor({
                   if (!f) return;
                   setPending(true);
                   setError('');
-                  void imageFile(f, 'avatar')
+                  void appearanceImageFile(f, 'avatar')
                     .then((data) => {
                       setValue((v) => (v ? { ...v, avatarDataUrl: data } : v));
                       setSource('upload');
@@ -238,7 +205,7 @@ export function WallAppearanceEditor({
                   if (!f) return;
                   setPending(true);
                   setError('');
-                  void imageFile(f, 'cover')
+                  void appearanceImageFile(f, 'cover')
                     .then((data) =>
                       setValue((v) => (v ? { ...v, coverDataUrl: data } : v)),
                     )

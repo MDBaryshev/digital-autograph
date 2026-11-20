@@ -66,6 +66,8 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
       ]
     : [['/#how-it-works', 'How it works', 'globe']];
   if (account?.canModerate) links.push(['/moderation', 'Moderation', 'check']);
+  if (account?.canManageWallDesigns)
+    links.push(['/me/walls/design/templates', 'Wall templates', 'theme']);
   links.push(['/me/settings', 'Settings', 'theme']);
   const accountLabel = account
     ? account.profile?.displayName || t('Your account')
