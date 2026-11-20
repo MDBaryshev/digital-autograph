@@ -289,11 +289,16 @@ export function SupcubeDesignLab({
                 </a>
               </div>
               <p className={styles.heroNote}>
-                {standalone
-                  ? 'Один автограф. Свободное место. Твоя часть общей истории.'
-                  : bold
-                    ? 'Общий куб пока работает как прототип.'
-                    : 'Попробуй сейчас: рисунок и выбор места без регистрации. Это демо.'}
+                {standalone ? (
+                  <>
+                    В демо рисунок хранится до обновления страницы.{' '}
+                    <a href="/autograph/create">Создать в аккаунте</a>
+                  </>
+                ) : bold ? (
+                  'Общий куб пока работает как прототип.'
+                ) : (
+                  'Попробуй сейчас: рисунок и выбор места без регистрации. Это демо.'
+                )}
               </p>
             </div>
             <div className={styles.heroStage}>
@@ -380,7 +385,7 @@ export function SupcubeDesignLab({
               </p>
             </div>
             {standalone ? <SupcubeWallsShowcase /> : <TryWall />}
-            <OpenInvitation />
+            {!standalone && <OpenInvitation />}
           </section>
 
           <section
