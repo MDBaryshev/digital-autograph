@@ -12,6 +12,10 @@ export {
 } from './telegram';
 export { createYookassaProvider } from './yookassa';
 export { createTelegramNotificationSender } from './telegram-notifications';
+export {
+  buildTelegramWallWidgetSend,
+  buildTelegramWallWidgetUpdate,
+} from './telegram-wall-widget';
 
 export {
   createYandexOAuthClient,

@@ -80,6 +80,15 @@ export function WallInvite({
         >
           {t('Share invitation')}
         </button>
+        {url && (
+          <a
+            href={`https://t.me/share/url?url=${encodeURIComponent(url)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('Share Wall link in Telegram')}
+          </a>
+        )}
         <button
           type="button"
           disabled={!url || pending}

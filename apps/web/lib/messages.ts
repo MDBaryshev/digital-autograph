@@ -160,6 +160,7 @@ export const messages: Record<string, string> = {
   'One Wall. Ten places. Send the link to someone who should be here.':
     'Одна стена. Десять мест. Отправь ссылку тем, кого хочешь здесь видеть.',
   'Share invitation': 'Поделиться приглашением',
+  'Share Wall link in Telegram': 'Поделиться ссылкой в Telegram',
   'Copy Wall link': 'Скопировать ссылку на стену',
   'Open invitation card': 'Открыть карточку приглашения',
   'Wall invitation link': 'Ссылка на стену',
