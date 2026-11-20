@@ -16,6 +16,7 @@ export {
   buildTelegramWallWidgetSend,
   buildTelegramWallWidgetUpdate,
 } from './telegram-wall-widget';
+export { createTelegramTestWallWidgetClient } from './telegram-wall-widget-client';
 
 export {
   createYandexOAuthClient,

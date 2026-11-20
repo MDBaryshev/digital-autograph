@@ -25,6 +25,21 @@ origin. При закрытии публикации новое состояни
 Изображения автографов, идентификаторы аккаунтов и данные личной сессии не
 участвуют. Отправка и обновление пока не подключены к работающему приложению.
 
+Пилотный скрипт использует синтетическую стену. Команда `preview` выводит
+тело запроса локально. Остальные команды работают только с путём `/test/`
+официального Bot API. Токен и ID чата берутся из переменных окружения
+`TELEGRAM_WIDGET_TEST_BOT_TOKEN` и `TELEGRAM_WIDGET_TEST_CHAT_ID` тестового
+бота. Для обновлений задайте `TELEGRAM_WIDGET_TEST_WIDGET_ID` из ответа
+`send`. При результате `uncertain` сначала проверьте чат, чтобы не создать
+дубликат. Код не повторяет вызовы автоматически.
+
+```sh
+pnpm exec tsx apps/api/scripts/telegram-wall-widget-pilot.ts preview
+pnpm exec tsx apps/api/scripts/telegram-wall-widget-pilot.ts send
+pnpm exec tsx apps/api/scripts/telegram-wall-widget-pilot.ts update 1 3
+pnpm exec tsx apps/api/scripts/telegram-wall-widget-pilot.ts withdraw 2
+```
+
 Для пилота:
 
 1. В тестовом Telegram подтвердить операции отправки, обновления и закрытия
