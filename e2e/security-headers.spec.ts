@@ -80,13 +80,14 @@ for (const sameOrigin of [true, false]) {
       );
       await expect(
         page.frameLocator('iframe').getByRole('heading', {
-          name: 'Leave your autograph.',
+          level: 1,
         }),
       ).toHaveCount(0);
       await page.goto(webUrl);
       await expect(
         page.getByRole('heading', {
-          name: 'Leave your autograph.',
+          level: 1,
+          name: /^Твой почерк\./,
         }),
       ).toBeVisible();
     } finally {

@@ -45,11 +45,11 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   test.setTimeout(120_000);
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Leave your autograph.' }),
+    page.getByRole('heading', { level: 1, name: /^Твой почерк\./ }),
   ).toBeVisible();
   await responsive(
     page,
-    page.getByRole('link', { name: 'Create autograph', exact: true }),
+    page.getByRole('link', { name: 'Создать автограф', exact: true }),
   );
   await page.keyboard.press('Tab');
   await expect(
@@ -226,9 +226,9 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await expect(
     page.getByRole('heading', { name: 'E2E Creator', exact: true }),
   ).toBeVisible();
-  await expect(page).toHaveTitle('E2E Creator — public Wall | Destka');
+  await expect(page).toHaveTitle('E2E Creator — public Wall | supcube');
   await responsive(page);
-  await page.getByRole('link', { name: 'E2E Creator’s Wall' }).click();
+  await page.getByRole('link', { name: 'Open Wall', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: "E2E Creator's Wall" }),
   ).toBeVisible();
