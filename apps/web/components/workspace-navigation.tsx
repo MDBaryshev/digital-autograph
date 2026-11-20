@@ -3,7 +3,8 @@ import { useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { BrandMark, Icon } from './ui-icon';
 import { useLocale } from './locale-provider';
-import { workspaceRequest, type Workspace } from './workspace-api';
+import { getWorkspace, type Workspace } from './workspace-api';
+import { myWallPath, wallDesignTemplatesPath } from '../lib/wall-design-links';
 import styles from './workspace-navigation.module.css';
 export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
   const { t } = useLocale();
@@ -21,7 +22,7 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
   const toggle = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const c = new AbortController();
-    workspaceRequest<Workspace>(apiOrigin, '/me/workspace', c.signal)
+    getWorkspace(apiOrigin, c.signal)
       .then((data) => {
         if (!c.signal.aborted) setAccount(data);
       })
@@ -59,7 +60,7 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
     ? [
         ['/me', 'Overview', 'user'],
         ['/me/autographs', 'My autographs', 'pen'],
-        ['/me/walls', 'My Walls', 'globe'],
+        [myWallPath, 'My Wall', 'globe'],
         ['/me/placements', 'Placement history', 'history'],
         ['/me/notifications', 'Notifications', 'bell'],
         ['/me/shares', 'My public links', 'globe'],
@@ -67,7 +68,7 @@ export function WorkspaceNavigation({ apiOrigin }: { apiOrigin: string }) {
     : [['/#how-it-works', 'How it works', 'globe']];
   if (account?.canModerate) links.push(['/moderation', 'Moderation', 'check']);
   if (account?.canManageWallDesigns)
-    links.push(['/me/walls/design/templates', 'Wall templates', 'theme']);
+    links.push([wallDesignTemplatesPath, 'Wall templates', 'theme']);
   links.push(['/me/settings', 'Settings', 'theme']);
   const accountLabel = account
     ? account.profile?.displayName || t('Your account')

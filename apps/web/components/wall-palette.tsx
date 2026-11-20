@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { wallDesignHex, type WallDesignStyle } from '@digital-autograph/domain';
+import { wallCubeColors } from '../lib/wall-design-presentation';
 import { wallDesignPalettes } from '../lib/wall-design-palettes';
 import { useLocale } from './locale-provider';
 import styles from './wall-design-studio.module.css';
@@ -77,12 +78,20 @@ export function WallPalette({
   const base =
     wallDesignPalettes.find(({ theme }) => theme === value.theme) ??
     wallDesignPalettes[0]!;
+  const { front, sides } = wallCubeColors(value.colors);
+  const softened =
+    front &&
+    sides &&
+    Boolean(value.colors?.cube && value.colors.sides) &&
+    (front !== value.colors?.cube || sides !== value.colors?.sides);
   return (
     <section className={styles.group}>
       <h2>{t('Wall palette')}</h2>
       <p className={styles.paletteHint}>
         {t(
-          'Face colors tint the three podium metals. The other cubes take the chosen colors.',
+          value.podium === 'jewels'
+            ? 'The diamond podium keeps its own colors. Finish and autograph ink still follow your settings.'
+            : 'Face colors tint the three podium metals. The other cubes take the chosen colors.',
         )}
       </p>
       <div
@@ -91,6 +100,7 @@ export function WallPalette({
       >
         {wallDesignPalettes.map((preset) => {
           const { accent, ...colors } = preset.colors;
+          const cube = wallCubeColors(colors);
           const active =
             value.theme === preset.theme &&
             value.accent === accent &&
@@ -116,7 +126,7 @@ export function WallPalette({
               }
             >
               <span className={styles.paletteSwatches} aria-hidden="true">
-                {[colors.cover, colors.cube, colors.ink, accent].map(
+                {[colors.cover, cube.front, cube.sides, colors.ink, accent].map(
                   (hex, index) => (
                     <span key={index} style={{ backgroundColor: hex }} />
                   ),
@@ -127,6 +137,17 @@ export function WallPalette({
           );
         })}
       </div>
+      {softened && (
+        <div className={styles.harmonizedFaces}>
+          <span className={styles.paletteSwatches} aria-hidden="true">
+            <span style={{ backgroundColor: front }} />
+            <span style={{ backgroundColor: sides }} />
+          </span>
+          <small>
+            {t('Cube colors are blended to soften sharp transitions.')}
+          </small>
+        </div>
+      )}
       <div className={styles.colorGrid}>
         {Object.entries(colorLabels).map(([key, label]) => {
           const name = key as keyof typeof colorLabels;

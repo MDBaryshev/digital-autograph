@@ -1,4 +1,13 @@
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
+import { wallStatuses } from '@digital-autograph/domain';
+
+type WorkspaceWall = {
+  id: string;
+  status: WallStatus;
+  slotCount: number;
+  createdAt: string;
+};
+
 export type Workspace = {
   profile: {
     id: string;
@@ -12,16 +21,29 @@ export type Workspace = {
     status: AutographStatus;
     createdAt: string;
   }[];
-  walls: {
-    id: string;
-    status: WallStatus;
-    slotCount: number;
-    createdAt: string;
-  }[];
+  wall: WorkspaceWall | null;
   canModerate: boolean;
   canManageWallDesigns?: boolean;
   canEditProfile: boolean;
 };
+
+export async function getWorkspace(origin: string, signal: AbortSignal) {
+  const response = await workspaceRequest<
+    Omit<Workspace, 'wall'> & { walls: WorkspaceWall[] }
+  >(origin, '/me/workspace', signal);
+  if (!Array.isArray(response?.walls) || response.walls.length > 1)
+    throw Error('REQUEST_FAILED');
+  const { walls, ...workspace } = response;
+  const wall = walls[0];
+  if (
+    walls.length &&
+    (!wall ||
+      typeof wall.id !== 'string' ||
+      !wallStatuses.includes(wall.status))
+  )
+    throw Error('REQUEST_FAILED');
+  return { ...workspace, wall: wall ?? null };
+}
 export async function workspaceRequest<T>(
   origin: string,
   path: string,

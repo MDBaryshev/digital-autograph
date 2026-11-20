@@ -688,3 +688,47 @@
   position: absolute;
   pointer-events: none;
 }
+
+.page[data-wall-podium='jewels'] .slot[data-podium] {
+  padding: clamp(0.25rem, 0.65vw, 0.65rem);
+  border: 1px solid color-mix(in srgb, var(--podium-rail) 55%, transparent);
+  border-radius: 0.8rem;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--podium-rail) 14%, transparent),
+    transparent 76%
+  );
+}
+.page[data-wall-podium='jewels'] .slot[data-podium='diamond'] {
+  --podium-rail: #85d8f1;
+  --slot-height: clamp(7rem, 13vw, 10.2rem);
+}
+.page[data-wall-podium='jewels'] .slot[data-podium='gold'] {
+  --podium-rail: #e4bc75;
+}
+.page[data-wall-podium='jewels'] .slot[data-podium='silver'] {
+  --podium-rail: #b9cce2;
+}
+
+.page[data-wall-podium='jewels'][data-wall-layout='podium'] .slot[data-podium] {
+  --slot-height: clamp(6.25rem, 11vw, 9rem);
+}
+.page[data-wall-podium='jewels'][data-wall-layout='podium']
+  .slot[data-podium='diamond'] {
+  grid-column: span 5;
+  --slot-height: clamp(7rem, 12vw, 10rem);
+}
+.page[data-wall-podium='jewels'][data-wall-layout='podium']
+  .slot[data-podium='silver'] {
+  grid-column: span 3;
+}
+@media (max-width: 42rem) {
+  .page[data-wall-podium='jewels'][data-wall-layout='podium']
+    .slot[data-podium='diamond'] {
+    grid-column: span 12;
+  }
+  .page[data-wall-podium='jewels'][data-wall-layout='podium']
+    .slot:is([data-podium='gold'], [data-podium='silver']) {
+    grid-column: span 6;
+  }
+}

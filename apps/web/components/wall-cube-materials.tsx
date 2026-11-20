@@ -8,6 +8,7 @@ import {
   wallDesignPlaceKeys,
   type WallCubeFinish,
   type WallDesignPlaceKey,
+  type WallDesignPodium,
   type WallDesignStyle,
 } from '@digital-autograph/domain';
 import { useLocale } from './locale-provider';
@@ -61,6 +62,18 @@ export function WallCubeMaterials({
     <section className={styles.group}>
       <h2>{t('Cube materials')}</h2>
       <div className={styles.materialTarget}>
+        <label>
+          {t('Top three style')}
+          <select
+            value={value.podium ?? 'classic'}
+            onChange={(event) =>
+              onChange({ podium: event.target.value as WallDesignPodium })
+            }
+          >
+            <option value="classic">{t('Classic podium')}</option>
+            <option value="jewels">{t('Diamond podium')}</option>
+          </select>
+        </label>
         <label>
           {t('Apply material to')}
           <select

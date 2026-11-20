@@ -13,7 +13,11 @@ import {
 import {
   isWallGlassFinish,
   type WallCubeFinish,
+  type WallDesignPodium,
 } from '@digital-autograph/domain';
+import { wallPodiumPlace } from '../lib/wall-podium';
+import { CrownStage } from './crown-stage';
+import { DiamondCrown } from './diamond-crown';
 import { useLocale } from './locale-provider';
 import { Icon } from './ui-icon';
 import styles from './autograph-cube.module.css';
@@ -27,6 +31,7 @@ export type CubeDetails = {
   empty?: boolean;
   paint?: CSSProperties;
   finish?: WallCubeFinish;
+  podium?: WallDesignPodium;
 };
 
 const faceNames = ['Autograph', 'Profile', 'Links', 'Place'] as const;
@@ -73,54 +78,6 @@ function RankCrown({ place }: { place: number }) {
       <path d={outline} fill="currentColor" fillOpacity="0.12" />
       <path d={place === 3 ? 'M13 38h22' : 'M9 38h30'} />
       {place === 1 && <path d="m24 21 3 4-3 4-3-4Z" />}
-    </svg>
-  );
-}
-
-function PreviewCrown({ place }: { place: number }) {
-  const gradient = useId();
-  return (
-    <svg
-      className={styles.previewCrown}
-      data-preview-crown={place}
-      viewBox="0 0 48 44"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
-          <stop
-            offset="0"
-            stopColor="color-mix(in srgb, var(--face-paper) 46%, white)"
-          />
-          <stop offset="0.54" stopColor="var(--face-paper)" />
-          <stop
-            offset="1"
-            stopColor="color-mix(in srgb, var(--face-paper) 70%, black)"
-          />
-        </linearGradient>
-      </defs>
-      <path
-        d={crownOutlines[place - 1]}
-        transform="translate(1 2)"
-        fill="currentColor"
-        opacity=".72"
-      />
-      <path
-        d={crownOutlines[place - 1]}
-        fill={'url(#' + gradient + ')'}
-        stroke="currentColor"
-        strokeWidth=".7"
-        strokeLinejoin="round"
-      />
-      <path d="M10 31h28" stroke="#ffffff80" strokeWidth=".9" />
-      {place === 1 && (
-        <path
-          d="m24 17 4 5-4 6-4-6Z"
-          fill="#fff0b8"
-          stroke="currentColor"
-          strokeWidth=".7"
-        />
-      )}
     </svg>
   );
 }
@@ -254,6 +211,20 @@ function SlotPlaque({ place }: { place: number }) {
   );
 }
 
+function SilverSculpture() {
+  return (
+    <span
+      className={styles.sculpture}
+      data-podium-sculpture="silver"
+      aria-hidden="true"
+    >
+      <span className={styles.silverRing} />
+      <span className={styles.silverRing} />
+      <span className={styles.silverCore} />
+    </span>
+  );
+}
+
 type CubeFaceName = 'front' | 'right' | 'back' | 'left' | 'top' | 'bottom';
 
 function CubeFace({
@@ -307,18 +278,22 @@ export function CubeObject({
 }) {
   const { t } = useLocale();
   const glass = isWallGlassFinish(details.finish);
+  const place = wallPodiumPlace(details.place, details.podium);
+  const jewel =
+    details.podium === 'jewels' &&
+    (place?.key === 'diamond' || place?.key === 'silver')
+      ? place.key
+      : undefined;
   return (
     <span
       ref={objectRef}
       className={styles.object}
       data-cube-object
       data-cube-finish={details.finish}
+      data-podium-design={details.podium}
       data-glass={glass ? '' : undefined}
       data-dragging={dragging || undefined}
-      data-material={
-        ['gold', 'silver', 'bronze'][details.place - 1] ??
-        (details.empty ? 'empty' : 'signature')
-      }
+      data-material={place?.key ?? (details.empty ? 'empty' : 'signature')}
       style={
         {
           ...details.paint,
@@ -329,22 +304,36 @@ export function CubeObject({
     >
       <CubeFace face="front" interior={glass && !flat}>
         <span className={styles.faceIndex} aria-hidden="true">
-          <RankCrown place={details.place} />
+          {jewel ? (
+            <span className={styles.podiumGlyph} data-jewel={jewel} />
+          ) : (
+            place && <RankCrown place={place.crown} />
+          )}
           {String(details.place).padStart(2, '0')}
         </span>
         <span className={styles.artwork} data-cube-artwork>
           {details.artwork}
         </span>
         <span className={styles.faceCaption} aria-hidden="true">
-          {t(
-            ['Gold', 'Silver', 'Bronze'][details.place - 1] ??
-              (details.empty ? 'Your place' : 'Autograph'),
-          )}
+          {t(place?.caption ?? (details.empty ? 'Your place' : 'Autograph'))}
         </span>
       </CubeFace>
-      {flat && details.place <= crownOutlines.length && details.place > 0 && (
-        <PreviewCrown place={details.place} />
+      {flat && place && (
+        <span
+          className={styles.sculpture}
+          data-crown-thumbnail={place.key}
+          aria-hidden="true"
+        >
+          <img
+            className={styles.crownThumbnail}
+            src={'/crown-models/' + place.key + '.webp'}
+            alt=""
+            draggable={false}
+          />
+        </span>
       )}
+      {!flat && jewel === 'diamond' && <DiamondCrown />}
+      {!flat && jewel === 'silver' && <SilverSculpture />}
       {(!flat || glass) && (
         <CubeFace face="back" exterior={!flat} interior={glass}>
           <span className={styles.faceIndex}>{t('Links')}</span>
@@ -398,18 +387,19 @@ export function CubeObject({
             <span className={styles.faceCaption}>{t('One of 10 places')}</span>
           </CubeFace>
           <CubeFace face="top" interior={glass}>
-            {details.place <= 3 && <span className={styles.crownSeat} />}
+            {place && !jewel && <span className={styles.crownSeat} />}
             <span>supcube</span>
             <span>{String(details.place).padStart(2, '0')}</span>
           </CubeFace>
           <CubeFace face="bottom" interior={glass}>
             d.
           </CubeFace>
-          {details.place <= 3 ? (
-            <SolidCrown place={details.place} />
-          ) : (
-            <SlotPlaque place={details.place} />
-          )}
+          {!jewel &&
+            (place ? (
+              <SolidCrown place={place.crown} />
+            ) : (
+              <SlotPlaque place={details.place} />
+            ))}
         </>
       )}
     </span>
@@ -448,6 +438,7 @@ export function CubeViewer({
     moved: boolean;
   } | null>(null);
   const face = ((Math.round(-rotation.y / 90) % 4) + 4) % 4;
+  const crown = wallPodiumPlace(details.place, details.podium);
 
   useLayoutEffect(() => {
     const previous = document.activeElement;
@@ -612,6 +603,14 @@ export function CubeViewer({
             rotation={rotation}
             dragging={dragging}
           />
+          {crown && (
+            <CrownStage
+              key={crown.key + ':' + details.finish}
+              metal={crown.key}
+              finish={details.finish}
+              cube={cube}
+            />
+          )}
         </div>
         <div className={styles.rotationControls}>
           <button

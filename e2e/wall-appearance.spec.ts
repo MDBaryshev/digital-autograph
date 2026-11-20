@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { e2eWallId, expect, test } from './fixtures';
 
-test('owner imports a private account avatar, can replace it, and publishes responsive Wall appearance', async ({
+test('owner manages the profile avatar separately and edits the appearance of their Wall in the studio', async ({
   scenario,
 }, testInfo) => {
   test.setTimeout(120_000);
@@ -20,14 +20,10 @@ test('owner imports a private account avatar, can replace it, and publishes resp
   );
   const context = await scenario.actorContext(scenario.ownerId);
   const page = await context.newPage();
-  await page.goto(
-    (process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000') + '/me/settings',
-  );
+  const web = process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000';
+  await page.goto(web + '/me/settings');
   await expect(page.getByLabel('Avatar source')).toHaveValue('provider');
-  await page.getByLabel('Wall name', { exact: true }).fill('Our ten places');
-  await page
-    .getByLabel('Wall description', { exact: true })
-    .fill('Leave your mark here.');
+  await expect(page.getByLabel('Wall name', { exact: true })).toHaveCount(0);
   const photo = await sharp({
     create: { width: 600, height: 400, channels: 3, background: '#f5cf78' },
   })
@@ -40,15 +36,11 @@ test('owner imports a private account avatar, can replace it, and publishes resp
   });
   await expect(page.getByLabel('Avatar source')).toHaveValue('upload');
   await page
-    .getByLabel('Upload cover', { exact: true })
-    .setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: photo });
-  await expect(
-    page.getByRole('img', { name: 'Cover preview', exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole('button', { name: 'Save Wall appearance', exact: true })
+    .getByRole('button', { name: 'Save profile avatar', exact: true })
     .click();
-  await expect(page.getByRole('status')).toHaveText('Wall appearance saved.');
+  await expect(
+    page.getByText('Profile avatar saved.', { exact: true }),
+  ).toBeVisible();
   const stored = await scenario.database.pool.query(
     'SELECT avatar_data_url FROM account_appearance WHERE user_id=$1',
     [scenario.ownerId],
@@ -59,22 +51,41 @@ test('owner imports a private account avatar, can replace it, and publishes resp
     'UPDATE account_appearance SET provider_avatar_data_url=$2 WHERE user_id=$1',
     [scenario.ownerId, provider],
   );
+  await page.getByRole('link', { name: 'My Wall', exact: true }).click();
+  await page
+    .getByRole('link', { name: 'Edit Wall appearance', exact: true })
+    .click();
+  await page.getByLabel('Wall name', { exact: true }).fill('Our ten places');
+  await page
+    .getByLabel('Wall description', { exact: true })
+    .fill('Leave your mark here.');
+  await page.getByLabel('Upload cover', { exact: true }).setInputFiles({
+    name: 'cover.png',
+    mimeType: 'image/png',
+    buffer: photo,
+  });
+  await expect(page.locator('[data-wall-theme] header > img')).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Save Wall design', exact: true })
+    .click();
+  await expect(
+    page.getByText('Wall design saved.', { exact: true }),
+  ).toBeVisible();
+  await page.goto(web + '/me/settings');
   for (const theme of ['light', 'dark']) {
     await page
       .getByRole('combobox', { name: 'Color theme' })
       .selectOption(theme);
-    await page.goto(
-      (process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000') +
-        '/walls/' +
-        e2eWallId,
-    );
+    await page.goto(web + '/walls/' + e2eWallId);
     await expect(
       page.getByRole('heading', { name: 'Our ten places', exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole('img', { name: 'Wall owner avatar' }),
     ).toHaveAttribute('src', stored.rows[0].avatar_data_url);
-    await expect(page.getByRole('img', { name: 'Wall cover' })).toBeVisible();
+    await expect(
+      page.locator('main[data-wall-theme] header > img'),
+    ).toBeVisible();
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       expect(
@@ -90,23 +101,22 @@ test('owner imports a private account avatar, can replace it, and publishes resp
         fullPage: true,
       });
     }
-    await page.goto(
-      (process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000') + '/me/settings',
-    );
+    await page.goto(web + '/me/settings');
   }
-  // Choosing initials survives reload and a later text-only update.
+  // Choosing initials in the profile leaves the customized Wall in place.
   await page.getByLabel('Avatar source').selectOption('none');
   await page
-    .getByRole('button', { name: 'Save Wall appearance', exact: true })
+    .getByRole('button', { name: 'Save profile avatar', exact: true })
     .click();
-  await expect(page.getByRole('status')).toHaveText('Wall appearance saved.');
+  await expect(
+    page.getByText('Profile avatar saved.', { exact: true }),
+  ).toBeVisible();
   await page.reload();
   await expect(page.getByLabel('Avatar source')).toHaveValue('none');
-  await page.getByLabel('Wall name', { exact: true }).fill('Initials only');
-  await page
-    .getByRole('button', { name: 'Save Wall appearance', exact: true })
-    .click();
-  await expect(page.getByRole('status')).toHaveText('Wall appearance saved.');
+  await page.goto(web + '/walls/' + e2eWallId);
+  await expect(
+    page.getByRole('heading', { name: 'Our ten places', exact: true }),
+  ).toBeVisible();
   const result = await scenario.database.pool.query(
     'SELECT avatar_source,avatar_data_url FROM account_appearance WHERE user_id=$1',
     [scenario.ownerId],

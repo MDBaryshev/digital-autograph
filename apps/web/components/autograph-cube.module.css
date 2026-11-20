@@ -18,7 +18,7 @@
   padding: 0.65rem;
   border-radius: var(--custom-cube-rounding, 0.7rem);
   box-shadow:
-    inset 0 0 0 1px var(--cube-frame),
+    inset 0 0 0 1px var(--cube-edge),
     var(--finish-depth, inset 0 0 0 transparent);
 }
 .preview .faceIndex {
@@ -32,10 +32,6 @@
 }
 .preview .artwork {
   height: 68%;
-}
-
-.previewCrown {
-  display: none;
 }
 
 /* Decorative geometry animates without changing the card layout. */
@@ -90,7 +86,7 @@
       background:
         var(--finish, var(--default-finish)),
         var(--finish-paper, var(--face-paper));
-      box-shadow: inset 0 0 0 1px var(--cube-frame);
+      box-shadow: inset 0 0 0 1px var(--cube-edge);
       backface-visibility: hidden;
       opacity: var(--preview-reveal);
       transition: opacity 190ms ease;
@@ -104,24 +100,22 @@
       transform: rotateX(90deg) translateZ(var(--preview-depth));
     }
 
-    .previewCrown {
-      position: absolute;
+    .preview .object .sculpture {
+      --sculpture-size: calc(var(--preview-edge) * var(--sculpture-proportion));
       display: block;
       top: 50%;
-      left: 50%;
-      width: calc(var(--preview-edge) * 0.78);
-      color: var(--face-ink);
       opacity: var(--preview-reveal);
-      transform: translate3d(
+      transform: translate(
           -50%,
-          calc(-88% - var(--preview-depth) * var(--preview-reveal)),
-          calc(var(--preview-edge) * 0.16)
+          calc(
+            -1 * var(--sculpture-rise) - var(--preview-depth) *
+              var(--preview-reveal)
+          )
         )
-        scaleY(calc(0.55 + 0.45 * var(--preview-reveal)));
-      transform-origin: center 88%;
+        rotateY(16deg) scaleY(calc(0.58 + 0.42 * var(--preview-reveal)));
       transition:
-        transform 230ms cubic-bezier(0.2, 0.75, 0.25, 1),
-        opacity 190ms ease;
+        opacity 190ms ease,
+        transform 230ms cubic-bezier(0.2, 0.75, 0.25, 1);
     }
 
     .preview .object[data-glass] .glassInterior {
@@ -162,6 +156,7 @@
     --custom-cube-frame,
     color-mix(in srgb, var(--face-ink) 28%, transparent)
   );
+  --cube-edge: color-mix(in srgb, var(--face-paper) 76%, var(--cube-frame));
   position: relative;
   display: block;
   width: var(--cube-size);
@@ -271,6 +266,7 @@
 }
 .object[data-glass]:is(
     [data-material='gold'],
+    [data-material='diamond'],
     [data-material='silver'],
     [data-material='bronze']
   ) {
@@ -295,6 +291,145 @@
 .object[data-glass] .face {
   color: var(--glass-label, var(--wall-surface-text, var(--color-ink)));
 }
+.object[data-podium-design='jewels']:is(
+    [data-material='diamond'],
+    [data-material='gold'],
+    [data-material='silver']
+  ),
+.object[data-podium-design='jewels']:is(
+    [data-material='diamond'],
+    [data-material='gold'],
+    [data-material='silver']
+  )
+  .front {
+  --face-paper: var(--legacy-paper);
+  --cube-frame: var(--podium-trim);
+}
+.object[data-podium-design='jewels'][data-material='silver'] {
+  --legacy-paper: #b5c6d8;
+  --legacy-text: #293f56;
+}
+.object[data-podium-design='jewels'][data-glass]:is(
+    [data-material='diamond'],
+    [data-material='gold'],
+    [data-material='silver']
+  ) {
+  --glass-rim-accent: var(--podium-trim);
+}
+.object[data-podium-design='jewels'] .front:where([data-cube-face])::before {
+  inset: 5px;
+}
+.preview .object[data-podium-design='jewels'][data-material='diamond'] .front {
+  box-shadow:
+    inset 0 0 0 1px #a4e8fa,
+    inset 0 0 18px #74dbe23a,
+    var(--finish-depth, inset 0 0 0 transparent);
+}
+.podiumGlyph {
+  width: 0.9em;
+  height: 0.9em;
+  background: currentColor;
+}
+.podiumGlyph[data-jewel='diamond'] {
+  clip-path: polygon(26% 7%, 74% 7%, 100% 34%, 50% 96%, 0 34%);
+}
+.podiumGlyph[data-jewel='silver'] {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  transform: rotate(-28deg) scaleY(0.72);
+}
+
+.sculpture {
+  --sculpture-proportion: 0.86;
+  --sculpture-rise: 94%;
+  --sculpture-size: calc(var(--cube-size) * var(--sculpture-proportion));
+  position: absolute;
+  width: var(--sculpture-size);
+  height: var(--sculpture-size);
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, calc(-1 * var(--sculpture-rise))) rotateY(16deg);
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+.sculpture[data-podium-sculpture='silver'] {
+  --sculpture-rise: 75%;
+  --sculpture-proportion: 0.88;
+}
+:where(.preview) .sculpture {
+  display: none;
+}
+
+.sculpture[data-diamond-crown] {
+  --sculpture-proportion: 0.96;
+  --sculpture-rise: 87%;
+}
+.sculpture[data-crown-thumbnail] {
+  --sculpture-proportion: 0.89;
+  --sculpture-rise: 90%;
+}
+.crownThumbnail {
+  width: 88%;
+  height: 72%;
+  object-fit: contain;
+  object-position: center bottom;
+  position: absolute;
+  left: 6%;
+  bottom: 10%;
+}
+.diamondCrownDefs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.diamondCrownPanel {
+  position: absolute;
+  bottom: 10%;
+  overflow: visible;
+}
+.diamondCrownPanel {
+  left: 36%;
+  width: 28%;
+  height: 66%;
+  transform: rotateY(var(--band-angle))
+    translateZ(calc(var(--sculpture-size) * 0.338));
+}
+
+.silverRing,
+.silverCore {
+  position: absolute;
+  left: 15%;
+  top: 31%;
+  width: 70%;
+  height: 43%;
+  border-radius: 50%;
+}
+.silverRing {
+  border: max(2px, calc(var(--sculpture-size) * 0.045)) solid #bbcde0;
+  box-shadow:
+    inset 0 1px #f4f9ff,
+    0 1px #536d8b,
+    0 -1px #f1f7ff;
+  transform: rotateY(24deg) rotateZ(-34deg);
+}
+.silverRing:nth-child(2) {
+  transform: rotateY(75deg) rotateZ(29deg);
+  border-color: #a3b9d4;
+}
+.silverCore {
+  inset: 39% 38% auto;
+  width: 24%;
+  height: 24%;
+  background: radial-gradient(
+    circle at 31% 24%,
+    #f5faff 7%,
+    #b0c7e3 42%,
+    #48617d 85%
+  );
+  transform: translateZ(2px);
+}
+
 .object[data-glass] .face::before {
   inset: 3px;
 }
@@ -371,14 +506,21 @@
   --finish-depth: inset 0 1px #e8ecf34f, inset 0 -1px #0d20334d;
 }
 
+.object[data-material='diamond'] {
+  --legacy-paper: #b9dce9;
+  --legacy-text: #18384d;
+  --podium-trim: #87dfef;
+}
 .object[data-material='gold'] {
   --legacy-paper: var(--podium-gold-paper);
   --legacy-text: var(--cube-gold-ink);
+  --podium-trim: #dfb66d;
 }
 
 .object[data-material='silver'] {
   --legacy-paper: var(--podium-silver-paper);
   --legacy-text: var(--cube-silver-ink);
+  --podium-trim: #b2c4dd;
 }
 
 .object[data-material='bronze'] {
@@ -406,11 +548,9 @@
   background:
     var(--finish, var(--default-finish)), var(--finish-paper, var(--face-paper));
   color: var(--face-ink);
-  box-shadow: var(
-    --finish-depth,
-    inset 0 1px 1px #ffffff70,
-    inset 0 -1px 1px #00000026
-  );
+  box-shadow:
+    inset 0 0 0 1px var(--cube-edge),
+    var(--finish-depth, inset 0 1px 1px #ffffff70, inset 0 -1px 1px #00000026);
   font-size: calc(var(--cube-size) * 0.073);
   line-height: 1.3;
   overflow: hidden;
@@ -419,15 +559,12 @@
 .front {
   --face-paper: var(--custom-cube-front, var(--legacy-paper));
   --face-ink: var(--custom-cube-front-text, var(--legacy-text));
-  --cube-frame: var(
-    --custom-cube-frame,
-    color-mix(in srgb, var(--face-ink) 28%, transparent)
-  );
 }
 
 /* Podium colors are fixed by rank; the palette only adds a tint. */
 .object:is(
   [data-material='gold'],
+  [data-material='diamond'],
   [data-material='silver'],
   [data-material='bronze']
 ) {
@@ -449,6 +586,7 @@
 }
 .object:is(
     [data-material='gold'],
+    [data-material='diamond'],
     [data-material='silver'],
     [data-material='bronze']
   )
@@ -472,6 +610,7 @@
 .preview
   .object:is(
     [data-material='gold'],
+    [data-material='diamond'],
     [data-material='silver'],
     [data-material='bronze']
   )
@@ -634,13 +773,15 @@
   );
 }
 .plaque {
-  --plaque-depth: calc(var(--cube-size) * 0.07);
-  --plaque-paper: color-mix(in srgb, var(--face-paper) 88%, var(--face-ink));
+  --plaque-depth: calc(var(--cube-size) * 0.052);
+  --plaque-width: calc(var(--cube-size) * 0.64);
+  --plaque-height: calc(var(--cube-size) * 0.18);
+  --plaque-paper: color-mix(in srgb, var(--face-paper) 91%, var(--cube-edge));
   position: absolute;
   left: 50%;
   top: 0;
-  width: calc(var(--cube-size) * 0.72);
-  height: calc(var(--cube-size) * 0.24);
+  width: var(--plaque-width);
+  height: var(--plaque-height);
   transform: translate(-50%, -100%);
   transform-style: preserve-3d;
   pointer-events: none;
@@ -653,9 +794,10 @@
     linear-gradient(135deg, #ffffff24, transparent 65%), var(--plaque-paper);
   color: var(--face-ink);
   backface-visibility: hidden;
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--face-ink) 22%, transparent);
-  font-size: calc(var(--cube-size) * 0.095);
+  box-shadow:
+    inset 0 0 0 1px var(--cube-edge),
+    inset 0 1px #ffffff40;
+  font-size: calc(var(--cube-size) * 0.078);
   font-weight: 750;
   letter-spacing: 0.08em;
 }
@@ -673,20 +815,20 @@
   top: 0;
   width: var(--plaque-depth);
   height: 100%;
-  transform: rotateY(-90deg) translateZ(calc(var(--cube-size) * 0.36));
+  transform: rotateY(-90deg) translateZ(calc(var(--plaque-width) / 2));
 }
 .plaqueRight {
-  transform: rotateY(90deg) translateZ(calc(var(--cube-size) * 0.36));
+  transform: rotateY(90deg) translateZ(calc(var(--plaque-width) / 2));
 }
 .plaqueTop,
 .plaqueBottom {
   top: calc(50% - var(--plaque-depth) / 2);
   width: 100%;
   height: var(--plaque-depth);
-  transform: rotateX(90deg) translateZ(calc(var(--cube-size) * 0.12));
+  transform: rotateX(90deg) translateZ(calc(var(--plaque-height) / 2));
 }
 .plaqueBottom {
-  transform: rotateX(-90deg) translateZ(calc(var(--cube-size) * 0.12));
+  transform: rotateX(-90deg) translateZ(calc(var(--plaque-height) / 2));
 }
 .crownSeat {
   position: absolute;
@@ -703,6 +845,7 @@
 }
 .object:is(
     [data-material='gold'],
+    [data-material='diamond'],
     [data-material='silver'],
     [data-material='bronze']
   )
@@ -716,6 +859,7 @@
 .preview
   .object:is(
     [data-material='gold'],
+    [data-material='diamond'],
     [data-material='silver'],
     [data-material='bronze']
   )
@@ -906,8 +1050,21 @@
   user-select: none;
   -webkit-user-select: none;
 }
-.manipulator:has([data-material='gold']) {
+.manipulator:has(:is([data-material='gold'], [data-material='diamond'])) {
   height: calc(var(--cube-size) * 1.95);
+}
+.manipulator:has([data-podium-design='jewels'][data-material='diamond']) {
+  height: calc(var(--cube-size) * 2.14);
+  padding-top: calc(var(--cube-size) * 0.15);
+}
+.manipulator:has(
+  [data-podium-design='jewels']:is(
+    [data-material='gold'],
+    [data-material='silver']
+  )
+) {
+  height: calc(var(--cube-size) * 2.14);
+  padding-top: calc(var(--cube-size) * 0.12);
 }
 .manipulator[data-dragging] {
   cursor: grabbing;
@@ -1030,4 +1187,22 @@
   .shadow {
     display: none;
   }
+}
+
+.crownCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  visibility: hidden;
+}
+.crownCanvas[data-crown-ready] {
+  visibility: visible;
+}
+.manipulator:has(.crownCanvas[data-crown-ready])
+  .object
+  :is(.crown, .sculpture) {
+  display: none;
 }

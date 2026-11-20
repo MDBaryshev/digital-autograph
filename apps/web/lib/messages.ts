@@ -180,7 +180,7 @@ export const messages: Record<string, string> = {
   'Wall palette': 'Палитра стены',
   'Ready-made palettes': 'Готовые палитры',
   'Face colors tint the three podium metals. The other cubes take the chosen colors.':
-    'Золото, серебро и бронза сохраняют основу. Выбранные цвета тонируют их и полностью окрашивают остальные кубы.',
+    'Золото, серебро и бронза сохраняют основу. Выбранные цвета тонируют призовые места и задают оттенки остальным кубам.',
   'Wall background': 'Фон стены',
   'Cover background': 'Фон обложки',
   'Cover text': 'Текст обложки',
@@ -191,6 +191,14 @@ export const messages: Record<string, string> = {
   Ultraviolet: 'Ультрафиолет',
   'Sunset poster': 'Розовый закат',
   'Arctic chrome': 'Северный хром',
+  'Midnight graphite': 'Ночной графит',
+  'Jade atelier': 'Нефрит',
+  'Lavender ink': 'Лавандовые чернила',
+  'Oxblood velvet': 'Винный бархат',
+  Lagoon: 'Лагуна',
+  Champagne: 'Шампань',
+  'Cube colors are blended to soften sharp transitions.':
+    'Оттенки граней сближены, чтобы переход выглядел мягче.',
   '{label}, HEX': '{label}, HEX',
   'Theme color': 'Цвет темы',
   'Cube materials': 'Материалы кубов',
@@ -225,6 +233,13 @@ export const messages: Record<string, string> = {
   'Night stage': 'Ночная сцена',
   'Concert poster': 'Концертная афиша',
   'Accent color': 'Акцентный цвет',
+  'Top three style': 'Стиль топ‑3',
+  'Classic podium': 'Классический подиум',
+  'Diamond podium': 'Алмазный подиум',
+  Diamond: 'Алмаз',
+  'Diamond place': 'Алмазное место',
+  'The diamond podium keeps its own colors. Finish and autograph ink still follow your settings.':
+    'Алмаз, золото и серебро сохраняют свои цвета. Можно менять фактуру и чернила автографа.',
   'Place layout': 'Вид мест',
   Podium: 'Подиум',
   Gallery: 'Галерея',
@@ -242,6 +257,14 @@ export const messages: Record<string, string> = {
   'Import a template': 'Загрузить шаблон',
   'Template link': 'Ссылка на шаблон',
   'Load template': 'Загрузить оформление',
+  'Wall design file': 'Файл оформления',
+  'Import design file': 'Загрузить файл оформления',
+  'Download design file': 'Скачать файл оформления',
+  'Download an example design': 'Скачать пример оформления',
+  'Choose a valid Supcube wall design file.':
+    'Выберите корректный JSON-файл оформления Supcube.',
+  'Design file loaded into the preview.':
+    'Оформление из файла загружено в предпросмотр.',
   'Author username': 'Имя пользователя автора',
   'Save Wall design': 'Сохранить оформление',
   'Create template link': 'Создать ссылку на шаблон',
@@ -250,8 +273,8 @@ export const messages: Record<string, string> = {
   'Copy template link': 'Скопировать ссылку',
   'Template link copied.': 'Ссылка скопирована.',
   'Link expires {date}.': 'Ссылка действует до {date}.',
-  'Create a Wall to customize it':
-    'Создайте стену, чтобы настроить её оформление',
+  'Create your Wall to customize it': 'Создай свою стену, чтобы её оформить',
+  'Your Wall is archived': 'Твоя стена в архиве',
   'No active author has this username.': 'Автор с таким именем не найден.',
   'This template is expired or belongs to another author.':
     'Ссылка просрочена или предназначена для другого автора.',
@@ -273,11 +296,11 @@ export const messages: Record<string, string> = {
   'Remove avatar': 'Убрать аватар',
   'Edit Wall appearance': 'Оформить стену',
   'Wall appearance': 'Оформление стены',
-  'Choose a name, avatar and cover. Saving publishes this appearance on your Wall.':
-    'Выбери название, аватар и обложку. После сохранения они появятся на твоей стене.',
-  'Could not load Wall appearance.': 'Не удалось загрузить оформление стены.',
-  'Could not save Wall appearance.': 'Не удалось сохранить оформление стены.',
-  'Wall appearance saved.': 'Оформление стены сохранено.',
+  'Profile avatar': 'Аватар профиля',
+  'Could not load your profile avatar.': 'Не удалось загрузить аватар профиля.',
+  'Could not save your profile avatar.': 'Не удалось сохранить аватар профиля.',
+  'Profile avatar saved.': 'Аватар профиля сохранён.',
+  'Save profile avatar': 'Сохранить аватар профиля',
   'Wall name': 'Название стены',
   'Wall description': 'Описание стены',
   'Avatar source': 'Аватар',
@@ -287,13 +310,9 @@ export const messages: Record<string, string> = {
   'Upload avatar': 'Загрузить аватар',
   'Upload cover': 'Загрузить обложку',
   'Avatar preview': 'Предпросмотр аватара',
-  'Cover preview': 'Предпросмотр обложки',
   'Remove cover': 'Убрать обложку',
-  'Images are cropped to fit. Check the previews before saving.':
-    'Изображения обрезаются по размеру. Проверь предпросмотр перед сохранением.',
   'Choose a PNG, JPEG or WebP image up to 10 MB and 20 megapixels.':
     'Выбери PNG, JPEG или WebP до 10 МБ и 20 мегапикселей.',
-  'Save Wall appearance': 'Сохранить оформление стены',
   'Wall cover': 'Обложка стены',
   'Wall owner avatar': 'Аватар владельца стены',
   'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.':
@@ -309,7 +328,7 @@ export const messages: Record<string, string> = {
   'Changes saved.': 'Изменения сохранены.',
   Overview: 'Обзор',
   'My autographs': 'Мои автографы',
-  'My Walls': 'Мои стены',
+  'My Wall': 'Моя стена',
   Settings: 'Настройки',
   'Settings (opens in a new tab)': 'Настройки (откроются в новой вкладке)',
   Menu: 'Меню',
@@ -323,14 +342,15 @@ export const messages: Record<string, string> = {
   'Could not save changes. Refresh before retrying.':
     'Не удалось подтвердить сохранение. Обнови страницу перед повторной попыткой.',
   'This username is already taken.': 'Этот ник уже занят.',
-  'Choose a name in settings to create your first Wall.':
-    'Выбери имя в настройках, чтобы создать первую стену.',
+  'Choose a name in settings to create your Wall.':
+    'Выбери имя в настройках, чтобы создать свою стену.',
   'Your drawings, private previews and moderation status.':
     'Твои рисунки, приватные предпросмотры и статус модерации.',
   'Open my autographs': 'Открыть мои автографы',
   'Create a Wall and invite people to leave their mark.':
     'Создай стену и пригласи людей оставить свой автограф.',
-  'Open my Walls': 'Открыть мои стены',
+  'Open my Wall': 'Перейти к моей стене',
+  'Manage my Wall': 'Управлять стеной',
   'Original uploads stay private. Only you can review these previews.':
     'Оригиналы остаются приватными. Эти предпросмотры видны только тебе.',
   'No autographs yet. Start with a drawing or a photo.':
@@ -340,7 +360,7 @@ export const messages: Record<string, string> = {
   'Your private cleaned autograph': 'Твой приватный очищенный автограф',
   'Showing up to 50 recent autographs. Refresh to update processing status.':
     'Показаны последние 50 автографов. Обнови список, чтобы проверить обработку.',
-  'Give your Wall a name': 'Твоя первая стена',
+  'Set up your public profile': 'Заполни публичный профиль',
   'Set up your public creator profile first. Your original uploads will remain private.':
     'Сначала заполни публичный профиль автора. Оригиналы автографов останутся приватными.',
   'Set up profile': 'Заполнить профиль',
@@ -349,11 +369,9 @@ export const messages: Record<string, string> = {
   'Number of places': 'Количество мест',
   'Saving…': 'Сохраняем…',
   'Create draft Wall': 'Создать черновик стены',
-  'Your Walls will appear here.': 'Здесь появятся твои стены.',
   places: 'мест',
   'Open Wall': 'Открыть стену',
   'Publish Wall': 'Опубликовать стену',
-  'Showing up to 50 recent Walls.': 'Показаны последние 50 стен.',
   'Public profile': 'Публичный профиль',
   'Your name and username appear on your creator page. Your sign-in details stay private.':
     'Имя и ник видны на странице автора. Данные входа остаются приватными.',
@@ -425,8 +443,6 @@ export const messages: Record<string, string> = {
   'Open a creator’s Wall link and choose an empty slot for your Free Claim.':
     'Открой стену по ссылке автора и выбери свободное место для бесплатного размещения.',
   'Already have a creator’s link?': 'Уже есть ссылка от автора?',
-  'Open it to see their public Walls. Each account has one Free Claim per Wall. A ready, moderated autograph is required; availability is checked when you confirm. Paid takeover is not available yet.':
-    'Открой её, чтобы увидеть стены автора. На каждой стене доступно одно бесплатное размещение на аккаунт. Нужен автограф, прошедший модерацию; доступность места проверяется при подтверждении. Платное замещение пока недоступно.',
   'View your placement history': 'Посмотреть историю размещений',
   'Your autograph studio': 'Твоя студия автографа',
   'Draw or upload a photo, edit it privately, and review the cleaned result.':
@@ -628,9 +644,8 @@ export const messages: Record<string, string> = {
   'Times are approximate; availability is checked when you confirm.':
     'Время приблизительное; доступность проверяется при подтверждении.',
   Creator: 'Автор',
-  'Public Walls': 'Публичные стены',
-  'No public Walls yet. Check back later.':
-    'Публичных стен пока нет. Загляни позже.',
+  'Autograph Wall': 'Стена автографов',
+  'This author has no public Wall yet.': 'У автора пока нет открытой стены.',
   'Status:': 'Статус:',
   'Prepare your digital autograph': 'Подготовь свой цифровой автограф',
   'Creator temporarily unavailable': 'Страница автора временно недоступна',
@@ -1022,9 +1037,9 @@ export const messages: Record<string, string> = {
   photo: 'Фото',
   "{name}'s Wall": 'Стена {name}',
   '{name}’s Wall': 'Стена {name}',
-  '{name} — public Walls': '{name} — публичные стены',
-  'Explore {name}’s public digital autograph Walls.':
-    'Публичные стены цифровых автографов автора {name}.',
+  '{name} — public Wall': '{name} — стена автографов',
+  'Explore {name}’s digital autograph Wall.':
+    'Стена цифровых автографов автора {name}.',
   'View {name}’s digital autograph Wall and its public placement history.':
     'Стена цифровых автографов автора {name} и публичная история размещений.',
   'Slot {number}': 'Место {number}',

@@ -21,7 +21,8 @@ export default async function Page() {
           style: {
             ...ultravioletWallStyle,
             finish: 'satin-glass',
-            layout: 'gallery',
+            layout: 'podium',
+            podium: 'jewels',
             alignment: 'left',
             coverPosition: 'center',
             typeface: 'editorial',

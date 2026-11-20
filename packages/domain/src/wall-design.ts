@@ -1,4 +1,6 @@
 export const wallDesignThemes = ['paper', 'stage', 'poster'] as const;
+export const wallDesignPodiums = ['classic', 'jewels'] as const;
+export type WallDesignPodium = (typeof wallDesignPodiums)[number];
 export const wallDesignLayouts = ['podium', 'gallery'] as const;
 export const wallDesignAlignments = ['left', 'center'] as const;
 export const wallDesignCoverPositions = ['top', 'center', 'bottom'] as const;
@@ -54,6 +56,7 @@ export type WallDesignStyle = {
   finish?: WallCubeFinish;
   placeFinishes?: Partial<Record<WallDesignPlaceKey, WallCubeFinish>>;
   pattern?: (typeof wallDesignPatterns)[number];
+  podium?: WallDesignPodium;
   theme: (typeof wallDesignThemes)[number];
   layout: (typeof wallDesignLayouts)[number];
   alignment: (typeof wallDesignAlignments)[number];

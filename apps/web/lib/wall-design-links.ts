@@ -1,7 +1,8 @@
 import { wallDesignTemplateToken } from '@digital-autograph/contracts';
 
-export const wallDesignPath = '/me/walls/design';
-export const wallDesignTemplatesPath = '/me/walls/design/templates';
+export const myWallPath = '/me/walls';
+export const wallDesignPath = `${myWallPath}/design`;
+export const wallDesignTemplatesPath = `${wallDesignPath}/templates`;
 
 export function wallDesignTemplateLink(origin: string, token: string) {
   return `${origin}${wallDesignPath}#template=${token}`;

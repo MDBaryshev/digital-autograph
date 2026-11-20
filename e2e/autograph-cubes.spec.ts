@@ -18,6 +18,9 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
       writes.push(request.url());
   });
   await page.goto('/walls/demo');
+  await page
+    .getByRole('combobox', { name: 'Top three style' })
+    .selectOption('classic');
   const open = page.getByRole('button', {
     name: 'Explore demo cube in place 1',
     exact: true,
@@ -53,7 +56,7 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
     page
       .getByRole('button', { name: 'Sign demo place 4' })
       .locator('[data-cube-face="front"]'),
-  ).toHaveCSS('background-color', 'rgb(37, 76, 129)');
+  ).toHaveCSS('background-color', 'rgb(100, 101, 104)');
   const object = open.locator('[data-cube-object]');
   await expect(object.locator('[data-cube-face]')).toHaveCount(1);
   await expect(object.locator('[data-cube-artwork] path')).toHaveCSS(
@@ -66,10 +69,10 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
     (element) => getComputedStyle(element).transform,
   );
   const cardSize = await open.boundingBox();
-  const crown = open.locator('[data-preview-crown="1"]');
+  const crown = open.locator('[data-crown-thumbnail="gold"]');
   await expect(crown).toHaveCSS('opacity', '0');
   const otherCrowns = page.locator(
-    '[data-preview-crown="2"], [data-preview-crown="3"]',
+    '[data-crown-thumbnail="silver"], [data-crown-thumbnail="bronze"]',
   );
   await expect(otherCrowns).toHaveCount(2);
   const restingCrown = await crown.evaluate(
@@ -99,7 +102,12 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   const close = viewer.getByRole('button', { name: 'Close', exact: true });
   await expect(close).toBeFocused();
   await expect(viewer.locator('[data-cube-face]')).toHaveCount(6);
-  await expect(viewer.locator('[data-solid-crown="1"]')).toBeVisible();
+  await expect(viewer.locator('[data-crown-model="gold"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-solid-crown="1"]:visible',
+    ),
+  ).toHaveCount(1);
   await expect(viewer.locator('[data-cube-face="front"]')).toHaveCSS(
     'background-color',
     newColors[0]!,
@@ -236,6 +244,9 @@ test('wall materials look distinct and defaults and individual places can be edi
   page,
 }) => {
   await page.goto('/walls/demo');
+  await page
+    .getByRole('combobox', { name: 'Top three style' })
+    .selectOption('classic');
   const gold = page.locator('[data-wall-theme] [data-material="gold"]');
   const front = gold.locator('[data-cube-face="front"]');
   const baseColor = await front.evaluate((element) =>
@@ -349,4 +360,209 @@ test('wall materials look distinct and defaults and individual places can be edi
   await page.getByRole('button', { name: 'Use wall default' }).click();
   await expect(gold).toHaveAttribute('data-cube-finish', 'weave');
   await expect(last).toHaveAttribute('data-cube-finish', 'stone');
+});
+
+test('the diamond podium has its own three sculptures and fixed colors', async ({
+  page,
+}) => {
+  await page.goto('/walls/demo');
+  const stage = page.locator('[data-wall-theme]');
+  const top = stage.locator('li[data-podium]');
+  const style = page.getByRole('combobox', { name: 'Top three style' });
+  await expect(style).toHaveValue('jewels');
+  expect(
+    await top.evaluateAll((items) =>
+      items.map((item) => item.getAttribute('data-podium')),
+    ),
+  ).toEqual(['diamond', 'gold', 'silver']);
+  const parts = top.locator('[data-cube-face="front"]');
+  const baseColors = () =>
+    parts.evaluateAll((faces) =>
+      faces.map((face) =>
+        getComputedStyle(face).getPropertyValue('--face-paper'),
+      ),
+    );
+  const original = await baseColors();
+  await page.getByRole('textbox', { name: 'Cube front, HEX' }).fill('#7d2298');
+  expect(await baseColors()).toEqual(original);
+  const open = page.getByRole('button', {
+    name: 'Explore demo cube in place 1',
+    exact: true,
+  });
+  const sculpture = open.locator('[data-crown-thumbnail="diamond"]');
+  await open.hover();
+  await expect(sculpture).toHaveCSS('opacity', '1');
+  await expect
+    .poll(() =>
+      sculpture
+        .locator('img')
+        .evaluate((image: HTMLImageElement) => image.naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await expect(page.locator('[data-crown-model]')).toHaveCount(0);
+  await open.click();
+  const viewer = page.getByRole('dialog');
+  await expect(viewer.locator('[data-crown-model="diamond"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-diamond-crown="viewer"]:visible',
+    ),
+  ).toHaveCount(1);
+  await expect(viewer.locator('[data-glass-interior]')).toHaveCount(6);
+  await page.keyboard.press('Escape');
+  await page
+    .getByRole('button', { name: 'Explore demo cube in place 2', exact: true })
+    .click();
+  await expect(viewer.locator('[data-crown-model="gold"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-solid-crown="1"]:visible',
+    ),
+  ).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await page
+    .getByRole('button', { name: 'Explore demo cube in place 3', exact: true })
+    .click();
+  await expect(viewer.locator('[data-crown-model="silver"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-podium-sculpture="silver"]:visible',
+    ),
+  ).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await style.selectOption('classic');
+  expect(
+    await top.evaluateAll((items) =>
+      items.map((item) => item.getAttribute('data-podium')),
+    ),
+  ).toEqual(['gold', 'silver', 'bronze']);
+});
+
+test('crown is visible through glass when viewed from below', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => {
+    // Keep the rendered pixels available for an alpha read after the frame.
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      kind: string,
+      options?: WebGLContextAttributes,
+    ) {
+      return Reflect.apply(getContext, this, [
+        kind,
+        kind === 'webgl2'
+          ? { ...options, preserveDrawingBuffer: true }
+          : options,
+      ]);
+    } as typeof getContext;
+  });
+  await page.goto('/walls/demo');
+  const supportsWebGL = await page.evaluate(() => {
+    const context = document
+      .createElement('canvas')
+      .getContext('webgl2') as WebGL2RenderingContext | null;
+    context?.getExtension('WEBGL_lose_context')?.loseContext();
+    return Boolean(context);
+  });
+  test.skip(!supportsWebGL, 'The GPU crown path requires WebGL 2.');
+
+  const opacitySums: number[] = [];
+  for (const finish of [
+    'Clear glass',
+    'Satin glass',
+    'Smoked glass',
+    'Polished metal',
+  ]) {
+    await page.getByRole('button', { name: finish, exact: true }).click();
+    await page
+      .getByRole('button', {
+        name: 'Explore demo cube in place 1',
+        exact: true,
+      })
+      .click();
+    const viewer = page.getByRole('dialog');
+    const crown = viewer.locator('canvas[data-crown-ready]');
+    await expect(crown).toBeVisible();
+    const cube = viewer.getByRole('group', {
+      name: 'Rotate cube',
+      exact: true,
+    });
+    for (let step = 0; step < 5; step++) await cube.press('ArrowDown');
+    const opacity = await crown.evaluate(async (canvas: HTMLCanvasElement) => {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      const copy = document.createElement('canvas');
+      copy.width = canvas.width;
+      copy.height = canvas.height;
+      const context = copy.getContext('2d')!;
+      context.drawImage(canvas, 0, 0);
+      const { data } = context.getImageData(0, 0, copy.width, copy.height);
+      let sum = 0;
+      for (let i = 3; i < data.length; i += 4) sum += data[i]!;
+      return sum;
+    });
+    opacitySums.push(opacity);
+    await page.keyboard.press('Escape');
+  }
+
+  const [clear, satin, smoked, metal] = opacitySums as [
+    number,
+    number,
+    number,
+    number,
+  ];
+  expect(clear).toBeGreaterThan(satin);
+  expect(satin).toBeGreaterThan(smoked);
+  expect(smoked).toBeGreaterThan(metal * 2);
+});
+
+test('strongly contrasting cube colors share a base and keep their trim in the viewer', async ({
+  page,
+}) => {
+  await page.goto('/walls/demo');
+  await page
+    .getByRole('button', { name: 'Sunset poster', exact: true })
+    .click();
+  await page.getByRole('textbox', { name: 'Cube front, HEX' }).fill('#ffffff');
+  await page
+    .getByRole('textbox', { name: 'Other cube faces, HEX' })
+    .fill('#000000');
+  await expect(
+    page.getByText('Cube colors are blended to soften sharp transitions.'),
+  ).toBeVisible();
+  const place = page.getByRole('button', {
+    name: 'Sign demo place 4',
+    exact: true,
+  });
+  await expect(place.locator('[data-cube-face="front"]')).toHaveCSS(
+    'background-color',
+    'rgb(144, 144, 144)',
+  );
+  await place.click();
+  const drawing = page.getByRole('dialog').locator('canvas');
+  for (const key of ['Space', 'ArrowRight', 'ArrowDown', 'ArrowRight', 'Space'])
+    await drawing.press(key);
+  await page.getByRole('button', { name: 'Show on the demo Wall' }).click();
+  await page.getByRole('button', { name: 'Rotate cube', exact: true }).click();
+  const viewer = page.getByRole('dialog');
+  await expect(viewer.locator('[data-cube-face="front"]')).toHaveCSS(
+    'background-color',
+    'rgb(144, 144, 144)',
+  );
+  await expect(viewer.locator('[data-cube-face="right"]')).toHaveCSS(
+    'background-color',
+    'rgb(112, 112, 112)',
+  );
+  const edges = await viewer
+    .locator('[data-cube-face], [data-slot-plaque] span')
+    .evaluateAll((faces) =>
+      faces.map((face) =>
+        getComputedStyle(face).getPropertyValue('--cube-edge').trim(),
+      ),
+    );
+  expect(edges[0]).toBeTruthy();
+  expect(new Set(edges).size).toBe(1);
 });

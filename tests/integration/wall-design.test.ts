@@ -88,6 +88,7 @@ it('imports only for the named author and publishes only the author’s explicit
       ...emptyWallDesign.style,
       theme: 'poster',
       event: 'Encore',
+      podium: 'jewels',
       colors: {
         surface: '#442288',
         cube: '#ee6699',

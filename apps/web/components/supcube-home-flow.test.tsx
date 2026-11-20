@@ -164,9 +164,7 @@ it('shows product navigation and an illustrated wall instead of the test playgro
     screen.getByRole('img', { name: 'Иллюстрация стены на десять мест' }),
   ).toBeTruthy();
   expect(
-    screen
-      .getByRole('link', { name: 'Создать свою стену' })
-      .getAttribute('href'),
+    screen.getByRole('link', { name: 'Моя стена' }).getAttribute('href'),
   ).toBe('/me/walls');
   expect(
     screen.getByRole('link', { name: 'Личный кабинет' }).getAttribute('href'),

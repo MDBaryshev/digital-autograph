@@ -7,7 +7,9 @@ import {
 } from '@digital-autograph/domain';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { appearanceImageFile } from '../lib/appearance-image-file';
+import { readWallDesignFile } from '../lib/wall-design-file';
 import {
+  myWallPath,
   wallDesignTemplateLink,
   wallDesignTokenFromLink,
 } from '../lib/wall-design-links';
@@ -15,8 +17,13 @@ import { AccountSession } from './account-session';
 import { FirstUseActionNotice } from './first-use-action-notice';
 import { useLocale } from './locale-provider';
 import { WallDesignFields, type DesignImage } from './wall-design-fields';
+import { WallDesignFileControls } from './wall-design-file-controls';
 import { WallDesignPreview } from './wall-design-preview';
-import { workspaceRequest, type Workspace } from './workspace-api';
+import {
+  getWorkspace,
+  workspaceRequest,
+  type Workspace,
+} from './workspace-api';
 import styles from './wall-design-studio.module.css';
 
 type Editor = {
@@ -26,13 +33,14 @@ type Editor = {
 };
 type Access =
   | { kind: 'loading' | 'anonymous' | 'forbidden' | 'error' | 'admin' }
-  | { kind: 'no-wall'; creatorId: string | undefined }
-  | { kind: 'owner'; wall: Workspace['walls'][number]; editable: boolean };
+  | { kind: 'no-wall'; archived: boolean }
+  | { kind: 'owner'; wall: NonNullable<Workspace['wall']>; editable: boolean };
 
 const errorCopy: Record<string, string> = {
   AUTHOR_NOT_FOUND: 'No active author has this username.',
   TEMPLATE_NOT_FOUND: 'This template is expired or belongs to another author.',
   INVALID_LINK: 'Paste a template link from this Supcube site.',
+  INVALID_DESIGN_FILE: 'Choose a valid Supcube wall design file.',
   DESIGN_CHANGED:
     'Someone saved another version. Reload the saved design before replacing it.',
   INVALID_APPEARANCE_IMAGE:
@@ -75,11 +83,7 @@ export function WallDesignStudio({
   const load = useCallback(
     async (signal: AbortSignal) => {
       try {
-        const workspace = await workspaceRequest<Workspace>(
-          apiOrigin,
-          '/me/workspace',
-          signal,
-        );
+        const workspace = await getWorkspace(apiOrigin, signal);
         if (signal.aborted) return;
         if (mode === 'admin') {
           setAccess({
@@ -88,14 +92,11 @@ export function WallDesignStudio({
           return;
         }
         setOwnerName(workspace.profile?.displayName ?? '');
-        const wall = workspace.walls.find((item) => item.status !== 'archived');
-        if (!wall) {
+        const { wall } = workspace;
+        if (!wall || wall.status === 'archived') {
           setAccess({
             kind: 'no-wall',
-            creatorId:
-              workspace.walls.length === 0 && workspace.canEditProfile
-                ? workspace.profile?.id
-                : undefined,
+            archived: wall?.status === 'archived',
           });
           return;
         }
@@ -198,6 +199,18 @@ export function WallDesignStudio({
     });
   }
 
+  function importFile(file: File) {
+    void run(async (signal) => {
+      const next = await readWallDesignFile(file).catch(() => {
+        throw Error('INVALID_DESIGN_FILE');
+      });
+      if (!signal.aborted) {
+        update(next);
+        setNotice('Design file loaded into the preview.');
+      }
+    });
+  }
+
   function saveWall(wallId: string) {
     void run(async (signal) => {
       const saved = await workspaceRequest<Editor>(
@@ -275,30 +288,14 @@ export function WallDesignStudio({
   if (access.kind === 'no-wall') {
     return (
       <section className={styles.group}>
-        <h2>{t('Create a Wall to customize it')}</h2>
-        {alert}
-        {access.creatorId ? (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              const creatorId = access.creatorId;
-              void run(async (signal) => {
-                await workspaceRequest(
-                  apiOrigin,
-                  `/creators/${creatorId}/walls`,
-                  signal,
-                  {},
-                );
-                await load(signal);
-              });
-            }}
-          >
-            {t('Create draft Wall')}
-          </button>
-        ) : (
-          <a href="/me/walls">{t('Open my Walls')}</a>
-        )}
+        <h2>
+          {t(
+            access.archived
+              ? 'Your Wall is archived'
+              : 'Create your Wall to customize it',
+          )}
+        </h2>
+        <a href={myWallPath}>{t('My Wall')}</a>
       </section>
     );
   }
@@ -307,7 +304,7 @@ export function WallDesignStudio({
   return (
     <>
       <div className={styles.meta}>
-        <a href="/me/walls">{t('My Walls')}</a>
+        <a href={myWallPath}>{t('My Wall')}</a>
         {ownsWall && isPublicWall(access.wall.status) && (
           <a href={`/walls/${access.wall.id}`}>{t('Open Wall')}</a>
         )}
@@ -357,8 +354,14 @@ export function WallDesignStudio({
               </label>
             </section>
           )}
+          <WallDesignFileControls
+            design={design}
+            disabled={pending || !editable}
+            onImport={importFile}
+          />
           {alert}
-          {notice.startsWith('Template loaded') && (
+          {(notice.startsWith('Template loaded') ||
+            notice === 'Design file loaded into the preview.') && (
             <p role="status">{t(notice)}</p>
           )}
           <form

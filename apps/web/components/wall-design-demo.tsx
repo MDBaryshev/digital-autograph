@@ -4,11 +4,13 @@ import { useRef, useState } from 'react';
 import { wallCubeFinish, type WallDesign } from '@digital-autograph/domain';
 import { wallCubePaint } from '../lib/wall-design-presentation';
 import { appearanceImageFile } from '../lib/appearance-image-file';
+import { readWallDesignFile } from '../lib/wall-design-file';
 import { CubePreview, CubeViewer, type CubeDetails } from './autograph-cube';
 import { DemoDrawingDialog, DemoInk, type DemoMark } from './demo-wall-drawing';
 import { useLocale } from './locale-provider';
 import { SignatureArt } from './signature-art';
 import { WallDesignFields, type DesignImage } from './wall-design-fields';
+import { WallDesignFileControls } from './wall-design-file-controls';
 import { WallDesignPreview } from './wall-design-preview';
 import wall from '../app/walls/[id]/page.module.css';
 import styles from './wall-design-studio.module.css';
@@ -23,26 +25,37 @@ export function WallDesignDemo({
   const [mark, setMark] = useState<DemoMark | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
   const [viewing, setViewing] = useState<CubeDetails | null>(null);
-  const [imageError, setImageError] = useState(false);
-  const [processingImage, setProcessingImage] = useState(false);
-  const imageBusy = useRef(false);
+  const [fileError, setFileError] = useState('');
+  const [designFileLoaded, setDesignFileLoaded] = useState(false);
+  const [processingFile, setProcessingFile] = useState(false);
+  const fileBusy = useRef(false);
 
-  async function addImage(field: DesignImage, file: File) {
-    if (imageBusy.current) return;
-    imageBusy.current = true;
-    setProcessingImage(true);
-    setImageError(false);
+  async function loadFile(field: DesignImage | 'design', file: File) {
+    if (fileBusy.current) return;
+    fileBusy.current = true;
+    setProcessingFile(true);
+    setFileError('');
+    setDesignFileLoaded(false);
     try {
+      if (field === 'design') {
+        setDesign(await readWallDesignFile(file));
+        setDesignFileLoaded(true);
+        return;
+      }
       const source = await appearanceImageFile(
         file,
         field === 'avatarDataUrl' ? 'avatar' : 'wall-cover',
       );
       setDesign((current) => ({ ...current, [field]: source }));
     } catch {
-      setImageError(true);
+      setFileError(
+        field === 'design'
+          ? 'Choose a valid Supcube wall design file.'
+          : 'Choose a PNG, JPEG or WebP image up to 10 MB and 20 megapixels.',
+      );
     } finally {
-      imageBusy.current = false;
-      setProcessingImage(false);
+      fileBusy.current = false;
+      setProcessingFile(false);
     }
   }
 
@@ -51,6 +64,7 @@ export function WallDesignDemo({
     const drawn = mark?.place === place;
     const details: CubeDetails = {
       place,
+      podium: design.style.podium,
       paint: wallCubePaint(design.style),
       finish: wallCubeFinish(design.style, place),
       empty: !sample && !drawn,
@@ -110,32 +124,40 @@ export function WallDesignDemo({
             'Change the design, rotate a cube or sign a free place. Your changes stay in this tab.',
           )}
         </p>
+        <a href="/demo/supcube-ice-room.wall-design.json" download>
+          {t('Download an example design')}
+        </a>
         <button
           type="button"
-          disabled={processingImage}
+          disabled={processingFile}
           onClick={() => {
             setDesign(initialDesign);
             setMark(null);
-            setImageError(false);
+            setFileError('');
+            setDesignFileLoaded(false);
           }}
         >
           {t('Reset demo')}
         </button>
       </div>
       <div className={styles.editor}>
-        <fieldset disabled={processingImage} className={styles.fields}>
+        <fieldset disabled={processingFile} className={styles.fields}>
+          <WallDesignFileControls
+            design={design}
+            onImport={(file) => void loadFile('design', file)}
+          />
+          {fileError && <p role="alert">{t(fileError)}</p>}
+          {designFileLoaded && (
+            <p role="status">{t('Design file loaded into the preview.')}</p>
+          )}
           <WallDesignFields
             value={design}
-            update={setDesign}
-            onImage={(field, file) => void addImage(field, file)}
+            update={(next) => {
+              setDesign(next);
+              setDesignFileLoaded(false);
+            }}
+            onImage={(field, file) => void loadFile(field, file)}
           />
-          {imageError && (
-            <p role="alert">
-              {t(
-                'Choose a PNG, JPEG or WebP image up to 10 MB and 20 megapixels.',
-              )}
-            </p>
-          )}
         </fieldset>
         <WallDesignPreview
           design={design}

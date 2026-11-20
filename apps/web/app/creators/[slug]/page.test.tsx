@@ -16,7 +16,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it('uses only the public creator read model and renders public Wall links and metadata', async () => {
+it('uses only the public creator read model and renders one public Wall and its metadata', async () => {
   const fetchMock = vi.fn<(input: string) => Promise<Response>>(
     async () =>
       new Response(
@@ -33,16 +33,14 @@ it('uses only the public creator read model and renders public Wall links and me
   vi.stubGlobal('fetch', fetchMock);
   render(await CreatorPage(props));
   expect(
-    screen
-      .getByRole('link', { name: 'Public Creator’s Wall' })
-      .getAttribute('href'),
+    screen.getByRole('link', { name: 'Open Wall' }).getAttribute('href'),
   ).toBe('/walls/public-wall');
   expect(fetchMock.mock.calls[0]?.[0]).toBe(
     'http://internal-api:4000/creators/public-creator',
   );
   expect(screen.queryByText('creator')).toBeNull();
   expect(await generateMetadata(props)).toMatchObject({
-    title: 'Public Creator — public Walls',
+    title: 'Public Creator — public Wall',
     openGraph: { type: 'website' },
   });
 });
@@ -56,9 +54,7 @@ it('has an empty state, retry for network failure and a safe 404 for invalid or 
     ),
   );
   render(await CreatorPage(props));
-  expect(
-    screen.getByText('No public Walls yet. Check back later.'),
-  ).toBeTruthy();
+  expect(screen.getByText('This author has no public Wall yet.')).toBeTruthy();
   cleanup();
   const fetchMock = vi
     .fn()

@@ -226,7 +226,7 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await expect(
     page.getByRole('heading', { name: 'E2E Creator', exact: true }),
   ).toBeVisible();
-  await expect(page).toHaveTitle('E2E Creator — public Walls | Destka');
+  await expect(page).toHaveTitle('E2E Creator — public Wall | Destka');
   await responsive(page);
   await page.getByRole('link', { name: 'E2E Creator’s Wall' }).click();
   await expect(

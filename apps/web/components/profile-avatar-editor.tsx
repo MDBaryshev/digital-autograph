@@ -14,7 +14,7 @@ type Appearance = {
   providerAvatarDataUrl: string | null;
   avatarSource: 'provider' | 'upload' | 'none' | null;
 };
-export function WallAppearanceEditor({
+export function ProfileAvatarEditor({
   apiOrigin,
   canEdit,
 }: {
@@ -48,7 +48,7 @@ export function WallAppearanceEditor({
         setError('');
       })
       .catch(() => {
-        if (!c.signal.aborted) setError('Could not load Wall appearance.');
+        if (!c.signal.aborted) setError('Could not load your profile avatar.');
       });
     return () => c.abort();
   }, [apiOrigin, version]);
@@ -60,18 +60,13 @@ export function WallAppearanceEditor({
         : null;
   return (
     <section className={styles.card}>
-      <h2>{t('Wall appearance')}</h2>
-      <p>
-        {t(
-          'Choose a name, avatar and cover. Saving publishes this appearance on your Wall.',
-        )}
-      </p>
+      <h2>{t('Profile avatar')}</h2>
       {error === 'FIRST_USE_REQUIRED' ? (
         <FirstUseActionNotice returnTo="/me/settings" />
       ) : (
         error && <p role="alert">{t(error)}</p>
       )}
-      {saved && <p role="status">{t('Wall appearance saved.')}</p>}
+      {saved && <p role="status">{t('Profile avatar saved.')}</p>}
       {!value ? (
         <button type="button" onClick={() => setVersion((v) => v + 1)}>
           {t('Retry')}
@@ -112,7 +107,7 @@ export function WallAppearanceEditor({
                       'LEGAL_DOCUMENT_CHANGED',
                     ].includes(e.message)
                     ? 'FIRST_USE_REQUIRED'
-                    : 'Could not save Wall appearance.',
+                    : 'Could not save your profile avatar.',
                 ),
               )
               .finally(() => {
@@ -122,24 +117,6 @@ export function WallAppearanceEditor({
           }}
         >
           <fieldset disabled={!canEdit || pending}>
-            <label>
-              {t('Wall name')}
-              <input
-                maxLength={100}
-                value={value.title}
-                onChange={(e) => setValue({ ...value, title: e.target.value })}
-              />
-            </label>
-            <label>
-              {t('Wall description')}
-              <textarea
-                maxLength={500}
-                value={value.description}
-                onChange={(e) =>
-                  setValue({ ...value, description: e.target.value })
-                }
-              />
-            </label>
             <label>
               {t('Avatar source')}
               <select
@@ -187,55 +164,11 @@ export function WallAppearanceEditor({
                 }}
               />
             </label>
-            {value.coverDataUrl && (
-              <img
-                className={styles.coverPreview}
-                src={value.coverDataUrl}
-                alt={t('Cover preview')}
-              />
-            )}
-            <label>
-              {t('Upload cover')}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = '';
-                  if (!f) return;
-                  setPending(true);
-                  setError('');
-                  void appearanceImageFile(f, 'cover')
-                    .then((data) =>
-                      setValue((v) => (v ? { ...v, coverDataUrl: data } : v)),
-                    )
-                    .catch(() =>
-                      setError(
-                        'Choose a PNG, JPEG or WebP image up to 10 MB and 20 megapixels.',
-                      ),
-                    )
-                    .finally(() => setPending(false));
-                }}
-              />
-            </label>
-            {value.coverDataUrl && (
-              <button
-                type="button"
-                onClick={() => setValue({ ...value, coverDataUrl: null })}
-              >
-                {t('Remove cover')}
-              </button>
-            )}
-            <p>
-              {t(
-                'Images are cropped to fit. Check the previews before saving.',
-              )}
-            </p>
             <button
               type="submit"
               disabled={source === 'upload' && !value.avatarDataUrl}
             >
-              {pending ? t('Saving…') : t('Save Wall appearance')}
+              {pending ? t('Saving…') : t('Save profile avatar')}
             </button>
           </fieldset>
         </form>

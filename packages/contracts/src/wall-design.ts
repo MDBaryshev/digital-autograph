@@ -5,6 +5,7 @@ import {
   wallDesignFinishes,
   wallDesignPlaceKeys,
   wallDesignPatterns,
+  wallDesignPodiums,
   wallDesignHex,
   wallDesignFrames,
   wallDesignLayouts,
@@ -53,8 +54,26 @@ const wallDesign = z.strictObject({
       .partialRecord(z.enum(wallDesignPlaceKeys), z.enum(wallDesignFinishes))
       .optional(),
     pattern: z.enum(wallDesignPatterns).optional(),
+    podium: z.enum(wallDesignPodiums).optional(),
     event: copy(80),
     actionLabel: copy(48),
+  }),
+});
+
+const embeddedImage = z
+  .string()
+  .max(350000)
+  .regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/)
+  .nullable();
+
+export const wallDesignFileFormat = 'supcube-wall-design';
+export const wallDesignFileVersion = 1;
+export const wallDesignFile = z.strictObject({
+  format: z.literal(wallDesignFileFormat),
+  version: z.literal(wallDesignFileVersion),
+  design: wallDesign.extend({
+    avatarDataUrl: embeddedImage,
+    coverDataUrl: embeddedImage,
   }),
 });
 

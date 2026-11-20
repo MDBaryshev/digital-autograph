@@ -6,6 +6,7 @@ import {
   wallCubeFinish,
   type WallDesignStyle,
 } from '@digital-autograph/domain';
+import { wallPodiumPlace } from '../lib/wall-podium';
 import { wallCubePaint } from '../lib/wall-design-presentation';
 import { CubePreview, CubeViewer, type CubeDetails } from './autograph-cube';
 import { placementSourceLabel } from '../lib/placement-history-api';
@@ -40,10 +41,7 @@ export function WallSlot({
   const [failedPath, setFailedPath] = useState<string | null>(null);
   const [viewing, setViewing] = useState(false);
   const number = slot.position + 1;
-  const podium = ['gold', 'silver', 'bronze'][slot.position];
-  const podiumLabel = ['Gold place', 'Silver place', 'Bronze place'][
-    slot.position
-  ];
+  const podium = wallPodiumPlace(number, design?.podium);
   const mediaPath = slot.currentPlacement?.mediaPath;
   const showMedia = Boolean(mediaPath && failedPath !== mediaPath);
 
@@ -67,6 +65,7 @@ export function WallSlot({
     );
   const details: CubeDetails = {
     place: number,
+    podium: design?.podium,
     paint: wallCubePaint(design),
     finish: design && wallCubeFinish(design, number),
     artwork,
@@ -81,7 +80,7 @@ export function WallSlot({
       id={`slot-${slot.id}`}
       tabIndex={-1}
       className={styles.slot}
-      data-podium={podium}
+      data-podium={podium?.key}
       data-selected={selected ? '' : undefined}
       data-empty={slot.occupied ? undefined : ''}
       data-arrived={arrived ? '' : undefined}
@@ -142,10 +141,14 @@ export function WallSlot({
             className={styles.crown}
             viewBox="0 0 32 26"
             role="img"
-            aria-label={t(podiumLabel!)}
+            aria-label={t(podium.label)}
           >
             <path
-              d="M4 8 10 13 16 3 22 13 28 8 25 22H7Z"
+              d={
+                podium.key === 'diamond'
+                  ? 'M4 7 9 2h14l5 5-12 16Z'
+                  : 'M4 8 10 13 16 3 22 13 28 8 25 22H7Z'
+              }
               fill="currentColor"
               stroke="currentColor"
               strokeWidth="2"

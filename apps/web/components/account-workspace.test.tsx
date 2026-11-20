@@ -121,6 +121,9 @@ it('does not link an archived Wall to a public endpoint that returns 404', async
   expect(await screen.findByText(/Archived/)).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'Open Wall' })).toBeNull();
   expect(
+    screen.queryByRole('link', { name: 'Edit Wall appearance' }),
+  ).toBeNull();
+  expect(
     screen.queryByRole('button', { name: 'Create draft Wall' }),
   ).toBeNull();
 });
@@ -227,6 +230,14 @@ it('creates a draft explicitly and does not publish it or duplicate a pending re
   expect(
     await screen.findByRole('button', { name: 'Publish Wall' }),
   ).toBeTruthy();
+  expect(
+    screen.getByRole('heading', { name: 'My studio’s Wall' }),
+  ).toBeTruthy();
+  expect(
+    screen
+      .getByRole('link', { name: 'Edit Wall appearance' })
+      .getAttribute('href'),
+  ).toBe('/me/walls/design');
   expect(screen.queryByRole('link', { name: 'Open Wall' })).toBeNull();
   expect(
     screen.queryByRole('button', { name: 'Create draft Wall' }),

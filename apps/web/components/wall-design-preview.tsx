@@ -3,6 +3,7 @@ import { wallCubeFinish, type WallDesign } from '@digital-autograph/domain';
 import { CubePreview } from './autograph-cube';
 import { useLocale } from './locale-provider';
 import { SignatureArt } from './signature-art';
+import { wallPodiumPlace } from '../lib/wall-podium';
 import { wallDesignPresentation } from '../lib/wall-design-presentation';
 import wall from '../app/walls/[id]/page.module.css';
 import styles from './wall-design-studio.module.css';
@@ -70,7 +71,7 @@ export function WallDesignPreview({
             <li
               key={index}
               className={wall.slot}
-              data-podium={['gold', 'silver', 'bronze'][index]}
+              data-podium={wallPodiumPlace(index + 1, design.style.podium)?.key}
             >
               {renderPlace ? (
                 renderPlace(index + 1)
@@ -78,6 +79,7 @@ export function WallDesignPreview({
                 <CubePreview
                   details={{
                     place: index + 1,
+                    podium: design.style.podium,
                     finish: wallCubeFinish(design.style, index + 1),
                     empty: index > 2,
                     artwork:

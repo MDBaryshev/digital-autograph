@@ -1,15 +1,20 @@
 'use client';
-import { WallAppearanceEditor } from './wall-appearance-editor';
+import { ProfileAvatarEditor } from './profile-avatar-editor';
 import { OwnerRejectionDetails } from './owner-rejection-details';
 import { WallLifecycleControls } from './wall-lifecycle-controls';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
-import { isPublicWall, wallStatuses } from '@digital-autograph/domain';
+import { isPublicWall } from '@digital-autograph/domain';
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from './locale-provider';
 import { AccountSession } from './account-session';
 import { ThemeSwitcher } from './theme-switcher';
 import { LanguageSwitcher } from './language-switcher';
-import { workspaceRequest, type Workspace } from './workspace-api';
+import {
+  getWorkspace,
+  workspaceRequest,
+  type Workspace,
+} from './workspace-api';
+import { myWallPath, wallDesignPath } from '../lib/wall-design-links';
 import { autographApi } from '../lib/autograph-api';
 import { CleanedAutographReview } from './cleaned-autograph-review';
 import { FirstUseActionNotice } from './first-use-action-notice';
@@ -58,7 +63,7 @@ export function AccountWorkspace({
   useEffect(() => () => mutation.current?.abort(), []);
   useEffect(() => {
     const c = new AbortController();
-    workspaceRequest<Workspace>(apiOrigin, '/me/workspace', c.signal)
+    getWorkspace(apiOrigin, c.signal)
       .then((d) => {
         if (c.signal.aborted) return;
         setData(d);
@@ -154,7 +159,7 @@ export function AccountWorkspace({
         )}
       </section>
     );
-  const profile = data.profile;
+  const { profile, wall } = data;
   const date = (s: string) =>
     new Date(s).toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-GB');
   return (
@@ -164,7 +169,7 @@ export function AccountWorkspace({
           [
             ['overview', '/me', 'Overview'],
             ['autographs', '/me/autographs', 'My autographs'],
-            ['walls', '/me/walls', 'My Walls'],
+            ['walls', myWallPath, 'My Wall'],
             ['settings', '/me/settings', 'Settings'],
           ] as const
         ).map(([key, url, label]) => (
@@ -206,7 +211,7 @@ export function AccountWorkspace({
                 {profile
                   ? '@' + profile.slug
                   : data.canEditProfile
-                    ? t('Choose a name in settings to create your first Wall.')
+                    ? t('Choose a name in settings to create your Wall.')
                     : t('Public profile setup is temporarily unavailable.')}
               </p>
             </div>
@@ -220,9 +225,15 @@ export function AccountWorkspace({
               <a href="/me/autographs">{t('Open my autographs')} →</a>
             </section>
             <section className={styles.card}>
-              <h2>{t('My Walls')}</h2>
-              <p>{t('Create a Wall and invite people to leave their mark.')}</p>
-              <a href="/me/walls">{t('Open my Walls')} →</a>
+              <h2>{t('My Wall')}</h2>
+              <p>
+                {wall
+                  ? `${t(statuses[wall.status])} · ${t('Places: {count}', { count: wall.slotCount })}`
+                  : t('Create a Wall and invite people to leave their mark.')}
+              </p>
+              <a href={myWallPath}>
+                {t(wall ? 'Manage my Wall' : 'Open my Wall')} →
+              </a>
             </section>
           </div>
         </>
@@ -315,10 +326,40 @@ export function AccountWorkspace({
       )}
       {section === 'walls' && (
         <>
-          {profile && data.canEditProfile && (
-            <a href="/me/walls/design">{t('Wall Design Studio')} →</a>
-          )}
-          {!profile && !data.canEditProfile ? (
+          {wall ? (
+            <article className={`${styles.card} ${styles.wallCard}`}>
+              <div className={styles.wallHeading}>
+                <h2>
+                  {profile
+                    ? t('{name}’s Wall', { name: profile.displayName })
+                    : t('Wall')}
+                </h2>
+                <p>
+                  {t(statuses[wall.status])} ·{' '}
+                  {t('Places: {count}', { count: wall.slotCount })}
+                </p>
+              </div>
+              <div className={styles.actions}>
+                {wall.status !== 'archived' && (
+                  <a className={styles.primary} href={wallDesignPath}>
+                    {t('Edit Wall appearance')}
+                  </a>
+                )}
+                {isPublicWall(wall.status) && (
+                  <a href={`/walls/${wall.id}`}>{t('Open Wall')}</a>
+                )}
+              </div>
+              <WallLifecycleControls
+                key={wall.id}
+                apiOrigin={apiOrigin}
+                wall={wall}
+                refresh={async (signal) => {
+                  const next = await getWorkspace(apiOrigin, signal);
+                  if (!signal.aborted) setData(next);
+                }}
+              />
+            </article>
+          ) : !data.canEditProfile ? (
             <section className={styles.card}>
               <h2>{t('Wall creation is temporarily unavailable')}</h2>
               <p>
@@ -332,7 +373,7 @@ export function AccountWorkspace({
             </section>
           ) : !profile ? (
             <section className={styles.card}>
-              <h2>{t('Give your Wall a name')}</h2>
+              <h2>{t('Set up your public profile')}</h2>
               <p>
                 {t(
                   'Set up your public creator profile first. Your original uploads will remain private.',
@@ -340,8 +381,8 @@ export function AccountWorkspace({
               </p>
               <a href="/me/settings">{t('Set up profile')} →</a>
             </section>
-          ) : data.walls.length === 0 ? (
-            <>
+          ) : (
+            <section className={styles.card}>
               <p>
                 {t(
                   'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.',
@@ -365,52 +406,7 @@ export function AccountWorkspace({
                   {pending ? t('Saving…') : t('Create draft Wall')}
                 </button>
               </form>
-            </>
-          ) : (
-            <p>{t('Your account already has its Wall with 10 places.')}</p>
-          )}
-          {data.walls.length > 0 && (
-            <div className={styles.grid}>
-              {data.walls.map((w, i) => (
-                <article className={styles.card} key={w.id}>
-                  <h2>
-                    {t('Wall')} {data.walls.length - i}
-                  </h2>
-                  <p>
-                    {t(statuses[w.status] ?? w.status)} ·{' '}
-                    {t('Places: {count}', { count: w.slotCount })}
-                  </p>
-                  <p>{date(w.createdAt)}</p>
-                  <div className={styles.actions}>
-                    {isPublicWall(w.status) && (
-                      <a href={`/walls/${w.id}`}>{t('Open Wall')}</a>
-                    )}
-                  </div>
-                  <WallLifecycleControls
-                    apiOrigin={apiOrigin}
-                    wall={w}
-                    refresh={async (signal) => {
-                      const next = await workspaceRequest<Workspace>(
-                        apiOrigin,
-                        '/me/workspace',
-                        signal,
-                      );
-                      if (
-                        !Array.isArray(next?.walls) ||
-                        next.walls.some(
-                          (item) =>
-                            !item ||
-                            typeof item.id !== 'string' ||
-                            !wallStatuses.includes(item.status),
-                        )
-                      )
-                        throw Error('REQUEST_FAILED');
-                      if (!signal.aborted) setData(next);
-                    }}
-                  />
-                </article>
-              ))}
-            </div>
+            </section>
           )}
         </>
       )}
@@ -491,7 +487,7 @@ export function AccountWorkspace({
               )}
             </form>
           </section>
-          <WallAppearanceEditor
+          <ProfileAvatarEditor
             apiOrigin={apiOrigin}
             canEdit={data.canEditProfile}
           />
