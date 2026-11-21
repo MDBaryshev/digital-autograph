@@ -903,6 +903,92 @@ it('DB rejects mutable snapshots, duplicate bindings, missing earnings, and dupl
     ),
   ).rejects.toThrow();
 });
+it('concurrent owner status reads stay local and preserve financial state while new payments are disabled', async () => {
+  const f = await started();
+  const stranger = await person();
+  succeed(f.providerId);
+  let providerCalls = 0;
+  const unavailable = async (): Promise<PaymentObservation> => {
+    providerCalls++;
+    throw new PaymentError('PROVIDER_UNAVAILABLE');
+  };
+  const passive = new PaymentService(
+    repo,
+    { createPayment: unavailable, getPayment: unavailable },
+    settings,
+  );
+  const app = api(passive, {
+    disableNewPayments: true,
+    disableFreeClaims: false,
+  });
+  const snapshot = async () => ({
+    placements: (
+      await database.pool.query(
+        'SELECT to_jsonb(p) AS value FROM placements p WHERE slot_id = ANY($1::uuid[]) ORDER BY id',
+        [f.slots.map((slot) => slot.slotId)],
+      )
+    ).rows,
+    earnings: (
+      await database.pool.query(
+        'SELECT to_jsonb(e) AS value FROM creator_earnings e WHERE order_id=$1 ORDER BY id',
+        [f.orderId],
+      )
+    ).rows,
+    order: (
+      await database.pool.query(
+        'SELECT to_jsonb(o) AS value FROM payment_orders o WHERE id=$1',
+        [f.orderId],
+      )
+    ).rows,
+    payment: (
+      await database.pool.query(
+        'SELECT to_jsonb(p) AS value FROM payments p WHERE order_id=$1',
+        [f.orderId],
+      )
+    ).rows,
+    effects: await counts(f.orderId),
+  });
+  const before = await snapshot();
+  try {
+    const responses = await Promise.all(
+      Array.from({ length: 12 }, () =>
+        app.inject({
+          method: 'GET',
+          url: `/payments/orders/${f.orderId}`,
+          headers: { cookie: `da_session=${f.buyer.token}` },
+        }),
+      ),
+    );
+    for (const response of responses) {
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        id: f.orderId,
+        status: 'provider_pending',
+      });
+      expect(response.headers['cache-control']).toBe('no-store');
+    }
+    const foreign = await app.inject({
+      method: 'GET',
+      url: `/payments/orders/${f.orderId}`,
+      headers: { cookie: `da_session=${stranger.token}` },
+    });
+    expect(foreign.statusCode).toBe(404);
+    expect(foreign.json()).toEqual({ error: { code: 'ORDER_NOT_FOUND' } });
+    expect(
+      (
+        await app.inject({
+          method: 'GET',
+          url: `/payments/orders/${f.orderId}`,
+        })
+      ).statusCode,
+    ).toBe(401);
+    expect(providerCalls).toBe(0);
+    expect(await snapshot()).toEqual(before);
+  } finally {
+    await app.close();
+  }
+});
+
 it('API requires ownership, rejects client price/return URL and does not trust webhook body', async () => {
   const f = await started(),
     stranger = await person();

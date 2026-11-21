@@ -64,21 +64,22 @@ it('keeps preferences out of the menu and supports closing with Escape', async (
   expect(screen.queryByRole('combobox')).toBeNull();
   expect(screen.queryByRole('link', { name: 'Moderation' })).toBeNull();
   fireEvent.keyDown(window, { key: 'Escape' });
-  expect(screen.queryByRole('navigation')).toBeNull();
+  expect(
+    screen.queryByRole('navigation', { name: 'Main navigation' }),
+  ).toBeNull();
   expect(document.activeElement).toBe(toggle);
 });
-it('does not advertise creating an autograph to a guest', async () => {
+it('shows sign-in and public links in guest navigation', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue(new Response('{}', { status: 401 })),
   );
   render(<WorkspaceNavigation apiOrigin="https://api.example.test" />);
   fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
-  expect(screen.queryByRole('link', { name: 'Create autograph' })).toBeNull();
+  expect(screen.getByRole('link', { name: 'How it works' })).toBeTruthy();
+  expect(screen.queryByRole('link', { name: 'My autographs' })).toBeNull();
   expect(
-    screen
-      .getByRole('link', { name: 'Sign in to continue' })
-      .getAttribute('href'),
+    screen.getByRole('link', { name: 'Sign in' }).getAttribute('href'),
   ).toBe('/me');
 });
 it('clears the previous account from navigation when a refreshed session expires', async () => {
@@ -153,6 +154,33 @@ it('disables public profile editing when the server has not admitted publication
     (screen.getByRole('button', { name: 'Save profile' }) as HTMLButtonElement)
       .disabled,
   ).toBe(true);
+});
+it('offers an autograph instead of a dead-end profile setup when Wall creation is closed', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...data,
+          profile: null,
+          walls: [],
+          canEditProfile: false,
+        }),
+      ),
+    ),
+  );
+  render(
+    <AccountWorkspace apiOrigin="https://api.example.test" section="walls" />,
+  );
+  expect(
+    await screen.findByRole('heading', {
+      name: 'Wall creation is temporarily unavailable',
+    }),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole('link', { name: 'Create autograph' }).getAttribute('href'),
+  ).toBe('/autograph/create');
+  expect(screen.queryByRole('link', { name: 'Set up profile' })).toBeNull();
 });
 it('creates a draft explicitly and does not publish it or duplicate a pending request', async () => {
   let finish!: (r: Response) => void;

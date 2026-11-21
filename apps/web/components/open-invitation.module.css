@@ -1,0 +1,87 @@
+.invite {
+  max-width: min(32rem, 100%);
+  scroll-margin-top: 5rem;
+}
+
+.invite summary {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid var(--brand-color-control);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 750;
+  list-style: none;
+}
+
+.invite summary::-webkit-details-marker {
+  display: none;
+}
+
+.invite summary:hover {
+  color: var(--color-link);
+  border-color: var(--color-link);
+}
+
+.invite[open] summary svg:last-child {
+  transform: rotate(180deg);
+}
+
+.invite form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+}
+
+.invite label,
+.invite p {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.invite p {
+  color: var(--brand-color-danger);
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.fields input {
+  flex: 1 1 11rem;
+  min-width: 0;
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+.fields button {
+  min-height: 44px;
+}
+
+.fields input::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+.fields input[aria-invalid='true'] {
+  --brand-color-control: var(--brand-color-danger);
+}
+
+@media (max-width: 38rem) {
+  .invite {
+    max-width: none;
+  }
+
+  .invite summary {
+    width: 100%;
+  }
+}

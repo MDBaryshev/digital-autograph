@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from './locale-provider';
 
+const RESERVATION_REQUEST_TIMEOUT_MS = 10_000;
+
 // Mounted only when the reviewed paid-takeover release capability is enabled.
 // Reserve on an explicit checkout action, never on hover, render or quote display.
 export function TakeoverStart({
@@ -26,7 +28,7 @@ export function TakeoverStart({
 }) {
   const { t } = useLocale();
   const attempt = useRef<{ quoteId?: string; key: string } | null>(null);
-  const pending = useRef(false);
+  const request = useRef<AbortController | null>(null);
   const storageKey = `destka-checkout:${apiOrigin}:${wallId}:${slotId}`;
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
@@ -44,6 +46,11 @@ export function TakeoverStart({
       /* Storage can be unavailable; in-memory retries still work. */
     }
     setHydrated(true);
+    return () => {
+      const controller = request.current;
+      request.current = null;
+      controller?.abort();
+    };
   }, [storageKey]);
   function forgetAttempt() {
     attempt.current = null;
@@ -60,52 +67,82 @@ export function TakeoverStart({
     expiresAt: string;
   } | null>(null);
 
-  async function post(path: string, body: object, key?: string) {
+  async function post(
+    path: string,
+    body: object,
+    signal: AbortSignal,
+    key?: string,
+  ) {
     const response = await fetch(`${apiOrigin}${path}`, {
       method: 'POST',
       credentials: 'include',
       cache: 'no-store',
+      signal,
       headers: {
         'Content-Type': 'application/json',
         ...(key ? { 'Idempotency-Key': key } : {}),
       },
       body: JSON.stringify(body),
     });
+    signal.throwIfAborted();
     const data = await response.json();
+    signal.throwIfAborted();
     if (!response.ok) throw new Error(data.error?.code ?? 'UNAVAILABLE');
     return data;
   }
 
+  async function requestReservation(signal: AbortSignal) {
+    const current = attempt.current ?? { key: crypto.randomUUID() };
+    attempt.current = current;
+    if (!current.quoteId) {
+      const quote = await post(
+        `/walls/${encodeURIComponent(wallId)}/slots/${encodeURIComponent(slotId)}/takeover-quote`,
+        {},
+        signal,
+      );
+      current.quoteId = quote.id;
+      // Opaque retry information only, never auth/provider credentials.
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify(current));
+      } catch {
+        /* Best effort. */
+      }
+    }
+    return post(
+      '/takeover-reservations',
+      { quoteId: current.quoteId },
+      signal,
+      current.key,
+    );
+  }
+
   async function reserve() {
-    if (pending.current) return;
-    pending.current = true;
+    if (request.current) return;
+    const controller = new AbortController();
+    request.current = controller;
     setBusy(true);
     setError('');
     if (checkout && Date.parse(checkout.expiresAt) <= now) {
       forgetAttempt();
       setCheckout(null);
     }
-    const current = attempt.current ?? { key: crypto.randomUUID() };
-    attempt.current = current;
+
+    const { signal } = controller;
+    let rejectAbort!: () => void;
+    const aborted = new Promise<never>((_, reject) => {
+      rejectAbort = () => reject(signal.reason);
+      signal.addEventListener('abort', rejectAbort, { once: true });
+    });
+    const deadline = window.setTimeout(
+      () => controller.abort(),
+      RESERVATION_REQUEST_TIMEOUT_MS,
+    );
     try {
-      if (!current.quoteId) {
-        const quote = await post(
-          `/walls/${encodeURIComponent(wallId)}/slots/${encodeURIComponent(slotId)}/takeover-quote`,
-          {},
-        );
-        current.quoteId = quote.id;
-        // Opaque retry information only, never auth/provider credentials.
-        try {
-          sessionStorage.setItem(storageKey, JSON.stringify(current));
-        } catch {
-          /* Best effort. */
-        }
-      }
-      const reservation = await post(
-        '/takeover-reservations',
-        { quoteId: current.quoteId },
-        current.key,
-      );
+      const reservation = await Promise.race([
+        aborted,
+        requestReservation(signal),
+      ]);
+      if (request.current !== controller) return;
       if (reservation.status !== 'active') {
         forgetAttempt();
         throw new Error('QUOTE_EXPIRED');
@@ -116,6 +153,7 @@ export function TakeoverStart({
       });
       onReserved();
     } catch (cause) {
+      if (request.current !== controller) return;
       const code = cause instanceof Error ? cause.message : '';
       const unavailable = [
         'SLOT_RESERVED',
@@ -136,8 +174,12 @@ export function TakeoverStart({
           : 'Could not reserve. Retry the same request.',
       );
     } finally {
-      pending.current = false;
-      setBusy(false);
+      window.clearTimeout(deadline);
+      signal.removeEventListener('abort', rejectAbort);
+      if (request.current === controller) {
+        request.current = null;
+        setBusy(false);
+      }
     }
   }
 

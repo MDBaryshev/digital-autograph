@@ -11,6 +11,7 @@ import styles from './photo-upload-editor.module.css';
 
 type PhotoUploadEditorProps = {
   onPhotoChange: (blob: Blob | null) => void;
+  onDraftChange?: (hasDraft: boolean) => void;
   disabled?: boolean;
 };
 
@@ -20,6 +21,7 @@ function isSupportedType(type: string): type is 'image/jpeg' | 'image/png' {
 
 export function PhotoUploadEditor({
   onPhotoChange,
+  onDraftChange,
   disabled = false,
 }: PhotoUploadEditorProps) {
   const { t } = useLocale();
@@ -68,6 +70,7 @@ export function PhotoUploadEditor({
     loadedImage.onerror = () => {
       setImage(null);
       setError('This image could not be opened. Choose a PNG or JPEG photo.');
+      onDraftChange?.(false);
       onPhotoChangeRef.current(null);
     };
     loadedImage.src = sourceUrl;
@@ -76,7 +79,7 @@ export function PhotoUploadEditor({
       loadedImage.onload = null;
       loadedImage.onerror = null;
     };
-  }, [sourceUrl]);
+  }, [sourceUrl, onDraftChange]);
 
   useEffect(() => {
     if (!image) return;
@@ -178,6 +181,7 @@ export function PhotoUploadEditor({
     clearPreview();
     setImage(null);
     onPhotoChangeRef.current(null);
+    onDraftChange?.(false);
     const fileType = file.type;
     if (!isSupportedType(fileType)) {
       setSourceUrl(null);
@@ -191,6 +195,7 @@ export function PhotoUploadEditor({
     }
     const nextUrl = URL.createObjectURL(file);
     setSourceUrl(nextUrl);
+    onDraftChange?.(true);
     setFormat(fileType);
     setRotation(0);
     setZoom(1);

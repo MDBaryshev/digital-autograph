@@ -71,7 +71,7 @@ describe('cleaned autograph approval UI', () => {
     expect(await screen.findByText('Submitted for moderation')).toBeTruthy();
     expect(
       screen.getByText(
-        'Your approval is recorded. No public placement has occurred yet.',
+        'Follow the decision in My autographs. You can place this autograph once it is approved.',
       ),
     ).toBeTruthy();
     expect(screen.queryByText(/Claim Slot/)).toBeNull();

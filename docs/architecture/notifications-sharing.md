@@ -81,6 +81,23 @@ notifications remain available independently of external delivery.
 
 ## Public cards and attribution
 
+Owners can revisit `/me/shares` to list and revoke their previously created links,
+including revoked links or links whose Wall is no longer public. The authenticated
+`GET /me/shares` returns a bounded owner-only page (default 20, maximum 50), with
+an opaque UUID cursor owned by that same user. PostgreSQL orders by
+`created_at DESC, id DESC` and compares cursor timestamps in SQL, preserving
+microsecond ordering. The DTO contains only share/Wall IDs, slot number, event,
+the owner's public alias and creation/revocation dates; user/Placement/asset IDs
+and private media metadata are excluded. Responses remain `no-store`.
+
+The account screen confirms the existing owner-checked DELETE action, then reads
+server state. An unknown DELETE result clears actionable state and requires an
+explicit GET before another revocation; it never replays a write automatically.
+Reads and body parsing have a ten-second deadline and are canceled on origin
+change/unmount. Revocation disables future public metadata/card reads in Destka;
+it cannot recall copies already saved by third parties. Share creation, public
+availability, alias consent and revocation semantics are unchanged.
+
 An authenticated owner creates a share for their own ready autograph Placement
 on a public Wall, or for a final ended Wall they own/participated in. The server
 selects event, creator and slot number. A public username is optional and requires

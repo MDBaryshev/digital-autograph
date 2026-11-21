@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest';
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -12,6 +13,8 @@ import { TakeoverStart } from './takeover-start';
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
+  vi.clearAllMocks();
   sessionStorage.clear();
 });
 const props = {
@@ -113,4 +116,122 @@ it('restores an explicit retry after reload without a new quote or a longer rese
     `${props.apiOrigin}/takeover-reservations`,
   );
   expect(fetcher.mock.calls[0]![1].headers['Idempotency-Key']).toBe(key);
+});
+
+const activeReservation = {
+  id: 'confirmed-reservation',
+  status: 'active',
+  expiresAt: '2026-11-05T12:05:00Z',
+};
+
+it.each(['headers', 'body'])(
+  'releases the reservation button after stalled %s and retries only on click with the same key',
+  async (stall) => {
+    vi.useFakeTimers();
+    let finishLate!: () => void;
+    const late = new Promise<typeof activeReservation>((resolve) => {
+      finishLate = () => resolve({ ...activeReservation, id: 'late' });
+    });
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ id: 'quote' }))
+      .mockImplementationOnce(() =>
+        stall === 'headers'
+          ? late.then((reservation) => Response.json(reservation))
+          : Promise.resolve({ ok: true, json: () => late }),
+      )
+      .mockResolvedValueOnce(Response.json(activeReservation));
+    vi.stubGlobal('fetch', fetcher);
+    const view = render(<TakeoverStart {...props} />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Reserve for 5 minutes' }),
+      );
+    });
+    expect(
+      (screen.getByRole('button', { name: 'Reserving…' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Retry the same request',
+    );
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls[1]![1].signal.aborted).toBe(true);
+
+    view.rerender(<TakeoverStart {...props} reserved />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Resume reservation' }),
+      );
+    });
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    const original = fetcher.mock.calls[1]![1];
+    const retry = fetcher.mock.calls[2]![1];
+    expect(retry.body).toBe(original.body);
+    expect(retry.headers['Idempotency-Key']).toBe(
+      original.headers['Idempotency-Key'],
+    );
+    await act(async () => finishLate());
+    expect(
+      screen
+        .getByRole('link', { name: 'Continue to payment' })
+        .getAttribute('href'),
+    ).toContain('reservationId=confirmed-reservation');
+    expect(props.onReserved).toHaveBeenCalledTimes(1);
+  },
+);
+
+it('does not start a reservation when the quote arrives after the deadline', async () => {
+  vi.useFakeTimers();
+  let finishQuote!: (response: Response) => void;
+  const fetcher = vi.fn().mockImplementationOnce(
+    () =>
+      new Promise<Response>((resolve) => {
+        finishQuote = resolve;
+      }),
+  );
+  vi.stubGlobal('fetch', fetcher);
+  render(<TakeoverStart {...props} />);
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Reserve for 5 minutes' }),
+  );
+  await act(() => vi.advanceTimersByTimeAsync(10_000));
+  await act(async () => finishQuote(Response.json({ id: 'late' })));
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('alert').textContent).toContain(
+    'Retry the same request',
+  );
+  expect(
+    (
+      screen.getByRole('button', {
+        name: 'Reserve for 5 minutes',
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(false);
+});
+
+it('aborts on unmount and ignores late reservation completion', async () => {
+  let finishReservation!: (response: Response) => void;
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(Response.json({ id: 'quote' }))
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          finishReservation = resolve;
+        }),
+    );
+  vi.stubGlobal('fetch', fetcher);
+  const view = render(<TakeoverStart {...props} />);
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Reserve for 5 minutes' }),
+    );
+  });
+  view.unmount();
+  expect(fetcher.mock.calls[1]![1].signal.aborted).toBe(true);
+  await act(async () => finishReservation(Response.json(activeReservation)));
+  expect(props.onReserved).not.toHaveBeenCalled();
+  expect(fetcher).toHaveBeenCalledTimes(2);
 });

@@ -1,18 +1,22 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { YandexSignIn } from './yandex-sign-in';
-import { VkIdSignIn } from './vk-id-sign-in';
-import { EmailSignIn } from './email-sign-in';
+import { SignInHelp, SignInOptions } from './sign-in-options';
 
 import { useEffect, useState } from 'react';
 import { FirstUseGate } from './first-use-gate';
 import { CanvasCreateScreen } from './canvas-create-screen';
-import styles from '../app/autograph/create/page.module.css';
+import styles from './sign-in-options.module.css';
 
 type AuthState = 'checking' | 'authenticated' | 'anonymous' | 'unavailable';
 
-export function CanvasAuthGate({ apiOrigin }: { apiOrigin: string }) {
+export function CanvasAuthGate({
+  apiOrigin,
+  wallId,
+}: {
+  apiOrigin: string;
+  wallId?: string;
+}) {
   const { t } = useLocale();
 
   const [auth, setAuth] = useState<AuthState>('checking');
@@ -36,40 +40,35 @@ export function CanvasAuthGate({ apiOrigin }: { apiOrigin: string }) {
     return () => controller.abort();
   }, [apiOrigin, retry]);
 
-  const returnTo = encodeURIComponent('/autograph/create');
+  const returnTo = wallId
+    ? `/autograph/create?wall=${wallId}`
+    : '/autograph/create';
   if (auth === 'checking') return <p role="status">{t('Checking sign-in…')}</p>;
   if (auth === 'authenticated')
     return (
-      <FirstUseGate apiOrigin={apiOrigin}>
-        <CanvasCreateScreen apiOrigin={apiOrigin} />
+      <FirstUseGate apiOrigin={apiOrigin} loginReturnTo={returnTo}>
+        <CanvasCreateScreen apiOrigin={apiOrigin} wallId={wallId} />
       </FirstUseGate>
     );
   if (auth === 'anonymous') {
     return (
-      <section className={styles.auth} aria-labelledby="sign-in-heading">
+      <section className={styles.panel} aria-labelledby="sign-in-heading">
         <h2 id="sign-in-heading">{t('Sign in to continue')}</h2>
         <p>{t('Your autograph creation will start after sign-in.')}</p>
-        <div className={styles.links}>
-          <a href={`${apiOrigin}/auth/google/start?returnTo=${returnTo}`}>
-            {t('Continue with Google')}
-          </a>
-          <a href={`${apiOrigin}/auth/telegram/start?returnTo=${returnTo}`}>
-            {t('Continue with Telegram')}
-          </a>
-          <YandexSignIn apiOrigin={apiOrigin} returnTo="/autograph/create" />
-          <VkIdSignIn apiOrigin={apiOrigin} returnTo="/autograph/create" />
-          <EmailSignIn apiOrigin={apiOrigin} returnTo="/autograph/create" />
-        </div>
-        <p>
-          {t(
-            'If sign-in cannot open inside this app, open this page in Safari or Chrome and try again.',
-          )}
-        </p>
+        <SignInOptions apiOrigin={apiOrigin} returnTo={returnTo} />
+        <SignInHelp />
+        {!wallId && (
+          <p>
+            <a href="/#try-wall-heading">
+              {t('Try drawing without signing in')}
+            </a>
+          </p>
+        )}
       </section>
     );
   }
   return (
-    <section role="alert" className={styles.auth}>
+    <section role="alert" className={styles.panel}>
       <h2>{t('Sign-in is temporarily unavailable')}</h2>
       <p>{t('Check your connection and try again.')}</p>
       <button

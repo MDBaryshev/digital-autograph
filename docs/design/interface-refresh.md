@@ -2,6 +2,12 @@
 
 Design-only implementation on the current main application. This supersedes the green product UI palette; the generated brand assets also use neutral graphite and periwinkle.
 
+## First visit and placement
+
+The homepage lets visitors try the main action before creating an account. They can draw with a pointer or keyboard, see the result in a demo place, edit it, or move it. The demo stores one drawing in component memory and resets on navigation or reload. Example signatures are authored SVGs. A separate invitation field opens an existing Destka Wall; it validates the address locally and navigates to the canonical Wall route.
+
+On mobile, Home, Studio and Account stay in a bottom bar with the current destination visible. The Wall shows availability next to the creator's identity; choosing a place gives sign-in or confirmation a clear heading and a way back to the selected tile. The studio names the current stage: creation, private preview, or moderation. Backend eligibility and moderation requirements still apply to real placements.
+
 ## Brief and reference review
 
 Reviewed the repository architecture/product/ADR/operations documents, current application routes and component flows, and the Linear project, EGO-80, EGO-82, EGO-84 and the saved «Я был здесь» concept. The user explicitly ruled out green on 27 October 2026. Preserve the personal handwriting/community idea without reproducing the dense poster, stickers, portrait, mint palette or prototype-only features. The user confirmed the product name Destka and requested a Russian/English language switch. Published legal document bodies are untouched.

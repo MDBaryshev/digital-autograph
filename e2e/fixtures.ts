@@ -57,7 +57,23 @@ export const test = base.extend<{ scenario: Scenario; uiLocale: 'en' | 'ru' }>({
         );
         for (const asset of assets.rows)
           await storage.deleteObject(asset.storage_key);
-        await database.pool.query('TRUNCATE TABLE users CASCADE');
+        // The live E2E worker can deadlock with the cascade. PostgreSQL rolls
+        // back the standalone statement, so only retry the database reset.
+        for (let attempt = 1; ; attempt += 1) {
+          try {
+            await database.pool.query('TRUNCATE TABLE users CASCADE');
+            return;
+          } catch (error) {
+            if (
+              attempt === 3 ||
+              !(error instanceof Error) ||
+              !('code' in error) ||
+              error.code !== '40P01'
+            ) {
+              throw error;
+            }
+          }
+        }
       };
       try {
         await cleanup();
