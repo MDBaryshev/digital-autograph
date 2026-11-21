@@ -111,6 +111,60 @@ it('recovers a stuck approval without automatic retry and ignores its late succe
   expect(vi.getTimerCount()).toBe(0);
 });
 
+it.each([undefined, '11111111-1111-4111-8111-111111111111'])(
+  'offers the authoritative status after a timed-out approval advances to moderation outcome (%s)',
+  async (wallId) => {
+    vi.useFakeTimers();
+    const first = deferred<Response>();
+    const fetcher = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValueOnce(
+        Response.json(
+          { error: { code: 'AUTOGRAPH_NOT_AWAITING_APPROVAL' } },
+          { status: 409 },
+        ),
+      );
+    vi.stubGlobal('fetch', fetcher);
+    render(
+      <CleanedAutographReview
+        api={autographApi('https://api.test')}
+        autographId="autograph-1"
+        initialPreview={initialPreview}
+        onStartOver={vi.fn()}
+        wallId={wallId}
+      />,
+    );
+    fireEvent.load(screen.getByAltText('Cleaned digital autograph preview'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Approve and submit for moderation' }),
+    );
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry approval' }));
+    await act(async () => {});
+
+    expect(
+      screen
+        .getByRole('link', { name: 'Check moderation status' })
+        .getAttribute('href'),
+    ).toBe(wallId ? `/me/autographs?wall=${wallId}` : '/me/autographs');
+    expect(screen.getByRole('alert').textContent).toBe(
+      'The status of this autograph has changed.',
+    );
+    expect(screen.queryByRole('button', { name: 'Retry approval' })).toBeNull();
+    expect(
+      screen.queryByRole('button', {
+        name: 'Approve and submit for moderation',
+      }),
+    ).toBeNull();
+    expect(screen.queryByText('Submitted for moderation')).toBeNull();
+    await act(async () => first.resolve(Response.json(approved)));
+    expect(screen.queryByText('Submitted for moderation')).toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(vi.getTimerCount()).toBe(0);
+  },
+);
+
 it('recovers a stuck refresh, discards its late asset, and requires the retried preview image to load', async () => {
   vi.useFakeTimers();
   const first = deferred<typeof initialPreview>();

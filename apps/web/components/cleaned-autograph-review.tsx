@@ -27,6 +27,7 @@ type ApprovalState =
   | { kind: 'preview' }
   | { kind: 'approving' }
   | { kind: 'approval_error'; message: string; legalRequired?: boolean }
+  | { kind: 'status_changed' }
   | { kind: 'submitted_for_moderation'; approvedAt: string };
 
 async function reviewRequest<T>(
@@ -117,12 +118,19 @@ export function CleanedAutographReview({
         });
       }
     } catch (error) {
-      if (controller.current === next)
+      if (controller.current !== next) return;
+      if (
+        error instanceof AutographApiError &&
+        error.code === 'AUTOGRAPH_NOT_AWAITING_APPROVAL'
+      ) {
+        setPhase({ kind: 'status_changed' });
+      } else {
         setPhase({
           kind: 'approval_error',
           message: approvalError(error),
           legalRequired: needsFirstUseConfirmation(error),
         });
+      }
     } finally {
       if (controller.current === next) controller.current = null;
     }
@@ -154,6 +162,37 @@ export function CleanedAutographReview({
       }
     }
   };
+
+  const moderationActions = (
+    <div className={styles.actions}>
+      <a
+        className="primaryLink"
+        href={
+          wallId
+            ? `/me/autographs?wall=${encodeURIComponent(wallId)}`
+            : '/me/autographs'
+        }
+      >
+        {t('Check moderation status')}
+      </a>
+      {wallId && <a href={`/walls/${wallId}`}>{t('Back to the Wall')}</a>}
+    </div>
+  );
+
+  if (phase.kind === 'status_changed') {
+    return (
+      <section className={styles.preview} aria-labelledby="preview-heading">
+        <div className={styles.status}>
+          <div role="alert">
+            <h2 id="preview-heading">
+              {t('The status of this autograph has changed.')}
+            </h2>
+          </div>
+          {moderationActions}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className={styles.preview} aria-labelledby="preview-heading">
@@ -193,15 +232,7 @@ export function CleanedAutographReview({
               )}
             </p>
           </div>
-          <div className={styles.actions}>
-            <a
-              className="primaryLink"
-              href={wallId ? `/me/autographs?wall=${wallId}` : '/me/autographs'}
-            >
-              {t('Check moderation status')}
-            </a>
-            {wallId && <a href={`/walls/${wallId}`}>{t('Back to the Wall')}</a>}
-          </div>
+          {moderationActions}
         </div>
       ) : (
         <div className={styles.approval}>

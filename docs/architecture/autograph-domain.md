@@ -23,6 +23,8 @@ unconfirmed approval or failed refresh. Approval retries remain explicit user
 actions against the same backend idempotency gate; no POST is retried
 automatically. Late responses cannot replace a newer attempt or restore state
 after unmount, and leaving the review cancels its request and deadline.
+If the API reports `AUTOGRAPH_NOT_AWAITING_APPROVAL`, the review links to the
+current status in My autographs and preserves the originating Wall when available.
 
 `GET /autographs/:id/preview` returns an owner-only short-lived signed URL and the cleaned Asset UUID in `assetId`. The canvas waits for that image to load before enabling approval. `POST /autographs/:id/approve` requires `{ "reviewedAssetId": "<UUID>" }` as a precondition describing what the owner saw, not as authority to select an asset. The backend takes the authenticated User ID from the session, locks the Autograph, selects its current uploaded cleaned Asset under a row lock, compares its ID with the reviewed ID, inserts one `autograph_user_approvals` row, and changes status to `awaiting_moderation` in the same PostgreSQL transaction. A different asset ID fails closed. A repeated call with matching persisted evidence succeeds without another insert; state/evidence disagreement fails closed.
 
