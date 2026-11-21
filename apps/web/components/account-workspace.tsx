@@ -52,8 +52,11 @@ export function AccountWorkspace({
   const [version, setVersion] = useState(0);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+  const recoveryRequired = useRef(false);
   const busy = useRef(false);
   const mutation = useRef<AbortController | null>(null);
+  const reading = useRef<AbortController | null>(null);
   const [preview, setPreview] = useState<{
     id: string;
     status: string;
@@ -64,11 +67,14 @@ export function AccountWorkspace({
   useEffect(() => () => mutation.current?.abort(), []);
   useEffect(() => {
     const c = new AbortController();
+    reading.current = c;
     getWorkspace(apiOrigin, c.signal)
       .then((d) => {
         if (c.signal.aborted) return;
         setData(d);
         setError('');
+        recoveryRequired.current = false;
+        setNeedsRefresh(false);
       })
       .catch((e) => {
         if (!c.signal.aborted)
@@ -84,8 +90,14 @@ export function AccountWorkspace({
     work: (signal: AbortSignal) => Promise<unknown>,
     notify = true,
   ) => {
-    if (busy.current) return;
+    if (busy.current || recoveryRequired.current) return;
     busy.current = true;
+    // A read started before this write cannot confirm its outcome.
+    reading.current?.abort();
+    if (notify) {
+      recoveryRequired.current = true;
+      setNeedsRefresh(true);
+    }
     setPending(true);
     setError('');
     setSaved(false);
@@ -119,6 +131,7 @@ export function AccountWorkspace({
         );
     } finally {
       busy.current = false;
+      if (mutation.current === c) mutation.current = null;
       if (!c.signal.aborted) setPending(false);
     }
   };
@@ -192,6 +205,17 @@ export function AccountWorkspace({
         error && <p role="alert">{t(error)}</p>
       )}
       {saved && <p role="status">{t('Changes saved.')}</p>}
+      {needsRefresh && !pending && (
+        <button
+          type="button"
+          onClick={() => {
+            setSaved(false);
+            setVersion((v) => v + 1);
+          }}
+        >
+          {t('Refresh account status')}
+        </button>
+      )}
       {section === 'overview' && (
         <>
           <div className={styles.actions}>
@@ -275,11 +299,16 @@ export function AccountWorkspace({
                     'moderation_rejected',
                   ].includes(a.status) && (
                     <button
-                      disabled={pending}
+                      disabled={pending || needsRefresh}
                       onClick={() =>
                         void act(async (signal) => {
-                          const p = await autographApi(apiOrigin).preview(
-                            a.id,
+                          const p = await workspaceRequest<{
+                            assetId: string;
+                            url: string;
+                            expiresAt: string;
+                          }>(
+                            apiOrigin,
+                            `/autographs/${encodeURIComponent(a.id)}/preview`,
                             signal,
                           );
                           setPreview({ id: a.id, status: a.status, ...p });
@@ -326,7 +355,7 @@ export function AccountWorkspace({
               'Showing up to 50 recent autographs. Refresh to update processing status.',
             )}
           </p>
-          <button onClick={() => setVersion((v) => v + 1)}>
+          <button disabled={pending} onClick={() => setVersion((v) => v + 1)}>
             {t('Refresh')}
           </button>
         </>
@@ -409,7 +438,7 @@ export function AccountWorkspace({
                   );
                 }}
               >
-                <button disabled={pending}>
+                <button disabled={pending || needsRefresh}>
                   {pending ? t('Saving…') : t('Create draft Wall')}
                 </button>
               </form>
@@ -452,7 +481,7 @@ export function AccountWorkspace({
                 {t('Display name')}
                 <input
                   name="displayName"
-                  disabled={pending || !data.canEditProfile}
+                  disabled={pending || needsRefresh || !data.canEditProfile}
                   maxLength={400}
                   onInput={(event) =>
                     event.currentTarget.setCustomValidity(
@@ -470,7 +499,7 @@ export function AccountWorkspace({
                 {t('Username')}
                 <input
                   name="slug"
-                  disabled={pending || !data.canEditProfile}
+                  disabled={pending || needsRefresh || !data.canEditProfile}
                   minLength={1}
                   maxLength={128}
                   pattern="[a-z0-9]+(-[a-z0-9]+)*"
@@ -484,7 +513,9 @@ export function AccountWorkspace({
                   'Use lowercase Latin letters, numbers and hyphens. Changing this changes your public profile link.',
                 )}
               </p>
-              <button disabled={pending || !data.canEditProfile}>
+              <button
+                disabled={pending || needsRefresh || !data.canEditProfile}
+              >
                 {pending ? t('Saving…') : t('Save profile')}
               </button>
               {profile && (
