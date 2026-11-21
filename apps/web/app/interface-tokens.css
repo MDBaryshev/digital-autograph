@@ -8,78 +8,163 @@
 }
 :root {
   color-scheme: light;
-  --brand-color-ink: #20232b;
-  --brand-color-muted: #646875;
-  --brand-color-paper: #f8f9fc;
-  --brand-color-surface: #ffffff;
-  --brand-color-border: #dfe2ea;
-  --brand-color-control: #818797;
-  --brand-color-primary: #3455db;
+  --cobalt-cover: #704033;
+  --cobalt-white: #fffaf2;
+  --cobalt-ink: #f8e7dc;
+  --cobalt-point: #efc69b;
+  --podium-gold-paper: #dbb76c;
+  --podium-silver-paper: #d9d6ce;
+  --podium-bronze-paper: #d7ab8c;
+  --brand-color-ink: #29251f;
+  --brand-color-muted: #665d52;
+  --brand-color-paper: #f5f2ec;
+  --brand-color-surface: #fffdf8;
+  --brand-color-border: #d9d1c5;
+  --brand-color-control: #887966;
+  --brand-color-primary: #9f4528;
   --brand-color-onPrimary: #ffffff;
-  --brand-color-primarySoft: #edf0ff;
+  --brand-color-primarySoft: #f2e4d8;
   --brand-color-secondary: #8b5615;
   --brand-color-secondarySoft: #fff5e5;
   --brand-color-danger: #b5364e;
   --brand-color-dangerSoft: #fff0f3;
-  --brand-color-focus: #3455db;
+  --brand-color-focus: #9f4528;
   --brand-color-mediaPaper: #ffffff;
-  --brand-color-mediaInk: #20232b;
+  --brand-color-mediaInk: #26231f;
   --brand-font-body: 'Manrope', 'Segoe UI', sans-serif;
   --brand-font-display: 'Manrope', 'Segoe UI', sans-serif;
   --brand-font-numeric: 'Manrope', 'Segoe UI', sans-serif;
   --brand-radius-small: 0.75rem;
   --brand-radius-card: 1.5rem;
-  --brand-shadow-raised: 0 12px 40px #1b254114;
-  --ui-surface-subtle: #f2f4f9;
-  --ui-primary-hover: #2646c4;
-  --ui-stage: #e9edff;
-  --ui-stage-ink: #314da9;
-  --ui-shadow: 0 28px 60px #26396e1c;
+  --brand-shadow-raised: 0 12px 40px #392b2014;
+  --ui-surface-subtle: #eee9e0;
+  --ui-primary-hover: #80351f;
+  --ui-action-surface: var(--cobalt-cover);
+  --ui-action-hover: #5c3328;
+  --ui-action-ink: var(--cobalt-ink);
+  --ui-action-link: var(--cobalt-cover);
+  --ui-stage: #eae2d7;
+  --ui-stage-ink: #744731;
+  --ui-shadow: 0 28px 60px #4936241c;
+  --cobalt-light: #955139;
+  --cube-paper: #eee5da;
+  --cube-ink: #4e382b;
+
+  --cube-gold-ink: #3e2a10;
+
+  --cube-silver-ink: #3f3c36;
+
+  --cube-bronze-ink: #432718;
+
+  --cube-empty-ink: #51473c;
+
+  --cube-highlight: #ffffff30;
+  --cube-shadow: #392a1c38;
+  --cube-stage-light: #f7f0e5;
+  --cube-stage-base: #e6d8c9;
+  --cube-stage-ink: #635143;
+  --cube-backdrop: #211911c9;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --brand-color-ink: #f0f1f7;
-  --brand-color-muted: #a4a8ba;
-  --brand-color-paper: #16171d;
-  --brand-color-surface: #1e2029;
-  --brand-color-border: #343744;
-  --brand-color-control: #7c8298;
-  --brand-color-primary: #b0bfff;
-  --brand-color-onPrimary: #1d2857;
-  --brand-color-primarySoft: #282f4b;
-  --brand-color-secondary: #efc18d;
-  --brand-color-secondarySoft: #352b25;
-  --brand-color-danger: #ffb0c1;
-  --brand-color-dangerSoft: #3d2530;
-  --brand-color-focus: #b0bfff;
-  --ui-surface-subtle: #252732;
-  --ui-primary-hover: #c4cfff;
-  --ui-stage: #252c47;
-  --ui-stage-ink: #c0cbff;
-  --ui-shadow: 0 28px 60px #00000030;
+  --cobalt-cover: #463028;
+  --cobalt-light: #664332;
+  --cobalt-white: #fff8ed;
+  --cobalt-ink: #ead6c1;
+  --cobalt-point: #dba87e;
+  --brand-color-ink: #efe9df;
+  --brand-color-muted: #b9ad9e;
+  --brand-color-paper: #181715;
+  --brand-color-surface: #24211e;
+  --brand-color-border: #494138;
+  --brand-color-control: #958574;
+  --brand-color-primary: #e8a07d;
+  --brand-color-onPrimary: #301e14;
+  --brand-color-primarySoft: #443126;
+  --brand-color-secondary: #dfbc83;
+  --brand-color-secondarySoft: #352e23;
+  --brand-color-danger: #ffb4be;
+  --brand-color-dangerSoft: #3e2928;
+  --brand-color-focus: #efb690;
+  --ui-surface-subtle: #27231e;
+  --ui-primary-hover: #f3b99a;
+  --ui-action-surface: var(--cobalt-light);
+  --ui-action-hover: #78503b;
+  --ui-action-ink: var(--cobalt-ink);
+  --ui-action-link: #c39780;
+  --ui-stage: #302922;
+  --ui-stage-ink: #e8c3a2;
+  --ui-shadow: 0 28px 60px #00000040;
+  --brand-shadow-raised: 0 12px 40px #00000038;
+  --podium-gold-paper: #c6a05b;
+  --podium-silver-paper: #bfb9ae;
+  --podium-bronze-paper: #c18f6b;
+  --cube-paper: #d8c8b6;
+  --cube-ink: #3c2b1f;
+
+  --cube-gold-ink: #302008;
+  --cube-silver-ink: #292721;
+  --cube-bronze-ink: #302013;
+
+  --cube-empty-ink: #f1dfca;
+
+  --cube-highlight: #ffffff10;
+  --cube-shadow: #00000075;
+  --cube-stage-light: #3a3027;
+  --cube-stage-base: #201c18;
+  --cube-stage-ink: #d3bda7;
+  --cube-backdrop: #0e0b08db;
 }
-/* Remains correct even before JS runs or when JS is unavailable. */
+/* System preference also works before hydration and without JavaScript. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
-    --brand-color-ink: #f0f1f7;
-    --brand-color-muted: #a4a8ba;
-    --brand-color-paper: #16171d;
-    --brand-color-surface: #1e2029;
-    --brand-color-border: #343744;
-    --brand-color-control: #7c8298;
-    --brand-color-primary: #b0bfff;
-    --brand-color-onPrimary: #1d2857;
-    --brand-color-primarySoft: #282f4b;
-    --brand-color-secondary: #efc18d;
-    --brand-color-secondarySoft: #352b25;
-    --brand-color-danger: #ffb0c1;
-    --brand-color-dangerSoft: #3d2530;
-    --brand-color-focus: #b0bfff;
-    --ui-surface-subtle: #252732;
-    --ui-primary-hover: #c4cfff;
-    --ui-stage: #252c47;
-    --ui-stage-ink: #c0cbff;
-    --ui-shadow: 0 28px 60px #00000030;
+    --cobalt-cover: #463028;
+    --cobalt-light: #664332;
+    --cobalt-white: #fff8ed;
+    --cobalt-ink: #ead6c1;
+    --cobalt-point: #dba87e;
+    --brand-color-ink: #efe9df;
+    --brand-color-muted: #b9ad9e;
+    --brand-color-paper: #181715;
+    --brand-color-surface: #24211e;
+    --brand-color-border: #494138;
+    --brand-color-control: #958574;
+    --brand-color-primary: #e8a07d;
+    --brand-color-onPrimary: #301e14;
+    --brand-color-primarySoft: #443126;
+    --brand-color-secondary: #dfbc83;
+    --brand-color-secondarySoft: #352e23;
+    --brand-color-danger: #ffb4be;
+    --brand-color-dangerSoft: #3e2928;
+    --brand-color-focus: #efb690;
+    --ui-surface-subtle: #27231e;
+    --ui-primary-hover: #f3b99a;
+    --ui-action-surface: var(--cobalt-light);
+    --ui-action-hover: #78503b;
+    --ui-action-ink: var(--cobalt-ink);
+    --ui-action-link: #c39780;
+    --ui-stage: #302922;
+    --ui-stage-ink: #e8c3a2;
+    --ui-shadow: 0 28px 60px #00000040;
+    --brand-shadow-raised: 0 12px 40px #00000038;
+    --podium-gold-paper: #c6a05b;
+    --podium-silver-paper: #bfb9ae;
+    --podium-bronze-paper: #c18f6b;
+    --cube-paper: #d8c8b6;
+    --cube-ink: #3c2b1f;
+
+    --cube-gold-ink: #302008;
+    --cube-silver-ink: #292721;
+    --cube-bronze-ink: #302013;
+
+    --cube-empty-ink: #f1dfca;
+
+    --cube-highlight: #ffffff10;
+    --cube-shadow: #00000075;
+    --cube-stage-light: #3a3027;
+    --cube-stage-base: #201c18;
+    --cube-stage-ink: #d3bda7;
+    --cube-backdrop: #0e0b08db;
   }
 }

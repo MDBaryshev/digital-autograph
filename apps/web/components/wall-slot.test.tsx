@@ -32,9 +32,9 @@ it('highlights only the first three places and labels every remaining place with
     'Silver place',
     'Bronze place',
   ].entries()) {
-    expect(places[i]!.querySelector('svg')?.getAttribute('aria-label')).toBe(
-      label,
-    );
+    expect(
+      places[i]!.querySelector('svg[role="img"]')?.getAttribute('aria-label'),
+    ).toBe(label);
     expect(places[i]!.getAttribute('data-podium')).toBe(
       ['gold', 'silver', 'bronze'][i],
     );

@@ -26,6 +26,7 @@ import { WallSlot } from './wall-slot';
 import { WallInvite } from './wall-invite';
 import { WallCountdown } from './wall-countdown';
 import { Icon } from './ui-icon';
+import { CobaltSignature } from './cobalt-signature';
 import { ShareControls } from './share-controls';
 import styles from '../app/walls/[id]/page.module.css';
 
@@ -72,6 +73,7 @@ export function PublicWallScreen({
   const [selectedId, setSelectedId] = useState('');
   const [targetSlotId, setTargetSlotId] = useState<string | null>(null);
   const [claimUsed, setClaimUsed] = useState(false);
+  const [confirmedPlacementId, setConfirmedPlacementId] = useState<string>();
   const [claimsUnavailable, setClaimsUnavailable] = useState(false);
   const [phase, setPhase] = useState<ClaimPhase>('idle');
   const [message, setMessage] = useState('');
@@ -164,7 +166,7 @@ export function PublicWallScreen({
     setPhase('claiming');
     setMessage('Claiming this slot…');
     try {
-      await wallClaimApi(apiOrigin).claim(
+      const result = await wallClaimApi(apiOrigin).claim(
         wall.id,
         targetSlotId,
         selectedId,
@@ -174,6 +176,7 @@ export function PublicWallScreen({
       setClaimUsed(true);
       setTargetSlotId(null);
       setPhase('success');
+      setConfirmedPlacementId(result.placement?.id);
       setMessage('Your autograph is on the Wall.');
       await refreshWall();
     } catch (error) {
@@ -247,6 +250,11 @@ export function PublicWallScreen({
   const wallPath = `/walls/${wall.id}`;
   const studioPath = `/autograph/create?wall=${wall.id}`;
   const occupiedCount = wall.slots.filter((slot) => slot.occupied).length;
+  const confirmedPlacementVisible = wall.slots.some(
+    (slot) =>
+      confirmedPlacementId !== undefined &&
+      slot.currentPlacement?.id === confirmedPlacementId,
+  );
   const showChoosePlace =
     canClaim &&
     occupiedCount < wall.slotCount &&
@@ -265,7 +273,11 @@ export function PublicWallScreen({
           alt={t('Wall cover')}
         />
       )}
-      <header className={styles.header}>
+      <header
+        className={styles.header}
+        data-custom-cover={wall.appearance?.coverDataUrl ? '' : undefined}
+      >
+        {!wall.appearance?.coverDataUrl && <CobaltSignature />}
         <div className={styles.wallIdentity}>
           {wall.appearance?.avatarDataUrl && (
             <img
@@ -329,25 +341,6 @@ export function PublicWallScreen({
             </p>
           )}
         </div>
-        <aside className={styles.wallSummary} aria-label={t('Wall overview')}>
-          <p>{t('Places occupied')}</p>
-          <strong>
-            {occupiedCount}{' '}
-            <span>{t('of {total}', { total: String(wall.slotCount) })}</span>
-          </strong>
-          <meter
-            className={styles.occupancy}
-            aria-label={t('Places occupied')}
-            value={occupiedCount}
-            min={0}
-            max={wall.slotCount}
-          />
-          {showChoosePlace && (
-            <a className={styles.choose} href="#slots-heading">
-              {t('Find a place')} <Icon name="down" size={18} />
-            </a>
-          )}
-        </aside>
       </header>
 
       {canClaim && auth === 'checking' && (
@@ -502,50 +495,90 @@ export function PublicWallScreen({
           {t(message)}
         </p>
       )}
-      <section aria-labelledby="slots-heading">
-        <h2 id="slots-heading" className={styles.placesHeading} tabIndex={-1}>
-          {t('Slots')}
-        </h2>
-        {canClaim && auth === 'anonymous' && occupiedCount < wall.slotCount && (
-          <p className={styles.slotIntro}>
-            {t(
-              'Choose an empty place to sign in. You’ll need an approved autograph to place it for free.',
-            )}
-          </p>
-        )}
-        {occupiedCount > 0 && !frontendCapabilities.paidTakeover && (
-          <p className={styles.slotIntro}>
-            {t('Paid takeover is not available yet.')}
-          </p>
-        )}
-        <ol className={styles.grid}>
-          {wall.slots.map((slot) => {
-            const actionLabel =
-              !canClaim || slot.occupied
-                ? undefined
-                : auth === 'anonymous'
-                  ? 'Sign in to claim'
-                  : auth === 'authenticated' && ready?.length
-                    ? 'Claim this slot'
-                    : undefined;
-            return (
-              <WallSlot
+      <div className={styles.wallLayout}>
+        <aside className={styles.wallSummary} aria-label={t('Wall overview')}>
+          <p>{t('Places occupied')}</p>
+          <strong>
+            {occupiedCount}{' '}
+            <span>{t('of {total}', { total: String(wall.slotCount) })}</span>
+          </strong>
+          <meter
+            className={styles.occupancy}
+            aria-label={t('Places occupied')}
+            value={occupiedCount}
+            min={0}
+            max={wall.slotCount}
+          />
+          <div className={styles.segments} aria-hidden="true">
+            {wall.slots.map((slot, index) => (
+              <span
                 key={slot.id}
-                slot={slot}
-                apiOrigin={apiOrigin}
-                actionLabel={actionLabel}
-                selected={Boolean(target?.id === slot.id && !slot.occupied)}
-                actionDisabled={phase === 'claiming' || refreshing}
-                onAction={() => {
-                  setTargetSlotId(slot.id);
-                  setPhase('idle');
-                  setMessage('');
-                }}
+                data-filled={index < occupiedCount ? '' : undefined}
+                data-arrived={
+                  confirmedPlacementVisible && index === occupiedCount - 1
+                    ? ''
+                    : undefined
+                }
               />
-            );
-          })}
-        </ol>
-      </section>
+            ))}
+          </div>
+          {showChoosePlace && (
+            <a className={styles.choose} href="#slots-heading">
+              {t('Find a place')} <Icon name="down" size={18} />
+            </a>
+          )}
+        </aside>
+        <section aria-labelledby="slots-heading">
+          <h2 id="slots-heading" className={styles.placesHeading} tabIndex={-1}>
+            {t('Slots')}
+          </h2>
+          {canClaim &&
+            auth === 'anonymous' &&
+            occupiedCount < wall.slotCount && (
+              <p className={styles.slotIntro}>
+                {t(
+                  'Choose an empty place to sign in. You’ll need an approved autograph to place it for free.',
+                )}
+              </p>
+            )}
+          {occupiedCount > 0 && !frontendCapabilities.paidTakeover && (
+            <p className={styles.slotIntro}>
+              {t('Paid takeover is not available yet.')}
+            </p>
+          )}
+          <ol className={styles.grid}>
+            {wall.slots.map((slot) => {
+              const actionLabel =
+                !canClaim || slot.occupied
+                  ? undefined
+                  : auth === 'anonymous'
+                    ? 'Sign in to claim'
+                    : auth === 'authenticated' && ready?.length
+                      ? 'Claim this slot'
+                      : undefined;
+              return (
+                <WallSlot
+                  key={slot.id}
+                  slot={slot}
+                  apiOrigin={apiOrigin}
+                  actionLabel={actionLabel}
+                  selected={Boolean(target?.id === slot.id && !slot.occupied)}
+                  arrived={
+                    confirmedPlacementId !== undefined &&
+                    slot.currentPlacement?.id === confirmedPlacementId
+                  }
+                  actionDisabled={phase === 'claiming' || refreshing}
+                  onAction={() => {
+                    setTargetSlotId(slot.id);
+                    setPhase('idle');
+                    setMessage('');
+                  }}
+                />
+              );
+            })}
+          </ol>
+        </section>
+      </div>
 
       <WallInvite
         wallId={wall.id}
