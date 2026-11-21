@@ -36,7 +36,10 @@ test('a visitor can draw and edit a demo autograph with the keyboard without upl
     name: 'Edit your autograph in place 4',
   });
   await expect(saved).toBeFocused();
-  await expect(saved.locator('svg path')).toHaveAttribute('d', /^M.+L/);
+  await expect(saved.locator('[data-cube-object] svg path')).toHaveAttribute(
+    'd',
+    /^M.+L/,
+  );
   await expect(page.getByText('Your autograph is in place 4.')).toBeVisible();
 
   await saved.click();

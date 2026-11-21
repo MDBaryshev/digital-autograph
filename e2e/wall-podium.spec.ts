@@ -35,9 +35,12 @@ test('the ten-place podium stays readable in light and dark themes on mobile and
         ).toBeVisible();
       for (let index = 3; index < 10; index++) {
         await expect(slots.nth(index).getByRole('img')).toHaveCount(0);
-        await expect(slots.nth(index)).toHaveCSS(
-          'border-top-color',
-          theme === 'dark' ? 'rgb(52, 55, 68)' : 'rgb(223, 226, 234)',
+        await expect(
+          slots.nth(index).locator('[data-cube-object]'),
+        ).toHaveAttribute('data-material', 'empty');
+        await expect(slots.nth(index).locator('[data-cube-object]')).toHaveCSS(
+          'transform-style',
+          'preserve-3d',
         );
       }
       expect(

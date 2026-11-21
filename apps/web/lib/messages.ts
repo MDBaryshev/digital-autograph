@@ -1,5 +1,45 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  Gold: 'Золото',
+  Silver: 'Серебро',
+  Bronze: 'Бронза',
+  'Hover over a place to unfold it. Click an autograph to rotate.':
+    'Наведи на место — оно раскроется в куб. Нажми на автограф, чтобы покрутить.',
+  'Tap an autograph to rotate its cube. Or sign a free place.':
+    'Нажми на автограф, чтобы покрутить куб. Или подпиши свободное место.',
+  Profile: 'Профиль',
+  Autograph: 'Автограф',
+  Website: 'Сайт',
+  Place: 'Место',
+  Links: 'Ссылки',
+  'Free place': 'Свободно',
+  'Your autograph': 'Твой автограф',
+  'Explore cube in slot {place}': 'Рассмотреть куб на месте {place}',
+  'Explore demo cube in place {place}': 'Рассмотреть демокуб на месте {place}',
+  'Place {place} of 10.': 'Место {place} из 10.',
+  'The author has not published any links here.':
+    'Автор пока не опубликовал здесь свои ссылки.',
+  'Telegram, YouTube and a website: example channels, not real accounts.':
+    'Telegram, YouTube и сайт — примеры каналов для этой грани, а не реальные аккаунты.',
+  'The author has not published a profile here.':
+    'Автор пока не опубликовал здесь свой профиль.',
+  'The autograph on the front of this cube.': 'Автограф на лицевой грани куба.',
+  'Cube faces': 'Грани куба',
+  'Turn right': 'Повернуть вправо',
+  'Turn left': 'Повернуть влево',
+  'Drag to rotate. Or use the arrow keys.':
+    'Вращай пальцем, мышью или стрелками.',
+  'Rotate cube': 'Покрутить куб',
+  'Demo profile · @{name}': 'Демопрофиль · @{name}',
+  'Cube · place {place}': 'Куб · место {place}',
+  'One of 10 places': 'Одно из 10 мест',
+  'Example channels': 'Примеры каналов',
+  'Added by the author': 'Добавляет автор',
+  'No public links': 'Нет публичных ссылок',
+  'Demo profile': 'Демопрофиль',
+  'Profile not published': 'Профиль не опубликован',
+  'Autograph author': 'Автор автографа',
+  'Your place': 'Твоё место',
   'Refresh account status': 'Обновить состояние аккаунта',
   'Public profile setup is temporarily unavailable.':
     'Настройка публичного профиля временно недоступна.',
