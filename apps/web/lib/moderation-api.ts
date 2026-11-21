@@ -91,7 +91,15 @@ export function moderationApi(origin: string) {
         origin,
         `/moderation/profiles?limit=20${cursor ? '&cursor=' + encodeURIComponent(cursor) : ''}`,
         signal,
-      ),
+      ).then((page) => {
+        if (
+          !Array.isArray(page?.items) ||
+          (page.nextCursor !== null && typeof page.nextCursor !== 'string')
+        ) {
+          throw new Error('INVALID_PROFILE_QUEUE');
+        }
+        return page;
+      }),
     profilePreview: (id: string, signal: AbortSignal) =>
       request<ProfileReview>(
         origin,

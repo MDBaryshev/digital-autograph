@@ -8,6 +8,7 @@ import {
   type ProfileReview,
   type RejectionReason,
 } from '../lib/moderation-api';
+import { withRequestDeadline } from '../lib/request-deadline';
 import { useLocale } from './locale-provider';
 import { ModerationWorkspace } from './moderation-workspace';
 import styles from './moderation-workspace.module.css';
@@ -74,9 +75,12 @@ export function ProfileModerationWorkspace({
   const [revision, setRevision] = useState(0);
   const previewController = useRef<AbortController | null>(null);
   const actionController = useRef<AbortController | null>(null);
-  const deciding = useRef(false);
+  const recoveryRequired = useRef(true);
   const [error, setError] = useState(false);
-  const handleError = (value: unknown) => {
+  const handleError = (
+    value: unknown,
+    fallback = 'Review could not be confirmed. Refresh the queue before retrying.',
+  ) => {
     setError(true);
     if (
       value instanceof ModerationApiError &&
@@ -92,36 +96,51 @@ export function ProfileModerationWorkspace({
       setMessage(
         'This username is already taken. The owner can submit a different one.',
       );
-    } else
-      setMessage(
-        'Review could not be confirmed. Refresh the queue before retrying.',
-      );
+    } else setMessage(fallback);
   };
   useEffect(() => {
     const controller = new AbortController();
-    setBusy(false);
+    let active = true;
+    recoveryRequired.current = true;
+    setBusy(true);
+    setAccess(false);
+    setItems([]);
+    setCursor(null);
     setPreview(null);
     setMessage('Loading submissions…');
     setError(false);
-    api
-      .profiles(null, controller.signal)
+    void withRequestDeadline(controller, (signal) => api.profiles(null, signal))
       .then((page) => {
-        if (controller.signal.aborted) return;
+        if (!active) return;
         setItems(page.items);
         setCursor(page.nextCursor);
+        recoveryRequired.current = false;
         setAccess(true);
         setMessage('');
       })
       .catch((value) => {
-        if (!controller.signal.aborted) handleError(value);
+        if (active)
+          handleError(
+            value,
+            'Could not load the moderation queue. Retry to read its current state.',
+          );
+      })
+      .finally(() => {
+        if (active) setBusy(false);
       });
     return () => {
+      active = false;
       controller.abort();
-      previewController.current?.abort();
-      actionController.current?.abort();
+      const previousPreview = previewController.current;
+      const previousAction = actionController.current;
+      previewController.current = null;
+      actionController.current = null;
+      previousPreview?.abort();
+      previousAction?.abort();
     };
   }, [api, revision]);
   const select = async (id: string) => {
+    if (recoveryRequired.current || actionController.current) return;
     previewController.current?.abort();
     const controller = new AbortController();
     previewController.current = controller;
@@ -131,31 +150,44 @@ export function ProfileModerationWorkspace({
     setMessage('Loading submissions…');
     setError(false);
     try {
-      const value = await api.profilePreview(id, controller.signal);
-      if (!controller.signal.aborted) {
+      const value = await withRequestDeadline(controller, (signal) =>
+        api.profilePreview(id, signal),
+      );
+      if (previewController.current === controller) {
         setPreview(value);
         setMessage('');
       }
     } catch (value) {
-      if (!controller.signal.aborted) handleError(value);
+      if (previewController.current === controller) handleError(value);
+    } finally {
+      if (previewController.current === controller)
+        previewController.current = null;
     }
   };
   const decide = async (decision: 'approved' | 'rejected') => {
-    if (!preview || deciding.current || (decision === 'rejected' && !reason))
+    if (
+      !preview ||
+      actionController.current ||
+      recoveryRequired.current ||
+      (decision === 'rejected' && !reason)
+    )
       return;
-    deciding.current = true;
     setBusy(true);
     const controller = new AbortController();
     actionController.current = controller;
     try {
-      await api.decideProfile(
-        preview.id,
-        decision === 'approved'
-          ? { decision }
-          : { decision, reasonCode: reason as RejectionReason },
-        controller.signal,
+      const result = await withRequestDeadline(controller, (signal) =>
+        api.decideProfile(
+          preview.id,
+          decision === 'approved'
+            ? { decision }
+            : { decision, reasonCode: reason as RejectionReason },
+          signal,
+        ),
       );
-      if (!controller.signal.aborted) {
+      if (actionController.current === controller) {
+        if (result?.id !== preview.id || result.status !== decision)
+          throw new Error('UNCONFIRMED_PROFILE_DECISION');
         setItems((rows) => rows.filter((row) => row.id !== preview.id));
         setPreview(null);
         setError(false);
@@ -168,10 +200,19 @@ export function ProfileModerationWorkspace({
         );
       }
     } catch (value) {
-      if (!controller.signal.aborted) handleError(value);
+      if (actionController.current === controller) {
+        recoveryRequired.current = true;
+        setAccess(false);
+        setItems([]);
+        setCursor(null);
+        setPreview(null);
+        handleError(value);
+      }
     } finally {
-      deciding.current = false;
-      if (!controller.signal.aborted) setBusy(false);
+      if (actionController.current === controller) {
+        actionController.current = null;
+        setBusy(false);
+      }
     }
   };
   const imagesReady =
@@ -217,22 +258,29 @@ export function ProfileModerationWorkspace({
                 type="button"
                 disabled={busy}
                 onClick={() => {
+                  if (recoveryRequired.current || actionController.current)
+                    return;
                   setBusy(true);
                   const controller = new AbortController();
                   actionController.current = controller;
-                  void api
-                    .profiles(cursor, controller.signal)
+                  void withRequestDeadline(controller, (signal) =>
+                    api.profiles(cursor, signal),
+                  )
                     .then((page) => {
-                      if (!controller.signal.aborted) {
+                      if (actionController.current === controller) {
                         setItems((rows) => [...rows, ...page.items]);
                         setCursor(page.nextCursor);
                       }
                     })
                     .catch((value) => {
-                      if (!controller.signal.aborted) handleError(value);
+                      if (actionController.current === controller)
+                        handleError(value);
                     })
                     .finally(() => {
-                      if (!controller.signal.aborted) setBusy(false);
+                      if (actionController.current === controller) {
+                        actionController.current = null;
+                        setBusy(false);
+                      }
                     });
                 }}
               >
