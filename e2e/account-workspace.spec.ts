@@ -125,6 +125,7 @@ test('owner sets up a profile, creates a draft and explicitly publishes their ow
             document.documentElement.scrollWidth <=
             document.documentElement.clientWidth,
         ),
+        `overflow at ${width}px with ${scale}% text`,
       ).toBe(true);
     }
   await page.evaluate(() => {

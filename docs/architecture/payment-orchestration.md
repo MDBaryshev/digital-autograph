@@ -158,6 +158,42 @@ states remain queryable. EGO-111 owns alert delivery and durable incident routin
   from navigation. The prepared `/payments/checkout` displays trusted reservation terms and exact legal editions, while unpublished real documents continue to block new Orders.
 
 Cookie mutation origin checks and current active-session validation remain intact.
+
+### Return-page recovery (EGO-189)
+
+Opening the return page performs only an owner-scoped local GET. A provider
+refresh is an explicit button action after a valid read, not a mount effect.
+StrictMode may replay/cancel GET effects but cannot initiate a POST. URL query
+parameters still provide only the Order reference, never payment evidence.
+
+The shared minimum response schema requires a known status and a UUID Order ID
+matching the requested canonical ID. Other DTO fields, including provider URLs,
+are not retained or displayed. `succeeded` means payment received, not completed
+placement; only `fulfilled` displays the completed-placement message.
+
+The UI state machine is keyed by both API origin and Order ID. A changed target
+starts with a checking state immediately, aborts its previous request and ignores
+late responses even when cancellation is ignored by a transport. A synchronous
+in-flight guard prevents repeated provider refreshes. Unmount cancels requests;
+one 15-second budget covers fetch and body reading. HTTP errors, invalid identity,
+unknown status, malformed JSON or timeout clear any prior success and leave only
+GET-based recovery available. Once that succeeds, the user can explicitly ask
+for a provider refresh again. No Order, UUID or provider attempt is created by
+the client, and no POST is retried automatically.
+
+This changes the return-page consumer only. Existing provider reconciliation,
+owner authorization, Order/payment writers, lease/idempotency rules and paid
+admission switches remain unchanged.
+
+The EGO-189 regression set includes a delayed old-Order response that fails on
+unmodified main, source/Order changes, malformed/foreign response identities,
+StrictMode, double clicks, deadlines and GET-only recovery. An isolated PostgreSQL
+test submits concurrent owner GETs while new payment admission is disabled,
+asserting no provider calls, unchanged Order/payment/placement/earning evidence,
+and the same not-found boundary for another account. Browser return fixtures
+assert that spoofed query flags cannot supply success and a lost refresh response
+recovers through GET rather than replaying POST.
+
 There is no mark-paid route. IDOR attempts return not-found; public Wall/history
 responses do not gain payment/financial/private-media fields.
 

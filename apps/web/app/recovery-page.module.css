@@ -1,0 +1,33 @@
+.page {
+  max-width: 56rem;
+  min-height: 52vh;
+  margin-inline: auto;
+  padding: clamp(2.5rem, 8vw, 6rem) var(--space-page);
+}
+
+.page h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+.page p {
+  max-width: 56ch;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 1.3rem;
+  margin-top: 1.4rem;
+}
+
+.actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}

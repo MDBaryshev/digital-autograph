@@ -7,6 +7,15 @@ session hashes or signed media URLs. Private previews use the existing owner-
 checked endpoint on explicit request. Mutation endpoints still authorize on the
 server; hiding a navigation item grants no authority.
 
+Rejected autographs have an explicit owner-only detail action in `/me/autographs`.
+It reads the existing `GET /autographs/:id` and retains only a validated matching
+ID, rejected status/decision, known reason and decision date. Original/upload
+metadata from that response is not displayed. Reads have a 15-second deadline,
+GET-only retry and cancellation on close, selection/origin change and unmount;
+late responses cannot restore a closed or replaced detail view. The existing
+final decision policy is unchanged: another review requires a new autograph,
+not a new appeal or moderation writer.
+
 `PUT /me/profile` submits the display name and username of the first owned creator
 profile for review. Approval updates the creator page and its public URL.
 Public profile writes are disabled by default. The trusted server setting

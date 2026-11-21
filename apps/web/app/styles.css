@@ -209,7 +209,7 @@ main > section {
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  z-index: 10;
+  z-index: 30;
   padding: 0.75rem;
   background: var(--color-surface);
   transform: translateY(-200%);
@@ -273,7 +273,7 @@ a.primaryLink:hover,
   overflow-wrap: anywhere;
 }
 .footerInner {
-  max-width: 84rem;
+  max-width: 77rem;
   margin-inline: auto;
   display: flex;
   align-items: center;
@@ -503,5 +503,16 @@ a.primaryLink:hover,
     min-width: 0;
     white-space: normal;
     justify-content: center;
+  }
+}
+
+@media (max-width: 38rem) {
+  :root {
+    --mobile-dock-height: calc(3.8rem + env(safe-area-inset-bottom));
+    scroll-padding-block: 4.5rem calc(var(--mobile-dock-height) + 0.65rem);
+  }
+
+  body {
+    padding-bottom: var(--mobile-dock-height);
   }
 }

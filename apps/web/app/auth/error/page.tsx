@@ -2,6 +2,7 @@ import { localizeMetadata } from '../../../lib/i18n-server';
 
 import { getTranslator } from '../../../lib/i18n-server';
 import type { Metadata } from 'next';
+import styles from '../../recovery-page.module.css';
 type AuthErrorPageProps = {
   searchParams: Promise<{ code?: string | string[] }>;
 };
@@ -32,16 +33,36 @@ export default async function AuthErrorPage({
     ALREADY_AUTHENTICATED: 'You are already signed in.',
   };
   const message =
-    typeof code === 'string'
+    typeof code === 'string' && Object.hasOwn(messages, code)
       ? (messages[code] ?? 'Sign-in could not be completed.')
       : 'Sign-in could not be completed.';
+  const signedIn = code === 'ALREADY_AUTHENTICATED';
 
   return (
-    <main>
-      <p className="eyebrow">{t('Destka')}</p>
-      <h1>{t('Sign-in')}</h1>
-      <p>{t(message)}</p>
-      <a href="/">{t('Return home')}</a>
+    <main className={styles.page}>
+      <h1>
+        {t(
+          signedIn
+            ? 'You are already signed in.'
+            : 'Sign-in could not be completed.',
+        )}
+      </h1>
+      {!signedIn && message !== 'Sign-in could not be completed.' && (
+        <p>{t(message)}</p>
+      )}
+      {!signedIn && (
+        <p>
+          {t(
+            'Return to sign-in and try again or choose another sign-in method.',
+          )}
+        </p>
+      )}
+      <div className={styles.actions}>
+        <a className="primaryLink" href="/me">
+          {t(signedIn ? 'Your account' : 'Back to sign-in')}
+        </a>
+        <a href="/">{t('Return home')}</a>
+      </div>
     </main>
   );
 }

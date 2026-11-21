@@ -1,0 +1,6 @@
+.checkButton {
+  min-width: 0;
+  max-width: 100%;
+  padding-inline: clamp(8px, 2.5vw, 16px);
+  overflow-wrap: anywhere;
+}

@@ -16,7 +16,7 @@ export default async function PaymentReturnPage({
       <h1>{t('Payment status')}</h1>
       <p>
         {t(
-          'Returning from checkout does not confirm payment. We verify the payment with the provider.',
+          'Returning from checkout does not confirm payment. Refresh the payment status to request a new check.',
         )}
       </p>
       <PaymentReturn apiOrigin={API_PUBLIC_ORIGIN} orderId={orderId ?? ''} />
