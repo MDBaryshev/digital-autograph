@@ -51,6 +51,7 @@ export function AccountWorkspace({
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [profileRevision, setProfileRevision] = useState(0);
   const recoveryRequired = useRef(false);
   const busy = useRef(false);
   const mutation = useRef<AbortController | null>(null);
@@ -102,6 +103,7 @@ export function AccountWorkspace({
           throw Error('INVALID_WORKSPACE');
         setData(d);
         setError('');
+        if (recoveryRequired.current) setProfileRevision((value) => value + 1);
         recoveryRequired.current = false;
         setNeedsRefresh(false);
       })
@@ -493,7 +495,7 @@ export function AccountWorkspace({
               )}
             </p>
             <form
-              key={profile?.slug ?? 'new'}
+              key={`${profile?.slug ?? 'new'}:${profileRevision}`}
               className={styles.form}
               onSubmit={(e) => {
                 e.preventDefault();

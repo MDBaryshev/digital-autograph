@@ -222,6 +222,10 @@ it('unlocks profile saves only after reading the current account, without retryi
   vi.stubGlobal('fetch', fetcher);
   render(<AccountWorkspace apiOrigin="https://api.test" section="settings" />);
   const save = await screen.findByRole('button', { name: 'Save profile' });
+  const nameInput = screen.getByRole('textbox', {
+    name: 'Display name',
+  }) as HTMLInputElement;
+  fireEvent.change(nameInput, { target: { value: 'Unconfirmed edit' } });
   vi.useFakeTimers();
   fireEvent.submit(save.closest('form')!);
   await act(() => vi.advanceTimersByTimeAsync(10_000));
@@ -244,6 +248,10 @@ it('unlocks profile saves only after reading the current account, without retryi
   expect(
     fetcher.mock.calls.filter(([, init]) => init.method === 'PUT'),
   ).toHaveLength(1);
+  expect(
+    (screen.getByRole('textbox', { name: 'Display name' }) as HTMLInputElement)
+      .value,
+  ).toBe(workspace.profile.displayName);
 });
 
 it('recovers a stuck owner preview and does not expose a late image', async () => {
