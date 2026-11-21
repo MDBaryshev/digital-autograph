@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
 import sharp from 'sharp';
-import { afterAll, beforeAll, beforeEach, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { registerCommunityCubeRoutes } from '../../apps/api/src/community-cube';
 import { SessionService } from '../../packages/auth/src/index';
 import {
@@ -31,13 +32,13 @@ const apiConfig = {
 };
 const repository = createPgCommunityCubeRepository(database.pool);
 const storage = new Map<string, Buffer>();
-const storageReads: string[] = [];
+const storageReads: { key: string; maxBytes: number }[] = [];
 let beforeStorageRead: (() => Promise<void>) | undefined;
 const app = buildAcceptedApi(database, sessions, apiConfig);
 const paused = buildAcceptedApi(database, sessions, apiConfig);
 const mediaStorage = {
-  async getPrivateObject(key: string) {
-    storageReads.push(key);
+  async getPrivateObject(key: string, maxBytes: number) {
+    storageReads.push({ key, maxBytes });
     await beforeStorageRead?.();
     const bytes = storage.get(key);
     if (!bytes) throw new Error('Missing fixture bytes');
@@ -86,7 +87,11 @@ async function person(accepted = true) {
   return { id, headers: { cookie: `da_session=${token}`, origin } };
 }
 
-async function autograph(userId: string, reviewed = true) {
+async function autograph(
+  userId: string,
+  reviewed = true,
+  verifiedSizeBytes = cleaned.length,
+) {
   const id = randomUUID();
   await database.pool.query(
     `INSERT INTO autographs (id, user_id, source, status)
@@ -110,7 +115,7 @@ async function autograph(userId: string, reviewed = true) {
        (id, autograph_id, role, status, storage_key, actual_content_type,
         verified_size_bytes, width, height, uploaded_at)
      VALUES ($1, $2, 'cleaned', 'uploaded', $3, 'image/png', $4, 2, 2, now())`,
-    [assetId, id, cleanedKey, cleaned.length],
+    [assetId, id, cleanedKey, verifiedSizeBytes],
   );
   const approvalId = randomUUID();
   await database.pool.query(
@@ -131,6 +136,15 @@ async function autograph(userId: string, reviewed = true) {
 
 function request(autographId: string, cell: number, generation = 1) {
   return { autographId, cell, generation, requestId: randomUUID() };
+}
+
+function pauseStorageReads() {
+  let release!: () => void;
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  beforeStorageRead = () => blocked;
+  return release;
 }
 
 function place(
@@ -258,7 +272,9 @@ it('requires current first-use evidence and owned moderated artwork, and serves 
   expect(media.headers['cache-control']).toBe('no-store');
   expect(media.headers['content-type']).toBe('image/png');
   expect(media.rawPayload).toEqual(cleaned);
-  expect(storageReads).toEqual([ready.cleanedKey]);
+  expect(storageReads).toEqual([
+    { key: ready.cleanedKey, maxBytes: cleaned.length },
+  ]);
   expect((await paused.inject({ url: '/community-cube' })).statusCode).toBe(
     404,
   );
@@ -280,6 +296,76 @@ it('requires current first-use evidence and owned moderated artwork, and serves 
   expect(
     (await app.inject({ url: '/community-cube' })).json().occupiedCells,
   ).toEqual([]);
+});
+
+it('allows media reads during an account update and revalidates after it commits', async () => {
+  const owner = await person();
+  const ready = await autograph(owner.id);
+  expect((await place(request(ready.id, 4), owner)).statusCode).toBe(201);
+
+  const editor = await database.pool.connect();
+  const release = pauseStorageReads();
+  const url = '/community-cube/cells/4/media';
+  try {
+    await editor.query('BEGIN');
+    await editor.query('UPDATE users SET status = $1 WHERE id = $2', [
+      'disabled',
+      owner.id,
+    ]);
+    const response = app.inject({ url }).then((result) => result);
+    try {
+      await vi.waitFor(() => expect(storageReads).toHaveLength(1), {
+        timeout: 3000,
+      });
+      await editor.query('COMMIT');
+    } finally {
+      release();
+      await editor.query('ROLLBACK');
+      await response;
+    }
+    expect((await response).statusCode).toBe(404);
+  } finally {
+    editor.release();
+  }
+});
+
+it('rejects excess verified media bytes before storage and frees the budget on failure', async () => {
+  const owner = await person();
+  const ready = await autograph(owner.id, true, 10 * 1024 * 1024);
+  expect((await place(request(ready.id, 5), owner)).statusCode).toBe(201);
+
+  const release = pauseStorageReads();
+  const url = '/community-cube/cells/5/media';
+  const active = Promise.all(
+    Array.from({ length: 4 }, () => app.inject({ url })),
+  );
+  try {
+    await vi.waitFor(() => expect(storageReads).toHaveLength(4), {
+      timeout: 3000,
+    });
+    const excess = app.inject({ method: 'HEAD', url }).then((result) => result);
+    try {
+      const busy = await Promise.race([
+        excess,
+        delay(3000, undefined, { ref: false }),
+      ]);
+      expect(busy?.statusCode).toBe(503);
+      expect(busy?.headers['retry-after']).toBe('1');
+      expect(busy?.headers['cache-control']).toBe('no-store');
+      expect(storageReads).toHaveLength(4);
+    } finally {
+      release();
+      await excess;
+    }
+  } finally {
+    release();
+    // The test storage returns fewer bytes than the verified size.
+    expect((await active).map((response) => response.statusCode)).toEqual([
+      404, 404, 404, 404,
+    ]);
+  }
+  expect((await app.inject({ url })).statusCode).toBe(404);
+  expect(storageReads).toHaveLength(5);
 });
 
 it('grows only at full capacity, rejects stale choices, and keeps prior cells after withdrawal', async () => {

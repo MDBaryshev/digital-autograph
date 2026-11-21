@@ -37,11 +37,19 @@ export class PublicPlacementMediaService {
     if (resolution.kind !== 'available') {
       throw new PublicPlacementMediaError(resolution.kind);
     }
+    const { storageKey, verifiedSizeBytes } = resolution;
+    if (
+      !Number.isSafeInteger(verifiedSizeBytes) ||
+      verifiedSizeBytes < 1 ||
+      verifiedSizeBytes > maxCleanedBytes
+    ) {
+      throw new PublicPlacementMediaError('invalid_object');
+    }
     let bytes: Buffer;
     try {
       bytes = await this.storage.getPrivateObject(
-        resolution.storageKey,
-        maxCleanedBytes,
+        storageKey,
+        verifiedSizeBytes,
       );
     } catch (error) {
       const status =
@@ -53,7 +61,7 @@ export class PublicPlacementMediaService {
       );
     }
     if (
-      bytes.length !== resolution.verifiedSizeBytes ||
+      bytes.length !== verifiedSizeBytes ||
       !bytes.subarray(0, pngSignature.length).equals(pngSignature)
     ) {
       throw new PublicPlacementMediaError('invalid_object');

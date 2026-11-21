@@ -53,10 +53,15 @@ function placementView(placement: PlacementRow) {
 async function transaction<T>(
   pool: Pool,
   work: (client: PoolClient) => Promise<T>,
+  mode: 'write' | 'read' = 'write',
 ) {
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await client.query(
+      mode === 'read'
+        ? 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY'
+        : 'BEGIN',
+    );
     const result = await work(client);
     await client.query('COMMIT');
     return result;
@@ -87,19 +92,20 @@ async function readEligibleAsset(
   client: PoolClient,
   userId: string,
   autographId: string,
+  lock = true,
 ) {
   const { rows } = await client.query<EvidenceAutograph>(
     `SELECT a.id, a.user_id, a.status FROM autographs a
      JOIN users u ON u.id = a.user_id AND u.status = 'active'
      WHERE a.user_id = $1::uuid AND a.id = $2::uuid
-     FOR SHARE OF a, u`,
+     ${lock ? 'FOR SHARE OF a, u' : ''}`,
     [userId, autographId],
   );
   const autograph = rows[0];
   if (!autograph || !isAutographPlacementEligible(autograph.status))
     return null;
   try {
-    const { cleaned } = await verifyAutographEvidence(client, autograph, true);
+    const { cleaned } = await verifyAutographEvidence(client, autograph, lock);
     if (!cleaned) return null;
     // Read only the immutable derivative whose ID matches the approval and decision.
     const { rows: assets } = await client.query<{
@@ -237,25 +243,32 @@ export function createPgCommunityCubeRepository(pool: Pool) {
     },
 
     async resolveMedia(cell: number) {
-      return transaction(pool, async (client) => {
-        const { rows } = await client.query<{
-          id: string;
-          user_id: string;
-          autograph_id: string;
-        }>(
-          `SELECT id, user_id, autograph_id FROM community_cube_placements
-           WHERE cell = $1 AND withdrawn_at IS NULL FOR SHARE`,
-          [cell],
-        );
-        const placement = rows[0];
-        if (!placement) return null;
-        const asset = await readEligibleAsset(
-          client,
-          placement.user_id,
-          placement.autograph_id,
-        );
-        return asset && { ...asset, placementId: placement.id };
-      });
+      // Use one consistent snapshot for the placement and approval evidence.
+      // Row locks here could conflict with an account or autograph deletion cascading to the placement.
+      return transaction(
+        pool,
+        async (client) => {
+          const { rows } = await client.query<{
+            id: string;
+            user_id: string;
+            autograph_id: string;
+          }>(
+            `SELECT id, user_id, autograph_id FROM community_cube_placements
+             WHERE cell = $1 AND withdrawn_at IS NULL`,
+            [cell],
+          );
+          const placement = rows[0];
+          if (!placement) return null;
+          const asset = await readEligibleAsset(
+            client,
+            placement.user_id,
+            placement.autograph_id,
+            false,
+          );
+          return asset && { ...asset, placementId: placement.id };
+        },
+        'read',
+      );
     },
   };
 }
