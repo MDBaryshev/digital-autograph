@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { emailConfirmationReturnPath } from '@digital-autograph/contracts';
+import { withRequestDeadline } from '../lib/request-deadline';
 import { useLocale } from './locale-provider';
 import styles from './email-auth-form.module.css';
 
@@ -31,9 +32,17 @@ export function EmailAuthForm({
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(!confirm);
-  const pendingRef = useRef(false);
+  const activeRequest = useRef<AbortController | null>(null);
   const returnTo = useRef('/me');
   const initialized = useRef(false);
+  useEffect(
+    () => () => {
+      const request = activeRequest.current;
+      activeRequest.current = null;
+      request?.abort();
+    },
+    [],
+  );
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -55,13 +64,14 @@ export function EmailAuthForm({
     }
   }, [confirm]);
   const switchMode = (next: Mode) => {
+    if (mode === 'confirm') setToken('');
     setMode(next);
     setError('');
     setMessage('');
   };
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (pendingRef.current) return;
+    if (activeRequest.current) return;
     const form = event.currentTarget;
     const data = new FormData(form);
     const password = String(data.get('password') ?? '');
@@ -78,34 +88,34 @@ export function EmailAuthForm({
       setError('Passwords do not match.');
       return;
     }
-    pendingRef.current = true;
+    const request = new AbortController();
+    activeRequest.current = request;
     setPending(true);
     setError('');
     setMessage('');
     try {
-      const response = await fetch(`${apiOrigin}/auth/email/${mode}`, {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          mode === 'confirm'
-            ? { token, password }
-            : {
-                email: String(data.get('email') ?? ''),
-                ...(mode === 'login'
-                  ? { password }
-                  : {
-                      returnTo: emailConfirmationReturnPath(returnTo.current),
-                    }),
-              },
-        ),
-      });
-      form
-        .querySelectorAll<HTMLInputElement>('input[type="password"]')
-        .forEach((input) => {
-          input.value = '';
-        });
+      const response = await withRequestDeadline(request, (signal) =>
+        fetch(`${apiOrigin}/auth/email/${mode}`, {
+          method: 'POST',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          signal,
+          body: JSON.stringify(
+            mode === 'confirm'
+              ? { token, password }
+              : {
+                  email: String(data.get('email') ?? ''),
+                  ...(mode === 'login'
+                    ? { password }
+                    : {
+                        returnTo: emailConfirmationReturnPath(returnTo.current),
+                      }),
+                },
+          ),
+        }),
+      );
+      if (activeRequest.current !== request) return;
       if (response.status === 429) {
         setError('Too many attempts. Please try again later.');
         return;
@@ -114,6 +124,8 @@ export function EmailAuthForm({
         window.location.assign(returnTo.current);
         return;
       }
+      if (mode === 'confirm' && response.status >= 500)
+        throw new Error('UNCONFIRMED_PASSWORD_CHANGE');
       if (!response.ok) {
         setError(
           mode === 'login' && response.status === 401
@@ -139,10 +151,24 @@ export function EmailAuthForm({
           'If this address can be used, an email with a link will arrive shortly. Check your spam folder too.',
         );
     } catch {
-      setError('Could not complete the request. Please try again.');
+      if (activeRequest.current !== request) return;
+      if (mode === 'confirm') {
+        setToken('');
+        setMode('login');
+        setError(
+          'Could not confirm the password change. Try signing in with your new password or request a new reset email.',
+        );
+      } else setError('Could not complete the request. Please try again.');
     } finally {
-      pendingRef.current = false;
-      setPending(false);
+      if (activeRequest.current === request) {
+        form
+          .querySelectorAll<HTMLInputElement>('input[type="password"]')
+          .forEach((input) => {
+            input.value = '';
+          });
+        activeRequest.current = null;
+        setPending(false);
+      }
     }
   };
   const titles: Record<Mode, string> = {
@@ -186,6 +212,7 @@ export function EmailAuthForm({
                 autoComplete={
                   mode === 'login' ? 'current-password' : 'new-password'
                 }
+                disabled={pending}
                 required
                 minLength={mode === 'confirm' ? 15 : 1}
                 maxLength={256}
@@ -205,6 +232,7 @@ export function EmailAuthForm({
                   name="repeatPassword"
                   type="password"
                   autoComplete="new-password"
+                  disabled={pending}
                   required
                   minLength={15}
                   maxLength={256}

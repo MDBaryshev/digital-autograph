@@ -166,6 +166,8 @@ export const messages: Record<string, string> = {
     'Ссылка недействительна или устарела. Запросите новое письмо.',
   'Could not complete the request. Please try again.':
     'Не удалось выполнить запрос. Попробуйте ещё раз.',
+  'Could not confirm the password change. Try signing in with your new password or request a new reset email.':
+    'Не удалось подтвердить смену пароля. Попробуйте войти с новым паролем или запросите новое письмо для сброса пароля.',
   'Email or password is incorrect.': 'Неверная почта или пароль.',
   'Too many attempts. Please try again later.':
     'Слишком много попыток. Повторите позже.',
