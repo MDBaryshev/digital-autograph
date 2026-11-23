@@ -16,6 +16,16 @@ upload_pending (expired and abandoned) → draft
 
 ## Owner approval gate
 
+The owner review interface bounds approval and private-preview refresh requests
+to ten seconds, including response-body reading. A timeout keeps the loaded
+preview and reviewed Asset identity, restores the controls, and reports an
+unconfirmed approval or failed refresh. Approval retries remain explicit user
+actions against the same backend idempotency gate; no POST is retried
+automatically. Late responses cannot replace a newer attempt or restore state
+after unmount, and leaving the review cancels its request and deadline.
+If the API reports `AUTOGRAPH_NOT_AWAITING_APPROVAL`, the review links to the
+current status in My autographs and preserves the originating Wall when available.
+
 `GET /autographs/:id/preview` returns an owner-only short-lived signed URL and the cleaned Asset UUID in `assetId`. The canvas waits for that image to load before enabling approval. `POST /autographs/:id/approve` requires `{ "reviewedAssetId": "<UUID>" }` as a precondition describing what the owner saw, not as authority to select an asset. The backend takes the authenticated User ID from the session, locks the Autograph, selects its current uploaded cleaned Asset under a row lock, compares its ID with the reviewed ID, inserts one `autograph_user_approvals` row, and changes status to `awaiting_moderation` in the same PostgreSQL transaction. A different asset ID fails closed. A repeated call with matching persisted evidence succeeds without another insert; state/evidence disagreement fails closed.
 
 The approval row stores `autograph_id`, `user_id`, `cleaned_asset_id`, and `approved_at`. Foreign keys use restrictive deletion and a unique Autograph index limits this MVP lifecycle to one approval. A database trigger rejects approval-row UPDATE/DELETE; another rejects mutation of an already approved cleaned Asset. The approval binds to Asset identity and cannot silently transfer to a replacement derivative. If future reprocessing produces a new cleaned Asset, it needs a deliberately new approval workflow. This PR provides no such workflow. Existing `awaiting_approval` records remain private without automatic retention cleanup.

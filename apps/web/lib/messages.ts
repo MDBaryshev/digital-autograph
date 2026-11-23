@@ -433,6 +433,8 @@ export const messages: Record<string, string> = {
     'Сессия истекла. Войди снова и повтори попытку.',
   'Approval could not be confirmed. Retry safely; this will not create a duplicate approval.':
     'Не удалось подтвердить одобрение. Повторная попытка безопасна и не создаст дубликат.',
+  'The status of this autograph has changed.':
+    'Статус этого автографа изменился.',
   'Could not refresh the private preview. Try again.':
     'Не удалось обновить приватный предпросмотр. Повтори попытку.',
   'Preview could not be loaded. Refresh it before approving.':
