@@ -9,11 +9,11 @@ test('a visitor can draw and edit a demo autograph with the keyboard without upl
     if (['POST', 'PUT', 'PATCH'].includes(request.method()))
       writes.push(request.url());
   });
-  await page.goto('/');
+  await page.goto('/design-lab');
   const dock = page.getByRole('navigation', { name: 'Product navigation' });
   await expect(dock.getByRole('link', { name: 'Home' })).toHaveAttribute(
-    'aria-current',
-    'page',
+    'href',
+    '/',
   );
 
   const place = page.getByRole('button', {
@@ -78,12 +78,12 @@ test('an invitation opens a real Wall and its selection offers a way back to the
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto('/');
   await page.getByText('Open an invitation', { exact: true }).click();
-  const invitation = page.getByLabel('Paste your Destka invitation link');
+  const invitation = page.getByLabel('Paste your supcube invitation link');
   await invitation.fill(`https://example.test/walls/${e2eWallId}`);
   await invitation.press('Enter');
   await expect(invitation).toBeFocused();
   await expect(page.getByRole('main').getByRole('alert')).toHaveText(
-    'Paste a link to a Wall on destka.ru.',
+    'Paste the Wall link from your invitation.',
   );
   await invitation.fill(
     `https://destka.ru/walls/${e2eWallId}?source=invitation`,

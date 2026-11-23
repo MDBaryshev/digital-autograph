@@ -2,7 +2,7 @@ import { e2eUserId, expect, test } from './fixtures';
 
 test.use({ uiLocale: 'ru' });
 
-test('Destka language and theme persist while an unfinished autograph survives switching', async ({
+test('supcube language and theme persist while an unfinished autograph survives switching', async ({
   page,
   scenario,
 }) => {
@@ -10,9 +10,9 @@ test('Destka language and theme persist while an unfinished autograph survives s
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'Оставь свой автограф.',
+    /^Твой почерк\./,
   );
-  await expect(page).toHaveTitle('Destka');
+  await expect(page).toHaveTitle('supcube');
   await page.goto('/me/settings');
   await page
     .getByRole('combobox', { name: 'Цветовая тема' })
@@ -68,7 +68,7 @@ test('Destka language and theme persist while an unfinished autograph survives s
   const second = await actor.newPage();
   await second.goto(`${web}/me`);
   await expect(second.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(second).toHaveTitle('Your account | Destka');
+  await expect(second).toHaveTitle('Your account | supcube');
   // Language preference has no authority to mutate or publish an autograph.
   const records = await scenario.database.pool.query(
     'SELECT count(*)::int AS count FROM autographs',
