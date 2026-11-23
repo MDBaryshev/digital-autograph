@@ -3,6 +3,7 @@ import { importProviderAvatar } from '@digital-autograph/integrations';
 import { registerAppearance } from './appearance';
 import { registerAiAutographs } from './ai-autographs';
 import { registerAccountWorkspace } from './account-workspace';
+import { registerWallFeedRoutes } from './walls/feed-http';
 import { loadApiStartupConfig } from './startup-config';
 import type { LegalHttp } from './legal-http';
 import {
@@ -32,6 +33,7 @@ import {
   createPgProviderIdentityRepository,
   createPgSessionRepository,
   createPgWallRepository,
+  createPgWallFeedRepository,
   createPgPlacementHistoryRepository,
   createPgFreeClaimRepository,
   createPgPublicPlacementMediaRepository,
@@ -289,6 +291,7 @@ export async function startApi(
     config.CREATOR_PROFILE_PUBLICATION_APPROVED,
   );
   registerAiAutographs(app, database.pool, storage, openRouter);
+  registerWallFeedRoutes(app, createPgWallFeedRepository(database.pool));
   let closing = false;
 
   const shutdown = async (): Promise<void> => {

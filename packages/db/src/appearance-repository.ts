@@ -41,10 +41,11 @@ export function createPgAppearanceRepository(pool: Pool) {
         );
         if (active.rowCount !== 1) throw Error('FORBIDDEN');
         await c.query(
-          `INSERT INTO account_appearance(user_id,title,description,avatar_data_url,cover_data_url,avatar_source)
-          VALUES($1,$2,$3,$4,$5,$7) ON CONFLICT(user_id) DO UPDATE SET title=excluded.title,description=excluded.description,
+          `INSERT INTO account_appearance(user_id,title,description,avatar_data_url,cover_data_url,avatar_source,public_updated_at)
+          VALUES($1,$2,$3,$4,$5,$7,clock_timestamp()) ON CONFLICT(user_id) DO UPDATE SET title=excluded.title,description=excluded.description,
           avatar_data_url=CASE WHEN $6 THEN account_appearance.provider_avatar_data_url ELSE excluded.avatar_data_url END,
-          cover_data_url=excluded.cover_data_url,avatar_source=excluded.avatar_source,updated_at=clock_timestamp()`,
+          cover_data_url=excluded.cover_data_url,avatar_source=excluded.avatar_source,
+          public_updated_at=clock_timestamp(),updated_at=clock_timestamp()`,
           [
             userId,
             input.title,

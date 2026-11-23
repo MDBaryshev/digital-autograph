@@ -1,5 +1,51 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  'Wall feed': 'Лента стен',
+  'Discover Walls and keep up with the creators you follow.':
+    'Открывай новые стены и следи за обновлениями авторов.',
+  'Feed views': 'Разделы ленты',
+  'For you': 'Для вас',
+  Following: 'Подписки',
+  'Follow creator': 'Подписаться',
+  'Unfollow creator': 'Отписаться',
+  'Following this creator': 'Ты подписан на этого автора.',
+  'Sign in to follow': 'Войти, чтобы подписаться',
+  'Checking follow…': 'Проверяем подписку…',
+  'Could not confirm your follow.': 'Не удалось проверить подписку.',
+  'Check again': 'Проверить ещё раз',
+  'Feed visibility': 'Показ в ленте',
+  'Checking feed visibility…': 'Проверяем видимость в ленте…',
+  'Let people discover this public Wall in recommendations.':
+    'Разреши показывать эту публичную стену в рекомендациях.',
+  'Followers can see this Wall even when recommendations are off.':
+    'Подписчики видят эту стену, даже если рекомендации выключены.',
+  'Show in recommendations': 'Показывать в рекомендациях',
+  'Remove from recommendations': 'Убрать из рекомендаций',
+  'Could not confirm feed visibility.':
+    'Не удалось проверить видимость стены в ленте.',
+  'You follow this creator': 'Из подписок',
+  'You signed this Wall': 'Ты подписал эту стену',
+  'Related Walls': 'По твоим интересам',
+  Discover: 'Рекомендация',
+  'Sign in to see your follows': 'Войди, чтобы открыть подписки',
+  'Follow a creator to see updates to their Wall here.':
+    'Подпишись на автора, чтобы видеть обновления его стены здесь.',
+  'Walls in your feed': 'Стены в ленте',
+  'Loading Walls…': 'Загружаем стены…',
+  'No Walls from your follows yet': 'Здесь появятся стены из твоих подписок',
+  'No Walls in your feed yet': 'Пока здесь нет стен',
+  'Open a Wall from an invitation or follow a creator to start your feed.':
+    'Открой стену по приглашению или подпишись на автора, чтобы начать собирать ленту.',
+  'Explore Walls': 'Посмотреть стены',
+  'Refresh feed': 'Обновить ленту',
+  '{count} of {total} places taken': 'Занято {count} из {total} мест',
+  'Placement activity': 'Изменились размещения',
+  'Wall updated': 'Стена обновилась',
+  'This feed page has expired. Refresh the feed to continue.':
+    'Лента устарела. Обнови её, чтобы продолжить.',
+  'Could not load Walls. Check your connection and try again.':
+    'Не удалось загрузить стены. Проверь соединение и попробуй ещё раз.',
+  'Load more Walls': 'Показать ещё стены',
   Gold: 'Золото',
   Silver: 'Серебро',
   Bronze: 'Бронза',

@@ -52,11 +52,13 @@
 .homeLink,
 .dockLabel,
 .studioLink svg,
+.feedLink svg,
 .accountIcon {
   display: none;
 }
 
 .studioLink,
+.feedLink,
 .accountLink,
 .toggle {
   display: inline-flex;
@@ -71,7 +73,9 @@
 }
 
 .studioLink:hover,
+.feedLink:hover,
 .studioLink[aria-current],
+.feedLink[aria-current],
 .accountLink:hover,
 .accountLink[aria-current],
 .accountLink[data-section] {
@@ -79,12 +83,14 @@
 }
 
 .studioLink,
+.feedLink,
 .accountLink {
   min-width: 0;
   padding-inline: 0.65rem;
 }
 
 .studioLink[aria-current],
+.feedLink[aria-current],
 .accountLink[aria-current],
 .accountLink[data-section] {
   background: var(--brand-color-primarySoft);
@@ -175,6 +181,7 @@
 
   .dockLabel,
   .studioLink svg,
+  .feedLink svg,
   .accountIcon {
     display: block;
   }
@@ -183,7 +190,7 @@
     position: fixed;
     inset: auto 0 0;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     min-height: var(--mobile-dock-height);
     gap: 0.35rem;
     padding: 0.35rem 0.55rem max(0.35rem, env(safe-area-inset-bottom));
@@ -193,6 +200,7 @@
 
   .homeLink,
   .studioLink,
+  .feedLink,
   .accountLink {
     display: flex;
     flex-direction: column;
