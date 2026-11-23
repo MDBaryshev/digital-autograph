@@ -1,0 +1,42 @@
+[
+  {
+    "type": "terms_of_use",
+    "sourceFile": "user-agreement-destka-20261010.md",
+    "sourceHash": "683da46a621c5ddf0fa9c9f8e5da6947be9110e0eddffbb036c76ef814b54107",
+    "file": "user-agreement-destka-20261105.md",
+    "version": "1.1-destka-20261105",
+    "hash": "87a698c62178e506f15541ad7ebba4306fac216e1a1a5803e4c35e35dea47ca8",
+    "status": "draft, not publication approval",
+    "changes": "URL completion and edition header; explicit 300-second reservation / 2700-second paid protection where applicable. Consumer remedies retained."
+  },
+  {
+    "type": "community_guidelines",
+    "sourceFile": "content-rules-destka-20261010.md",
+    "sourceHash": "9b096d9b5040f6f56b3919a948f4c2baeb063c0764d38317604dc57f3a4fe4b5",
+    "file": "content-rules-destka-20261105.md",
+    "version": "1.1-destka-20261105",
+    "hash": "e9036d8677684677aad89a4760b33d516a2461fb70b16e471c40da431a8e01be",
+    "status": "draft, not publication approval",
+    "changes": "URL completion and edition header; explicit 300-second reservation / 2700-second paid protection where applicable. Consumer remedies retained."
+  },
+  {
+    "type": "public_offer",
+    "sourceFile": "public-offer-destka-20261010.md",
+    "sourceHash": "45ac7dd0d5a258e6684db6298f03f55cf60ea4f87f06e10ef8f2efa35394d5be",
+    "file": "public-offer-destka-20261105.md",
+    "version": "1.1-destka-20261105",
+    "hash": "b1414da3e3e1e403254156d7269211c883a662c73fac4edcf179b528d43859cd",
+    "status": "draft, not publication approval",
+    "changes": "URL completion and edition header; explicit 300-second reservation / 2700-second paid protection where applicable. Consumer remedies retained."
+  },
+  {
+    "type": "refund_policy",
+    "sourceFile": "refund-policy-destka-20261010.md",
+    "sourceHash": "9249777a71aacc018162a1261fb75f44af3c764ebe18668b5c10d9b44397b7fc",
+    "file": "refund-policy-destka-20261105.md",
+    "version": "1.1-destka-20261105",
+    "hash": "8049e499d19aeb81fc2075fa33fd6716e32e41c56bf35b6e58549a38596c08f6",
+    "status": "draft, not publication approval",
+    "changes": "URL completion and edition header; explicit 300-second reservation / 2700-second paid protection where applicable. Consumer remedies retained."
+  }
+]

@@ -1,3 +1,4 @@
+import { paidProtectionSecondsSql } from './placement-protection';
 import {
   isPublicWall,
   wallSlotCount,
@@ -28,6 +29,9 @@ type WallRow = {
 type SlotRow = { id: string; position: number };
 
 type PublicWallRow = {
+  server_now: Date;
+  reservation_expires_at: Date | null;
+  takeover_available_at: Date | null;
   appearance: WallAppearance | null;
   id: string;
   creator_id: string;
@@ -179,7 +183,11 @@ export function createPgWallRepository(pool: Pool): WallRepository {
 
     async findPublicWall(wallId): Promise<PublicWall | null> {
       const result = await pool.query<PublicWallRow>(
-        `SELECT w.id, w.status, w.start_at, w.end_at, w.slot_count,
+        `WITH snapshot AS MATERIALIZED (SELECT statement_timestamp() AS now)
+         SELECT snapshot.now AS server_now,
+                r.expires_at AS reservation_expires_at,
+                p.started_at + COALESCE(${paidProtectionSecondsSql}, pc.guaranteed_visibility_seconds) * interval '1 second' AS takeover_available_at,
+                w.id, w.status, w.start_at, w.end_at, w.slot_count,
                 c.id AS creator_id, cp.slug, cp.display_name,
                 CASE WHEN ap.user_id IS NOT NULL THEN json_build_object('title',ap.title,'description',ap.description,'avatarDataUrl',ap.avatar_data_url,'coverDataUrl',ap.cover_data_url) ELSE NULL END AS appearance,
                 s.id AS slot_id, s.position,
@@ -200,11 +208,16 @@ export function createPgWallRepository(pool: Pool): WallRepository {
                   AND ca.height BETWEEN 1 AND 2048
                   THEN true ELSE false END AS media_available
          FROM walls w
+         CROSS JOIN snapshot
+         LEFT JOIN pricing_config_versions pc ON pc.id = w.pricing_config_id
          JOIN creators c ON c.id = w.creator_id
          JOIN creator_profiles cp ON cp.creator_id = c.id
          LEFT JOIN account_appearance ap ON ap.user_id=c.owner_user_id
          LEFT JOIN slots s ON s.wall_id = w.id
          LEFT JOIN placements p ON p.slot_id = s.id AND p.ended_at IS NULL
+         LEFT JOIN takeover_reservations r ON r.slot_id = s.id
+           AND r.target_placement_id = p.id AND r.status = 'active'
+           AND r.expires_at > snapshot.now
          LEFT JOIN autographs a ON a.id = p.autograph_id
          LEFT JOIN autograph_user_approvals ua ON ua.autograph_id = a.id
          LEFT JOIN autograph_assets ca ON ca.autograph_id = a.id
@@ -225,6 +238,8 @@ export function createPgWallRepository(pool: Pool): WallRepository {
                 id: row.slot_id,
                 position: row.position,
                 occupied: row.placement_id !== null,
+                reservationExpiresAt: row.reservation_expires_at,
+                takeoverAvailableAt: row.takeover_available_at,
                 currentPlacement:
                   row.placement_id &&
                   row.placement_source &&
@@ -244,6 +259,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
       assertSlotStructure(first.slot_count, slots);
       return {
         id: first.id,
+        serverNow: first.server_now,
         status: first.status,
         startAt: first.start_at,
         endAt: first.end_at,

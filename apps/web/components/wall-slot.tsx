@@ -1,7 +1,8 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { remainingPaymentTime } from '../lib/slot-time';
 import { CubePreview, CubeViewer, type CubeDetails } from './autograph-cube';
 import { placementSourceLabel } from '../lib/placement-history-api';
 import type { PublicWall } from '../lib/public-wall-api';
@@ -17,8 +18,12 @@ export function WallSlot({
   selected = false,
   arrived = false,
   onAction,
+  now = Date.now(),
+  paidAction,
 }: {
   slot: Slot;
+  now?: number;
+  paidAction?: ReactNode;
   apiOrigin: string;
   actionLabel?: string;
   actionDisabled?: boolean;
@@ -35,6 +40,9 @@ export function WallSlot({
   const podiumLabel = ['Gold place', 'Silver place', 'Bronze place'][
     slot.position
   ];
+  const reserved = Boolean(slot.reservationExpiresAt);
+  const protectedUntil =
+    slot.takeoverAvailableAt && Date.parse(slot.takeoverAvailableAt) > now;
   const mediaPath = slot.currentPlacement?.mediaPath;
   const showMedia = Boolean(mediaPath && failedPath !== mediaPath);
 
@@ -69,6 +77,7 @@ export function WallSlot({
       tabIndex={-1}
       className={styles.slot}
       data-podium={podium}
+      data-reserved={reserved || undefined}
       data-selected={selected ? '' : undefined}
       data-empty={slot.occupied ? undefined : ''}
       data-arrived={arrived ? '' : undefined}
@@ -79,6 +88,7 @@ export function WallSlot({
           type="button"
           className={styles.cubeOpen}
           aria-haspopup="dialog"
+          disabled={reserved}
           aria-label={t('Explore cube in slot {place}', { place: number })}
           onClick={() => setViewing(true)}
         >
@@ -90,7 +100,7 @@ export function WallSlot({
           className={styles.slotAction}
           type="button"
           aria-label={t(actionLabel)}
-          disabled={actionDisabled}
+          disabled={actionDisabled || reserved}
           aria-expanded={selected}
           onClick={onAction}
         >
@@ -102,6 +112,7 @@ export function WallSlot({
           type="button"
           className={styles.cubeOpen}
           aria-haspopup="dialog"
+          disabled={reserved}
           aria-label={t('Explore cube in slot {place}', { place: number })}
           onClick={() => setViewing(true)}
         >
@@ -140,7 +151,11 @@ export function WallSlot({
             <div>
               <p>{t('Autograph unavailable')}</p>
               {mediaPath && (
-                <button type="button" onClick={() => setFailedPath(null)}>
+                <button
+                  type="button"
+                  disabled={reserved}
+                  onClick={() => setFailedPath(null)}
+                >
                   {t('Retry autograph')}
                 </button>
               )}
@@ -150,6 +165,19 @@ export function WallSlot({
             {t('Current placement')}
             {details.detail ? ` · ${details.detail}` : ''}
           </p>
+          {protectedUntil && !reserved && (
+            <p>
+              {t('Protected from takeover for')}{' '}
+              <span role="timer" aria-live="off">
+                {remainingPaymentTime(slot.takeoverAvailableAt!, now)}
+              </span>
+            </p>
+          )}
+          {paidAction && (
+            <div className={reserved ? styles.reservationAction : undefined}>
+              {paidAction}
+            </div>
+          )}
         </div>
       ) : !actionLabel ? (
         <p className={styles.emptyLabel}>{t('Empty slot')}</p>
@@ -159,6 +187,7 @@ export function WallSlot({
           type="button"
           className={styles.cubeInspect}
           aria-haspopup="dialog"
+          disabled={reserved}
           aria-label={t('Explore cube in slot {place}', { place: number })}
           onClick={() => setViewing(true)}
         >
@@ -167,6 +196,21 @@ export function WallSlot({
       )}
       {viewing && (
         <CubeViewer details={details} onClose={() => setViewing(false)} />
+      )}
+      {reserved && (
+        <div className={styles.reservationOverlay}>
+          <strong>{t('Reserved for payment')}</strong>
+          <span role="timer" aria-live="off">
+            {Date.parse(slot.reservationExpiresAt!) > now
+              ? remainingPaymentTime(slot.reservationExpiresAt!, now)
+              : t('Checking availability…')}
+          </span>
+          <small>
+            {t(
+              'The buyer has 5 minutes to pay. Availability is confirmed by the server.',
+            )}
+          </small>
+        </div>
       )}
     </li>
   );

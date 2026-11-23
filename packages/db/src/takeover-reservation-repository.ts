@@ -1,3 +1,4 @@
+import { paidProtectionSecondsSql } from './placement-protection';
 import {
   isWallTakeoverEligible,
   type WallStatus,
@@ -168,9 +169,10 @@ async function createInTransaction(
     user_id: string;
     started_at: Date;
     ended_at: Date | null;
+    protection_seconds: number | null;
   }>(
-    `SELECT slot_id, user_id, started_at, ended_at FROM placements
-     WHERE id = $1::uuid FOR SHARE`,
+    `SELECT p.slot_id, p.user_id, p.started_at, p.ended_at, ${paidProtectionSecondsSql} AS protection_seconds FROM placements p
+     WHERE p.id = $1::uuid FOR SHARE OF p`,
     [quote.target_placement_id],
   );
   const target = targetResult.rows[0];
@@ -234,7 +236,9 @@ async function createInTransaction(
     throw new ReservationError('QUOTE_TARGET_STALE');
   }
   const availableAt = new Date(
-    target.started_at.getTime() + config.guaranteed_visibility_seconds * 1000,
+    target.started_at.getTime() +
+      (target.protection_seconds ?? config.guaranteed_visibility_seconds) *
+        1000,
   );
   if (time.now < availableAt) {
     throw new ReservationError('TAKEOVER_COOLDOWN_ACTIVE');

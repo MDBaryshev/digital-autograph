@@ -104,7 +104,7 @@ async function displayedConfirmation(reservationId: string) {
     terms: {
       amountMinor: r.amount_minor,
       currency: 'RUB' as const,
-      guaranteedVisibilitySeconds: r.guaranteed_visibility_seconds,
+      guaranteedVisibilitySeconds: 2700,
       reservationExpiresAt: r.expires_at.toISOString(),
       targetPlacementId: r.target_placement_id,
       pricingConfigId: r.pricing_config_id,
@@ -274,7 +274,11 @@ async function autographFixture(
 }
 
 async function setup(shortTtlSeconds?: number, visibilitySeconds = 0) {
-  const f = await fixture(1, visibilitySeconds);
+  const f = await fixture(
+    1,
+    visibilitySeconds,
+    Math.max(600, visibilitySeconds + 1),
+  );
   const buyer = await person();
   const autographId = await autographFixture(buyer.id);
   const q = await new TakeoverQuoteService(
@@ -1984,7 +1988,7 @@ it('owner checkout summary and evidence cannot be reused for a different subject
     amountMinor: (await displayedConfirmation(f.reservationId)).terms
       .amountMinor,
     slotNumber: 1,
-    guaranteedVisibilitySeconds: 3,
+    guaranteedVisibilitySeconds: 2700,
     autographId: f.autographId,
   });
   await expect(
@@ -2332,3 +2336,114 @@ it.each(['missing', 'foreign_user', 'wrong_hash'])(
     expect(creates).toBe(0);
   },
 );
+
+it('fulfills once with a 45-minute protection snapshot and rejects the next buyer before expiry', async () => {
+  const f = await setup(undefined, 0);
+  const summary = await repo.checkout!(
+    f.buyer.id,
+    f.reservationId,
+    f.autographId,
+  );
+  if ('existingOrderId' in summary)
+    throw new Error('Expected fresh checkout terms');
+  expect(summary.guaranteedVisibilitySeconds).toBe(2700);
+  const order = await service().create(
+    f.buyer.id,
+    f.reservationId,
+    f.autographId,
+  );
+  const attempt = (await repo.find(order.id))!;
+  succeed(attempt.providerPaymentId!);
+  const observations = await Promise.allSettled([
+    service().webhook(attempt.providerPaymentId!, 'payment.succeeded'),
+    service().webhook(attempt.providerPaymentId!, 'payment.succeeded'),
+  ]);
+  expect(observations.some((r) => r.status === 'fulfilled')).toBe(true);
+  for (const result of observations)
+    if (result.status === 'rejected')
+      expect(result.reason.message).toBe('PAYMENT_BUSY');
+  await service().webhook(attempt.providerPaymentId!, 'payment.succeeded');
+  expect(await counts(order.id)).toMatchObject({
+    status: 'fulfilled',
+    takeovers: 1,
+    active: 1,
+  });
+  const next = await person();
+  await expect(
+    new TakeoverQuoteService(
+      createPgPricingRepository(database.pool),
+    ).createQuote({
+      userId: next.id,
+      wallId: f.wallId,
+      slotId: f.slots[0]!.slotId,
+    }),
+  ).rejects.toMatchObject({ code: 'TAKEOVER_COOLDOWN_ACTIVE' });
+  const confirmation = await database.pool.query(
+    'SELECT guaranteed_visibility_seconds FROM checkout_confirmations WHERE order_id=$1',
+    [order.id],
+  );
+  expect(confirmation.rows[0].guaranteed_visibility_seconds).toBe(2700);
+  const policy = await database.pool.query(
+    'SELECT guaranteed_visibility_seconds FROM pricing_config_versions WHERE id=$1',
+    [f.configId],
+  );
+  expect(policy.rows[0].guaranteed_visibility_seconds).toBe(0);
+});
+
+it('late success after release cannot consume the next buyer reservation or replace their paid placement', async () => {
+  const f = await setup(1);
+  const first = await service().create(
+    f.buyer.id,
+    f.reservationId,
+    f.autographId,
+  );
+  const old = (await repo.find(first.id))!;
+  await new Promise((done) => setTimeout(done, 1100));
+  const next = await person();
+  const autographId = await autographFixture(next.id);
+  const q = await new TakeoverQuoteService(
+    createPgPricingRepository(database.pool),
+  ).createQuote({
+    userId: next.id,
+    wallId: f.wallId,
+    slotId: f.slots[0]!.slotId,
+  });
+  const hold = await new TakeoverReservationService(
+    createPgTakeoverReservationRepository(database.pool),
+  ).create(next.id, q.id, randomUUID());
+  const second = await service().create(
+    next.id,
+    hold.reservation.id,
+    autographId,
+  );
+  const latest = (await repo.find(second.id))!;
+  succeed(latest.providerPaymentId!);
+  await service().webhook(latest.providerPaymentId!, 'payment.succeeded');
+  succeed(old.providerPaymentId!);
+  const observations = await Promise.allSettled([
+    service().webhook(old.providerPaymentId!, 'payment.succeeded'),
+    service().webhook(old.providerPaymentId!, 'payment.succeeded'),
+  ]);
+  expect(observations.some((r) => r.status === 'fulfilled')).toBe(true);
+  for (const result of observations)
+    if (result.status === 'rejected')
+      expect(result.reason.message).toBe('PAYMENT_BUSY');
+  await service().webhook(old.providerPaymentId!, 'payment.succeeded');
+  expect(await counts(first.id)).toMatchObject({
+    status: 'paid_but_not_fulfilled',
+    takeovers: 1,
+    earnings: 0,
+    active: 1,
+  });
+  expect(await counts(second.id)).toMatchObject({
+    status: 'fulfilled',
+    takeovers: 1,
+    earnings: 1,
+    active: 1,
+  });
+  const active = await database.pool.query(
+    'SELECT user_id FROM placements WHERE slot_id=$1 AND ended_at IS NULL',
+    [f.slots[0]!.slotId],
+  );
+  expect(active.rows[0].user_id).toBe(next.id);
+});

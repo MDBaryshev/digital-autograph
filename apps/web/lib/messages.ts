@@ -840,6 +840,21 @@ export const messages: Record<string, string> = {
     'Не удалось завершить вход через VK ID.',
   'Confirm paid placement': 'Подтверждение платного размещения',
   'Your order terms': 'Условия вашего заказа',
+  'Reserved for payment': 'Забронировано для оплаты',
+  'Checking availability…': 'Проверяем доступность…',
+  'Protected from takeover for': 'Защищено от перекупки ещё',
+  'The buyer has 5 minutes to pay. Availability is confirmed by the server.':
+    'У покупателя есть 5 минут на оплату. Доступность подтверждает сервер.',
+  'Resume reservation': 'Продолжить бронирование',
+  'Reserve for 5 minutes': 'Забронировать на 5 минут',
+  'Reserving…': 'Бронируем…',
+  'Continue to payment': 'Перейти к оплате',
+  'Could not reserve. Retry the same request.':
+    'Не удалось подтвердить бронь. Повтори тот же запрос.',
+  'This slot is reserved or no longer available. Refresh the Wall.':
+    'Место забронировано или уже недоступно. Обнови стену.',
+  '1 minute': '1 мин.',
+  '{minutes} minutes': '{minutes} мин.',
   'Sign in to check your own reservation.':
     'Войдите, чтобы проверить собственное бронирование.',
   'Order status is being checked.': 'Состояние заказа уточняется.',

@@ -16,6 +16,9 @@ it('dumps and restores the actual schema and synthetic financial history in disp
   expect(evidence).toMatchObject({
     event: 'SYNTHETIC_RECOVERY_DRILL_PASS',
     financialChains: 1,
+    paidProtectionChecked: existsSync(
+      resolve('packages/db/drizzle/0027_paid_protection_45_minutes.sql'),
+    ),
     sourceUnchanged: true,
     restoredConstraintsChecked: true,
     legalSnapshotChecked: existsSync(

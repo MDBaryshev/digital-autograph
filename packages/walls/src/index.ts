@@ -47,6 +47,7 @@ export type PublicCreator = {
 };
 
 export type PublicWall = {
+  serverNow?: Date;
   appearance?: {
     title: string;
     description: string;
@@ -63,6 +64,8 @@ export type PublicWall = {
     id: string;
     position: number;
     occupied: boolean;
+    reservationExpiresAt?: Date | null;
+    takeoverAvailableAt?: Date | null;
     currentPlacement: {
       id: string;
       source: 'free_claim' | 'takeover' | 'admin';

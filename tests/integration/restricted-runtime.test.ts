@@ -288,6 +288,20 @@ it('migrates populated baseline with a non-superuser owner; separate runtime rol
   ])
     await expect(api.query(sql)).rejects.toMatchObject({ code: '42501' });
   await expect(
+    worker.query('SELECT id,placement_id FROM payment_orders LIMIT 1'),
+  ).resolves.toBeDefined();
+  await expect(
+    worker.query(
+      'SELECT order_id,guaranteed_visibility_seconds FROM checkout_confirmations LIMIT 1',
+    ),
+  ).resolves.toBeDefined();
+  await expect(
+    worker.query('SELECT amount_minor FROM payment_orders'),
+  ).rejects.toMatchObject({ code: '42501' });
+  await expect(
+    worker.query('SELECT user_id FROM checkout_confirmations'),
+  ).rejects.toMatchObject({ code: '42501' });
+  await expect(
     worker.query('SELECT * FROM payment_orders'),
   ).rejects.toMatchObject({ code: '42501' });
 });

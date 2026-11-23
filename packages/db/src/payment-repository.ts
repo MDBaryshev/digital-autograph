@@ -1,3 +1,5 @@
+import { paidProtectionSecondsSql } from './placement-protection';
+import { paidTakeoverProtectionSeconds } from '@digital-autograph/domain';
 import { checkoutDocuments } from './checkout-documents';
 import {
   type CheckoutConfirmation,
@@ -154,8 +156,9 @@ async function lockTarget(
     user_id: string;
     ended_at: Date | null;
     started_at: Date;
+    protection_seconds: number | null;
   }>(
-    'SELECT slot_id,user_id,ended_at,started_at FROM placements WHERE id=$1::uuid FOR UPDATE',
+    `SELECT p.slot_id,p.user_id,p.ended_at,p.started_at,${paidProtectionSecondsSql} AS protection_seconds FROM placements p WHERE p.id=$1::uuid FOR UPDATE OF p`,
     [targetId],
   );
   if (
@@ -211,7 +214,9 @@ async function eligible(
       !!config.rows[0] &&
       evaluatedAt.getTime() >=
         target.target.started_at.getTime() +
-          config.rows[0].guaranteed_visibility_seconds * 1000,
+          (target.target.protection_seconds ??
+            config.rows[0].guaranteed_visibility_seconds) *
+            1000,
   };
 }
 async function checkoutTerms(
@@ -219,17 +224,15 @@ async function checkoutTerms(
   r: OrderRow,
 ): Promise<CheckoutTerms> {
   const result = await db.query<{
-    guaranteed_visibility_seconds: number;
     expires_at: Date;
-  }>(
-    `SELECT c.guaranteed_visibility_seconds,r.expires_at FROM pricing_config_versions c JOIN takeover_reservations r ON r.pricing_config_id=c.id WHERE r.id=$1`,
-    [r.reservation_id],
-  );
+  }>(`SELECT expires_at FROM takeover_reservations WHERE id=$1`, [
+    r.reservation_id,
+  ]);
   const t = result.rows[0]!;
   return {
     amountMinor: r.amount_minor,
     currency: r.currency,
-    guaranteedVisibilitySeconds: t.guaranteed_visibility_seconds,
+    guaranteedVisibilitySeconds: paidTakeoverProtectionSeconds,
     reservationExpiresAt: t.expires_at.toISOString(),
     targetPlacementId: r.target_placement_id,
     pricingConfigId: r.pricing_config_id,

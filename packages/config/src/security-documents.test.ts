@@ -17,7 +17,7 @@ describe('separate security publication registry', () => {
     expect(doc!.hash).toBe(
       createHash('sha256').update(doc!.content).digest('hex'),
     );
-    expect(loadLegalDocuments()).toHaveLength(14);
+    expect(loadLegalDocuments()).toHaveLength(18);
     expect(
       loadLegalDocuments().some((d) => String(d.type) === 'security'),
     ).toBe(false);

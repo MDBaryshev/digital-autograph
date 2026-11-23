@@ -102,7 +102,7 @@ it('shows backend terms and exact three editions; checkbox and private preview a
   expect((button as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText('Тестовый создатель')).toBeTruthy();
   expect(screen.getByText('№ 3')).toBeTruthy();
-  expect(screen.getByText('60 секунд')).toBeTruthy();
+  expect(screen.getByText('1 minute')).toBeTruthy();
   for (const slug of ['offer', 'content-rules', 'refunds'])
     expect(
       screen
@@ -266,12 +266,12 @@ it('document body/hash mismatch prevents submission even if metadata says publis
 });
 
 it.each(['ru', 'en'] as const)(
-  'renders approved server prices and 900-second protection in %s',
+  'renders approved server prices and 45-minute protection in %s',
   async (locale) => {
     for (const amountMinor of ['8900', '18900', '498900']) {
       fixture({
         locale,
-        summaryPatch: { amountMinor, guaranteedVisibilitySeconds: 900 },
+        summaryPatch: { amountMinor, guaranteedVisibilitySeconds: 2700 },
       });
       await screen.findByRole('checkbox');
       const expected = new Intl.NumberFormat(
@@ -284,7 +284,7 @@ it.each(['ru', 'en'] as const)(
           .some((node) => node.textContent === expected),
       ).toBe(true);
       expect(
-        screen.getByText(locale === 'ru' ? '900 секунд' : '900 seconds'),
+        screen.getByText(locale === 'ru' ? '45 мин.' : '45 minutes'),
       ).toBeTruthy();
       cleanup();
     }

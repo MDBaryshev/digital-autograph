@@ -7,6 +7,7 @@ import {
 import { SessionService } from '../../packages/auth/src/index';
 import {
   createDatabase,
+  createPgWallRepository,
   createPgPricingRepository,
   createPgSessionRepository,
   createPgTakeoverReservationRepository,
@@ -90,6 +91,10 @@ async function fixture(
     `INSERT INTO walls (id, creator_id, pricing_config_id, status, slot_count)
      VALUES ($1::uuid, $2::uuid, $3::uuid, 'live', $4::integer)`,
     [wallId, creatorId, configId, 10],
+  );
+  await database.pool.query(
+    'INSERT INTO creator_profiles (creator_id,slug,display_name) VALUES ($1,$2,$3)',
+    [creatorId, `creator-${creatorId}`, 'Fixture creator'],
   );
   const slots: Array<{ slotId: string; placementId: string }> = [];
   for (let position = 0; position < slotCount; position++) {
@@ -192,6 +197,82 @@ describe('Takeover Reservation / Slot locking', () => {
     await database.close();
   });
 
+  it('shows the sole winner of a two-buyer race as a five-minute public hold without private identifiers', async () => {
+    const f = await fixture();
+    const buyers = await Promise.all([person(), person()]);
+    const quotes = await Promise.all(
+      buyers.map((buyer) => quote(f.wallId, f.slots[0]!.slotId, buyer.token)),
+    );
+    const results = await Promise.all(
+      buyers.map((buyer, i) =>
+        reserve(quotes[i]!.id, buyer.token, `parallel-checkout-${i}`),
+      ),
+    );
+    expect(results.map((r) => r.statusCode).sort()).toEqual([201, 409]);
+    const winner = results.findIndex((r) => r.statusCode === 201);
+    const hold = results[winner]!.json();
+    expect(Date.parse(hold.expiresAt) - Date.parse(hold.createdAt)).toBe(
+      300000,
+    );
+    const reader = createPgWallRepository(database.pool);
+    const wall = (await reader.findPublicWall(f.wallId))!;
+    const slot = wall.slots.find((s) => s.id === f.slots[0]!.slotId)!;
+    expect(slot.reservationExpiresAt?.toISOString()).toBe(hold.expiresAt);
+    expect(wall.serverNow!.getTime()).toBeLessThan(Date.parse(hold.expiresAt));
+    const json = JSON.stringify(wall);
+    for (const value of [hold.id, hold.quoteId, ...buyers.map((b) => b.id)])
+      expect(json).not.toContain(value);
+    expect(Object.keys(slot).sort()).toEqual(
+      [
+        'currentPlacement',
+        'id',
+        'occupied',
+        'position',
+        'reservationExpiresAt',
+        'takeoverAvailableAt',
+      ].sort(),
+    );
+    await cancel(hold.id, buyers[winner]!.token);
+    expect(
+      (await reader.findPublicWall(f.wallId))!.slots[0]!.reservationExpiresAt,
+    ).toBeNull();
+    const loser = 1 - winner;
+    expect(
+      (
+        await reserve(
+          quotes[loser]!.id,
+          buyers[loser]!.token,
+          `parallel-checkout-${loser}`,
+        )
+      ).statusCode,
+    ).toBe(201);
+  });
+
+  it('uses the 45-minute pinned policy for the public protection deadline and server eligibility', async () => {
+    const f = await fixture(1, 2700, 2600);
+    const buyer = await person();
+    const response = await app.inject({
+      method: 'POST',
+      url: `/walls/${f.wallId}/slots/${f.slots[0]!.slotId}/takeover-quote`,
+      headers: headers(buyer.token),
+      payload: {},
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('TAKEOVER_COOLDOWN_ACTIVE');
+    const slot = (await createPgWallRepository(database.pool).findPublicWall(
+      f.wallId,
+    ))!.slots[0]!;
+    expect(
+      slot.takeoverAvailableAt!.getTime() -
+        slot.currentPlacement!.startedAt.getTime(),
+    ).toBe(2700000);
+    expect(slot.reservationExpiresAt).toBeNull();
+    const elapsed = await fixture(1, 2700, 2701);
+    expect(
+      await quote(elapsed.wallId, elapsed.slots[0]!.slotId, buyer.token),
+    ).toHaveProperty('id');
+  });
+
   it('copies immutable Quote money and target; exact replay is one row', async () => {
     const f = await fixture();
     const buyer = await person();
@@ -229,7 +310,7 @@ describe('Takeover Reservation / Slot locking', () => {
     expect(new Date(body.expiresAt).getTime()).toBeGreaterThan(Date.now());
     expect(
       new Date(body.expiresAt).getTime() - new Date(body.createdAt).getTime(),
-    ).toBe(240_000);
+    ).toBe(300_000);
     const replay = await reserve(q.id, buyer.token, 'checkout-attempt-0001');
     expect(replay.statusCode).toBe(200);
     expect(replay.json()).toEqual(body);
@@ -354,6 +435,10 @@ describe('Takeover Reservation / Slot locking', () => {
        FROM takeover_quotes WHERE id = $1::uuid`,
       [q.id, oldHash],
     );
+    expect(
+      (await createPgWallRepository(database.pool).findPublicWall(f.wallId))!
+        .slots[0]!.reservationExpiresAt,
+    ).toBeNull();
     const nextQuote = await quote(
       f.wallId,
       f.slots[0]!.slotId,

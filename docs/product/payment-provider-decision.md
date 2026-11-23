@@ -21,17 +21,17 @@ merchant terms. See [merchant checklist](merchant-review-readiness.md),
 [owner decisions](commercial-owner-decisions.md) and
 [launch evidence](../operations/destka-launch-readiness.md).
 
-| Requirement                    | Actual implementation / remaining gate                                                                                                                 |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Backend price/reservation      | Implemented immutable quote/config and server locking; owner approved89/+100/4989 RUB and900s; decay/publication/application still pending             |
-| Primary adapter                | `packages/integrations/src/yookassa.ts`, with strict test flag/identity/amount/currency verification; real provider contract evidence remains separate |
-| Order/payment/webhook/takeover | Implemented in payment repository/domain and integration tests (EGO-100); not permission for live payment                                              |
-| Accounting                     | Creator earning rows exist; full ledger, refunds/fiscal receipts/payout are separate EGO-101/102/103/104 gates                                         |
-| Config/secrets                 | Validated server config and Lockbox mechanism implemented; no payloads inspected, no production credentials/activation confirmed                       |
-| Public/legal                   | Real homepage/core UI and legal current/version/archive routes exist; 14 legal entries remain unready, approved contacts/service/tariff still required |
-| Merchant/site                  | destka.ru currently serves a parking page; no merchant/KYB approval verified                                                                           |
-| Sandbox                        | Owner confirmed shop/externally stored test credentials 02.10; this audit made no provider API call                                                    |
-| Economics                      | Acquiring calculator exists; written merchant fees/mix/settlement and full commercial economics still needed                                           |
+| Requirement                    | Actual implementation / remaining gate                                                                                                                                                        |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend price/reservation      | Implemented immutable quote/config and server locking; owner approved89/+100/4989 RUB and2700s; decay/publication/application still pending                                                   |
+| Primary adapter                | `packages/integrations/src/yookassa.ts`, with strict test flag/identity/amount/currency verification; real provider contract evidence remains separate                                        |
+| Order/payment/webhook/takeover | Implemented in payment repository/domain and integration tests (EGO-100); not permission for live payment                                                                                     |
+| Accounting                     | Creator earning rows exist; full ledger, refunds/fiscal receipts/payout are separate EGO-101/102/103/104 gates                                                                                |
+| Config/secrets                 | Validated server config and Lockbox mechanism implemented; no payloads inspected, no production credentials/activation confirmed                                                              |
+| Public/legal                   | Real homepage/core UI and legal current/version/archive routes exist; 18 legal entries remain unready (including four proposed 1.1 editions), approved contacts/service/tariff still required |
+| Merchant/site                  | destka.ru currently serves a parking page; no merchant/KYB approval verified                                                                                                                  |
+| Sandbox                        | Owner confirmed shop/externally stored test credentials 02.10; this audit made no provider API call                                                                                           |
+| Economics                      | Acquiring calculator exists; written merchant fees/mix/settlement and full commercial economics still needed                                                                                  |
 
 ## Comparison template
 
