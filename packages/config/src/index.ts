@@ -583,4 +583,7 @@ export function loadVkIdAuthConfig(environment = process.env) {
   }
 }
 
-export { loadOpenRouterConfig } from './openrouter';
+export {
+  loadOpenRouterConfig,
+  loadTelegramModerationConfig,
+} from './openrouter';

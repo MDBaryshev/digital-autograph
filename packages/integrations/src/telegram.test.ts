@@ -22,6 +22,8 @@ type TokenClaims = {
   exp?: number;
   nonce?: string;
   picture?: string;
+  name?: string;
+  preferred_username?: string;
 };
 
 function signedIdToken(overrides: TokenClaims = {}): string {
@@ -199,12 +201,17 @@ describe('Telegram production OIDC adapter with local discovery and JWKS', () =>
   });
 });
 
-it('requests optional profile scope and accepts only the verified token photo claim', async () => {
+it('reads profile fields from the verified ID token when profile scope is enabled', async () => {
   const client = createTelegramOidcClient(
     { clientId, clientSecret: 'testsecret', redirectUri, includeProfile: true },
     {
       fetch: fakeFetch(
-        () => signedIdToken({ picture: 'https://t.me/i/userpic/320/test.jpg' }),
+        () =>
+          signedIdToken({
+            picture: 'https://cdn4.telesco.pe/file/sample',
+            name: 'Лиса',
+            preferred_username: 'fox_42',
+          }),
         [],
       ),
     },
@@ -226,6 +233,9 @@ it('requests optional profile scope and accepts only the verified token photo cl
     }),
   ).toEqual({
     subject: 'telegram-sub',
-    picture: 'https://t.me/i/userpic/320/test.jpg',
+    picture: 'https://cdn4.telesco.pe/file/sample',
+    name: 'Лиса',
+    username: 'fox_42',
+    issuedAt: expect.any(Number),
   });
 });

@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ModerationApiError,
   moderationApi,
+  reasonLabels,
   rejectionReasons,
   type QueueItem,
   type PrivatePreview,
@@ -15,17 +16,6 @@ import {
   type QueuePage,
 } from '../lib/moderation-api';
 import styles from './moderation-workspace.module.css';
-
-const reasonLabels: Record<RejectionReason, string> = {
-  SEXUAL_CONTENT: 'Explicit sexual content',
-  HATE_OR_EXTREMISM: 'Hate or extremist content',
-  THREATS_OR_VIOLENCE: 'Threats or graphic violence',
-  PERSONAL_DATA: 'Sensitive personal data',
-  IMPERSONATION_OR_DECEPTIVE: 'Deceptive impersonation',
-  ILLEGAL_OR_PROHIBITED: 'Illegal or prohibited content',
-  NOT_AN_AUTOGRAPH: 'Not an autograph',
-  OTHER_POLICY_VIOLATION: 'Other policy violation',
-};
 
 export function ModerationWorkspace({ apiOrigin }: { apiOrigin: string }) {
   return <ModerationQueue key={apiOrigin} apiOrigin={apiOrigin} />;

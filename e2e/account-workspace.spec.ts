@@ -14,6 +14,7 @@ test('maximum-length public names remain readable without horizontal overflow', 
     },
   );
   expect(response.status()).toBe(200);
+  await scenario.approveProfileSubmission((await response.json()).submissionId);
   await page.goto((process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000') + '/me');
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   for (const width of [320, 390, 640, 768, 1024, 1440]) {
@@ -41,7 +42,30 @@ test('owner sets up a profile, creates a draft and explicitly publishes their ow
   await page
     .getByRole('button', { name: 'Сохранить профиль', exact: true })
     .click();
-  await expect(page.getByRole('status')).toHaveText('Изменения сохранены.');
+  await expect(page.getByText('Изменения профиля на проверке.')).toBeVisible();
+  const moderator = await scenario.actorContext(scenario.ownerId);
+  const review = await moderator.newPage();
+  await review.goto(web + '/moderation');
+  await review.getByRole('button', { name: 'Профили', exact: true }).click();
+  await review.getByRole('button', { name: /Публичный профиль ·/ }).click();
+  await expect(review.getByText('Александр', { exact: true })).toBeVisible();
+  await review.setViewportSize({ width: 320, height: 850 });
+  expect(
+    await review.evaluate(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  await review.screenshot({
+    path: testInfo.outputPath('profile-review-320.png'),
+    fullPage: true,
+  });
+  await review.getByRole('button', { name: 'Одобрить', exact: true }).click();
+  await expect(
+    review.getByText('Изменения профиля опубликованы.'),
+  ).toBeVisible();
+  await page.reload();
   await expect(
     page.getByRole('link', { name: 'Александр', exact: true }),
   ).toBeVisible();

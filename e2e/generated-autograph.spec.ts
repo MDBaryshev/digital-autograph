@@ -22,8 +22,18 @@ test('signed-in owner creates a ten-place Wall, chooses a generated variant, rev
   await page.goto('/me/settings');
   await page.getByLabel('Display name', { exact: true }).fill('Generated Fan');
   await page.getByLabel('Username', { exact: true }).fill('generated-fan');
+  const submittedProfile = page.waitForResponse(
+    (response) =>
+      response.url() === api + '/me/profile' &&
+      response.request().method() === 'PUT',
+  );
   await page.getByRole('button', { name: 'Save profile', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Changes saved.');
+  await expect(
+    page.getByText('Profile changes are awaiting moderation.'),
+  ).toBeVisible();
+  await scenario.approveProfileSubmission(
+    (await (await submittedProfile).json()).submissionId,
+  );
   await page.goto('/me/walls');
   await page
     .getByRole('button', { name: 'Create draft Wall', exact: true })

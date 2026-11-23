@@ -154,6 +154,53 @@ export const messages: Record<string, string> = {
     'Сессия истекла. Войди снова, чтобы управлять стеной.',
   'This Wall is archived. Your account cannot create another Wall.':
     'Стена архивирована. Создать другую стену в этом аккаунте нельзя.',
+  'Content moderation': 'Модерация контента',
+  'Telegram profile': 'Профиль Telegram',
+  'Automated check flagged this profile.':
+    'Автопроверка отметила этот профиль.',
+  'Automated check needs a human decision.':
+    'Автопроверка передала профиль модератору.',
+  'Automated check was unavailable.': 'Автопроверка была недоступна.',
+  'Automated check reached its daily limit.':
+    'Достигнут дневной лимит автопроверок.',
+  'Telegram profile review complete.': 'Проверка профиля Telegram завершена.',
+  'Your Telegram profile is being checked.':
+    'Твой профиль Telegram на проверке.',
+  'Update your Telegram profile and sign in again to request a new check.':
+    'Измени профиль в Telegram и войди снова, чтобы отправить его на проверку.',
+  Autographs: 'Автографы',
+  'Moderation sections': 'Разделы модерации',
+  Profiles: 'Профили',
+  'Review submitted profiles and autographs before publication.':
+    'Проверь заявки на публикацию профилей и автографов.',
+  'Loading submissions…': 'Загружаем заявки…',
+  'Review could not be confirmed. Refresh the queue before retrying.':
+    'Не удалось подтвердить действие. Обнови очередь и попробуй ещё раз.',
+  'This username is already taken. The owner can submit a different one.':
+    'Этот ник уже занят. Владелец может отправить заявку с другим ником.',
+  'Approved profile changes are now published.':
+    'Изменения профиля опубликованы.',
+  'Changes returned to the owner for correction.':
+    'Заявка возвращена владельцу на исправление.',
+  'Pending profiles': 'Профили на проверке',
+  'Review selected profile': 'Проверка профиля',
+  'Select a profile submission to review.': 'Выбери заявку для проверки.',
+  'Return for correction': 'Вернуть на исправление',
+  'Profile changes are awaiting moderation.': 'Изменения профиля на проверке.',
+  'Profile changes need correction.': 'Изменения профиля нужно исправить.',
+  'Profile changes approved.': 'Изменения профиля одобрены.',
+  'Submit your Wall appearance for review. Approved changes appear on your Wall.':
+    'Отправь оформление на проверку. Одобренные изменения появятся на твоей стене.',
+  'Wall appearance submitted for moderation.':
+    'Оформление стены отправлено на проверку.',
+  'Wall appearance is awaiting moderation.': 'Оформление стены на проверке.',
+  'Wall appearance needs correction.': 'Оформление стены нужно исправить.',
+  'Wall appearance approved.': 'Оформление стены одобрено.',
+  'This form is out of date. Reload it before submitting again.':
+    'Форма устарела. Перезагрузи страницу перед повторной отправкой.',
+  'Daily submission limit reached. Try again later.':
+    'Достигнут дневной лимит заявок. Попробуй позже.',
+  'Use latest sign-in photo': 'Использовать новое фото из аккаунта',
   'Invite to this Wall': 'Приглашение на стену',
   'Invite your people': 'Позови своих',
   'One Wall. Ten places. Send the link to someone who should be here.':

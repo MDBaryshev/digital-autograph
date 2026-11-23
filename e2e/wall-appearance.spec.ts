@@ -20,6 +20,22 @@ test('owner imports a private account avatar, can replace it, and publishes resp
   );
   const context = await scenario.actorContext(scenario.ownerId);
   const page = await context.newPage();
+  const submitAndApprove = async () => {
+    const submitted = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/me/appearance') &&
+        response.request().method() === 'PUT',
+    );
+    await page
+      .getByRole('button', { name: 'Save Wall appearance', exact: true })
+      .click();
+    await expect(
+      page.getByText('Wall appearance submitted for moderation.'),
+    ).toBeVisible();
+    await scenario.approveProfileSubmission(
+      (await (await submitted).json()).submissionId,
+    );
+  };
   await page.goto(
     (process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000') + '/me/settings',
   );
@@ -45,10 +61,7 @@ test('owner imports a private account avatar, can replace it, and publishes resp
   await expect(
     page.getByRole('img', { name: 'Cover preview', exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole('button', { name: 'Save Wall appearance', exact: true })
-    .click();
-  await expect(page.getByRole('status')).toHaveText('Wall appearance saved.');
+  await submitAndApprove();
   const stored = await scenario.database.pool.query(
     'SELECT avatar_data_url FROM account_appearance WHERE user_id=$1',
     [scenario.ownerId],
@@ -96,17 +109,11 @@ test('owner imports a private account avatar, can replace it, and publishes resp
   }
   // Choosing initials survives reload and a later text-only update.
   await page.getByLabel('Avatar source').selectOption('none');
-  await page
-    .getByRole('button', { name: 'Save Wall appearance', exact: true })
-    .click();
-  await expect(page.getByRole('status')).toHaveText('Wall appearance saved.');
+  await submitAndApprove();
   await page.reload();
   await expect(page.getByLabel('Avatar source')).toHaveValue('none');
   await page.getByLabel('Wall name', { exact: true }).fill('Initials only');
-  await page
-    .getByRole('button', { name: 'Save Wall appearance', exact: true })
-    .click();
-  await expect(page.getByRole('status')).toHaveText('Wall appearance saved.');
+  await submitAndApprove();
   const result = await scenario.database.pool.query(
     'SELECT avatar_source,avatar_data_url FROM account_appearance WHERE user_id=$1',
     [scenario.ownerId],

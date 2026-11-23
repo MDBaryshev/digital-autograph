@@ -197,6 +197,20 @@
       "when": 1793903895688,
       "tag": "0027_paid_protection_45_minutes",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794348228096,
+      "tag": "0028_profile_moderation",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794350070276,
+      "tag": "0029_telegram_profile_moderation",
+      "breakpoints": true
     }
   ]
 }

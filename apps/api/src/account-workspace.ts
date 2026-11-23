@@ -42,7 +42,13 @@ export function registerAccountWorkspace(
       } catch (error) {
         if (error instanceof AccountWorkspaceError)
           return reply
-            .code(error.code === 'FORBIDDEN' ? 403 : 409)
+            .code(
+              error.code === 'FORBIDDEN'
+                ? 403
+                : error.code === 'SUBMISSION_LIMIT'
+                  ? 429
+                  : 409,
+            )
             .send({ error: { code: error.code } });
         throw error;
       }

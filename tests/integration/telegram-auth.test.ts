@@ -9,10 +9,15 @@ import { GoogleLoginService } from '../../apps/api/src/auth/google-login';
 import type { AuthHttpConfig } from '../../apps/api/src/auth/http';
 import { TelegramLoginService } from '../../apps/api/src/auth/telegram-login';
 import {
+  captureTelegramProfile,
+  screenNextTelegramProfile,
+} from '../../apps/api/src/telegram-profile-screening';
+import {
   createDatabase,
   createPgOAuthAttemptRepository,
   createPgProviderIdentityRepository,
   createPgSessionRepository,
+  createPgTelegramProfileRepository,
   eq,
 } from '../../packages/db/src/index';
 import {
@@ -22,7 +27,10 @@ import {
   users,
 } from '../../packages/db/src/schema';
 import type { GoogleOidcClient } from '../../packages/integrations/src/google';
-import type { TelegramOidcClient } from '../../packages/integrations/src/telegram';
+import type {
+  TelegramOidcClient,
+  TelegramProfileClaims,
+} from '../../packages/integrations/src/telegram';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -55,6 +63,7 @@ class FakeTelegram implements TelegramOidcClient {
   calls = 0;
   lastNonce = '';
   lastVerifier = '';
+  profile: TelegramProfileClaims = {};
 
   async authorizationUrl(input: {
     state: string;
@@ -82,14 +91,14 @@ class FakeTelegram implements TelegramOidcClient {
     state: string;
     nonce: string;
     codeVerifier: string;
-  }): Promise<{ subject: string }> {
+  }): Promise<{ subject: string } & TelegramProfileClaims> {
     this.calls += 1;
     this.lastVerifier = input.codeVerifier;
     if (input.code.startsWith('invalid-') || input.code === 'exchange-failed') {
       throw new Error('Sensitive Telegram provider error');
     }
     if (input.nonce !== this.lastNonce) throw new Error('Invalid nonce');
-    return { subject: input.code };
+    return { subject: input.code, ...this.profile };
   }
 }
 
@@ -109,12 +118,14 @@ class FakeGoogle implements GoogleOidcClient {
 function createApp(
   fake = new FakeTelegram(),
   environment = authConfig.appEnvironment,
+  capture?: (userId: string, profile: TelegramProfileClaims) => Promise<void>,
 ) {
   const login = new TelegramLoginService(
     attempts,
     fake,
     identities,
     sessionService,
+    capture,
   );
   const google = new GoogleLoginService(
     attempts,
@@ -227,6 +238,60 @@ describe('Telegram Authentication with PostgreSQL', () => {
     await database.pool.query('TRUNCATE users CASCADE');
   });
   afterAll(async () => database.close());
+
+  it('queues signed profile fields from the callback and preserves access during review', async () => {
+    const fake = new FakeTelegram();
+    fake.profile = { name: 'Synthetic Telegram sample', username: 'sample_42' };
+    const repository = createPgTelegramProfileRepository(database.pool);
+    const { app } = createApp(
+      fake,
+      authConfig.appEnvironment,
+      captureTelegramProfile(repository),
+    );
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const login = await start(app, '/me/settings');
+        const response = await callback(app, login.result);
+        expect(response.statusCode).toBe(302);
+        expect(response.headers.location).toBe(
+          'http://127.0.0.1:3000/me/settings',
+        );
+        expect(sessionCookie(response)).toContain('da_session=');
+      }
+      expect(
+        (await database.pool.query('SELECT id FROM telegram_profile_checks'))
+          .rowCount,
+      ).toBe(1);
+      await screenNextTelegramProfile(
+        repository,
+        'synthetic/vision',
+        async (snapshot) => {
+          expect(snapshot).toEqual({
+            name: 'Synthetic Telegram sample',
+            username: 'sample_42',
+            avatarDataUrl: null,
+          });
+          return {
+            decision: 'rejected',
+            reasonCode: 'SEXUAL_CONTENT',
+            confidence: 0.99,
+          };
+        },
+      );
+      expect(
+        (
+          await database.pool.query(
+            'SELECT kind,status FROM profile_submissions',
+          )
+        ).rows,
+      ).toEqual([{ kind: 'telegram', status: 'pending' }]);
+      expect(
+        (await database.pool.query('SELECT status FROM users')).rows,
+      ).toEqual([{ status: 'active' }]);
+    } finally {
+      await app.close();
+    }
+  });
 
   it('starts OIDC code flow with minimal scopes, S256, random secrets and hashed persistence', async () => {
     const { app } = createApp();

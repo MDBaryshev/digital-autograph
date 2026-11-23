@@ -1,4 +1,7 @@
-import { loadOpenRouterConfig } from '@digital-autograph/config';
+import {
+  loadOpenRouterConfig,
+  loadTelegramModerationConfig,
+} from '@digital-autograph/config';
 import type { LegalHttp } from './legal-http';
 import { assertFirstUseActivation } from './first-use';
 import {
@@ -32,6 +35,7 @@ export function loadApiStartupConfig(
   return {
     config,
     openRouter: loadOpenRouterConfig(environment),
+    telegramModeration: loadTelegramModerationConfig(environment),
     paymentConfig,
     yandexConfig,
     vkIdConfig,
