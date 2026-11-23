@@ -542,18 +542,18 @@ it('retains the exact previous env only as private evidence while removing all p
 });
 
 // Every reviewed migration, including paid protection 0027, must be deployable.
-it('accepts the 30-migration release and rejects unreviewed counts', () => {
+it('accepts the 31-migration release and rejects unreviewed counts', () => {
   const f = fixture();
   try {
     const m = {
       ...f.m,
-      migrations: Array.from({ length: 30 }, (_, i) => ({
+      migrations: Array.from({ length: 31 }, (_, i) => ({
         hash: 'a'.repeat(64),
         created_at: i,
       })),
     };
     expect(() => validateManifest(m)).not.toThrow();
-    for (const count of [23, 31])
+    for (const count of [23, 32])
       expect(() =>
         validateManifest({
           ...m,

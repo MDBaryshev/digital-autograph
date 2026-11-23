@@ -587,3 +587,4 @@ export {
   loadOpenRouterConfig,
   loadTelegramModerationConfig,
 } from './openrouter';
+export { loadEmailAuthConfig } from './email-auth';

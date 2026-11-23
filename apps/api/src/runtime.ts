@@ -31,12 +31,14 @@ import {
 import { createPgPaymentRepository } from '@digital-autograph/db';
 import { createYookassaProvider } from '@digital-autograph/integrations';
 import {
+  EmailAuthService,
   IdentityService,
   OAuthAttemptService,
   SessionService,
 } from '@digital-autograph/auth';
 import {
   createDatabase,
+  createPgEmailAuthRepository,
   createPgOAuthAttemptRepository,
   createPgProviderIdentityRepository,
   createPgSessionRepository,
@@ -65,6 +67,7 @@ import {
   createYandexOAuthClient,
   createVkIdOAuthClient,
   createGoogleOidcClient,
+  createAuthEmailSender,
   createTelegramOidcClient,
   createPrivateS3Storage,
 } from '@digital-autograph/integrations';
@@ -88,6 +91,7 @@ export async function startApi(
 ): Promise<void> {
   const {
     config,
+    emailConfig,
     paymentConfig,
     yandexConfig,
     vkIdConfig,
@@ -293,6 +297,14 @@ export async function startApi(
             redirectUri: vkIdConfig.redirectUri,
           },
         }
+      : undefined,
+    undefined,
+    emailConfig
+      ? new EmailAuthService(
+          createPgEmailAuthRepository(database.pool),
+          createAuthEmailSender(emailConfig),
+          config.SESSION_TTL_SECONDS,
+        )
       : undefined,
   );
   registerAccountWorkspace(

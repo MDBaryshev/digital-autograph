@@ -3,6 +3,7 @@ import { useLocale } from './locale-provider';
 
 import { YandexSignIn } from './yandex-sign-in';
 import { VkIdSignIn } from './vk-id-sign-in';
+import { EmailSignIn } from './email-sign-in';
 
 import { useEffect, useState } from 'react';
 import {
@@ -194,6 +195,7 @@ export function UserPlacementHistory({ apiOrigin }: { apiOrigin: string }) {
           </a>
           <YandexSignIn apiOrigin={apiOrigin} returnTo="/me/placements" />
           <VkIdSignIn apiOrigin={apiOrigin} returnTo="/me/placements" />
+          <EmailSignIn apiOrigin={apiOrigin} returnTo="/me/placements" />
         </p>
       </section>
     );

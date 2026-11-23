@@ -25,6 +25,10 @@ GRANT SELECT,INSERT ON profile_submissions,profile_moderation_decisions TO da_ap
 GRANT UPDATE(status) ON profile_submissions TO da_api;
 GRANT SELECT,INSERT ON telegram_profile_checks TO da_api;
 GRANT UPDATE(observed_at,status,display_name,username,avatar_data_url,started_at,lease_id,lease_until,model,assessment,reason_code,submission_id) ON telegram_profile_checks TO da_api;
+GRANT SELECT,INSERT ON email_credentials,email_auth_challenges,auth_rate_limits TO da_api;
+GRANT UPDATE(password_hash,updated_at) ON email_credentials TO da_api;
+GRANT UPDATE(consumed_at) ON email_auth_challenges TO da_api;
+GRANT UPDATE(used,expires_at) ON auth_rate_limits TO da_api;
 GRANT SELECT,INSERT ON ai_autograph_requests TO da_api;
 GRANT UPDATE(state,result,finished_at) ON ai_autograph_requests TO da_api;
 GRANT INSERT ON creators,creator_profiles TO da_api;
@@ -64,6 +68,9 @@ GRANT UPDATE(processed_at) ON notification_events TO da_worker;
 GRANT UPDATE(web) ON notification_preferences TO da_worker;
 GRANT UPDATE(consumed_at) ON oauth_login_attempts TO da_worker;
 GRANT DELETE ON autograph_assets,autograph_storage_leases,oauth_login_attempts TO da_worker;
+GRANT SELECT(id,expires_at) ON email_auth_challenges TO da_worker;
+GRANT SELECT(key_hash,expires_at) ON auth_rate_limits TO da_worker;
+GRANT DELETE ON email_auth_challenges,auth_rate_limits TO da_worker;
 DO $$ DECLARE item record; BEGIN
  FOR item IN SELECT t.typname FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace WHERE n.nspname='public' AND t.typtype='e' LOOP
   EXECUTE format('GRANT USAGE ON TYPE public.%I TO da_api,da_worker',item.typname);

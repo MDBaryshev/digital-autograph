@@ -1,5 +1,6 @@
 'use client';
 
+import { EmailSignIn } from './email-sign-in';
 import { useLocale } from './locale-provider';
 import { VkIdSignIn } from './vk-id-sign-in';
 import { YandexSignIn } from './yandex-sign-in';
@@ -25,6 +26,7 @@ export function SignInOptions({
       </a>
       <YandexSignIn apiOrigin={apiOrigin} returnTo={returnTo} />
       <VkIdSignIn apiOrigin={apiOrigin} returnTo={returnTo} />
+      <EmailSignIn apiOrigin={apiOrigin} returnTo={returnTo} />
     </div>
   );
 }

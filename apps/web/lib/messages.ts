@@ -154,6 +154,38 @@ export const messages: Record<string, string> = {
     'Сессия истекла. Войди снова, чтобы управлять стеной.',
   'This Wall is archived. Your account cannot create another Wall.':
     'Стена архивирована. Создать другую стену в этом аккаунте нельзя.',
+  'Use 15–128 characters. Spaces and password managers are supported.':
+    'Используйте от 15 до 128 символов. Можно использовать пробелы и менеджер паролей.',
+  'We will send a confirmation link. You will create your password after confirming your email.':
+    'Мы отправим ссылку для подтверждения. Вы создадите пароль после подтверждения почты.',
+  'If this address can be used, an email with a link will arrive shortly. Check your spam folder too.':
+    'Если адрес подходит, скоро придёт письмо со ссылкой. Проверьте также папку «Спам».',
+  'Your password is saved. Sign in with your email and password.':
+    'Пароль сохранён. Войдите с почтой и паролем.',
+  'This link is invalid or has expired. Request a new email.':
+    'Ссылка недействительна или устарела. Запросите новое письмо.',
+  'Could not complete the request. Please try again.':
+    'Не удалось выполнить запрос. Попробуйте ещё раз.',
+  'Could not confirm the password change. Try signing in with your new password or request a new reset email.':
+    'Не удалось подтвердить смену пароля. Попробуйте войти с новым паролем или запросите новое письмо для сброса пароля.',
+  'Email or password is incorrect.': 'Неверная почта или пароль.',
+  'Too many attempts. Please try again later.':
+    'Слишком много попыток. Повторите позже.',
+  'Passwords do not match.': 'Пароли не совпадают.',
+  'Other sign-in options': 'Другие способы входа',
+  'Forgot password?': 'Забыли пароль?',
+  'Sign-in options': 'Способы входа',
+  'Send email': 'Отправить письмо',
+  'Save password': 'Сохранить пароль',
+  'Please wait…': 'Подождите…',
+  'Repeat password': 'Повторите пароль',
+  Password: 'Пароль',
+  Email: 'Электронная почта',
+  'Set your password': 'Задайте пароль',
+  'Reset password': 'Восстановить пароль',
+  'Create an account': 'Создать аккаунт',
+  'Sign in with email': 'Войти по почте',
+  'Continue with email': 'Продолжить с почтой',
   'Content moderation': 'Модерация контента',
   'Telegram profile': 'Профиль Telegram',
   'Automated check flagged this profile.':
@@ -839,8 +871,8 @@ export const messages: Record<string, string> = {
     'Опубликованные документы представлены в оригинале на русском языке. Переключение языка интерфейса не переводит юридический текст.',
   'Before your first action': 'Перед первым действием',
   'Confirmations for Destka': 'Подтверждения для Destka',
-  'Confirm your age and read the service terms before creating an autograph or placing it on a Wall. Signing in with Google or Telegram does not mean accepting the terms.':
-    'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход через Google или Telegram не означает принятия условий.',
+  'Confirm your age and read the service terms before creating or placing an autograph. Your confirmations are saved separately after sign-in.':
+    'Для создания и размещения автографа подтвердите возраст и ознакомьтесь с условиями сервиса. Подтверждения сохраняются отдельно после входа.',
   'An autograph is decorative content, not a legal signature. Do not upload a bank, official or other sensitive signature.':
     'Автограф — декоративный контент, а не юридическая подпись. Не загружайте банковскую, официальную или другую чувствительную подпись.',
   'Sign in to confirm the terms.': 'Войдите, чтобы подтвердить условия.',
