@@ -13,6 +13,11 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   page,
 }) => {
   const writes: string[] = [];
+  const hydrationErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /hydrat/i.test(message.text()))
+      hydrationErrors.push(message.text());
+  });
   page.on('request', (request) => {
     if (['POST', 'PUT', 'PATCH'].includes(request.method()))
       writes.push(request.url());
@@ -35,6 +40,7 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   });
   const close = viewer.getByRole('button', { name: 'Close', exact: true });
   await expect(close).toBeFocused();
+  expect(hydrationErrors).toEqual([]);
   const controls = viewer.getByRole('group', {
     name: 'Cube faces',
     exact: true,
@@ -64,7 +70,7 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   await page.mouse.move(
     box.x + box.width / 2 + 140,
     box.y + box.height / 2 + 30,
-    { steps: 10 },
+    { steps: 3 },
   );
   await page.mouse.up();
   await expect(
