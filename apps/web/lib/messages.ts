@@ -40,6 +40,7 @@ export const messages: Record<string, string> = {
   'Profile not published': 'Профиль не опубликован',
   'Autograph author': 'Автор автографа',
   'Your place': 'Твоё место',
+  'Refresh account status': 'Обновить состояние аккаунта',
   'Public profile setup is temporarily unavailable.':
     'Настройка публичного профиля временно недоступна.',
   'Wall creation is temporarily unavailable':

@@ -28,21 +28,45 @@ export async function workspaceRequest<T>(
   body?: unknown,
   method = 'POST',
 ): Promise<T> {
-  const response = await fetch(origin + path, {
-    credentials: 'include',
-    cache: 'no-store',
-    signal,
-    method: body === undefined ? 'GET' : method,
-    headers:
-      body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  let rejectAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = () => reject(new Error('WORKSPACE_REQUEST_ABORTED'));
+    controller.signal.addEventListener('abort', rejectAbort, { once: true });
   });
-  const result = await response.json().catch(() => null);
-  if (!response.ok)
-    throw Error(
-      response.status === 401
-        ? 'SIGN_IN'
-        : (result?.error?.code ?? 'REQUEST_FAILED'),
-    );
-  return result as T;
+  signal.addEventListener('abort', cancel, { once: true });
+  const timer = setTimeout(cancel, 10_000);
+  if (signal.aborted) cancel();
+  try {
+    if (controller.signal.aborted) return await aborted;
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(origin + path, {
+          credentials: 'include',
+          cache: 'no-store',
+          signal: controller.signal,
+          method: body === undefined ? 'GET' : method,
+          headers:
+            body === undefined
+              ? undefined
+              : { 'Content-Type': 'application/json' },
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok)
+          throw Error(
+            response.status === 401
+              ? 'SIGN_IN'
+              : (result?.error?.code ?? 'REQUEST_FAILED'),
+          );
+        return result as T;
+      })(),
+      aborted,
+    ]);
+  } finally {
+    clearTimeout(timer);
+    signal.removeEventListener('abort', cancel);
+    controller.signal.removeEventListener('abort', rejectAbort);
+  }
 }
