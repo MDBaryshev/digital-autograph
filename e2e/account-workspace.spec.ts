@@ -45,7 +45,10 @@ test('owner sets up a profile, creates a draft and explicitly publishes their ow
   await expect(
     page.getByRole('link', { name: 'Александр', exact: true }),
   ).toBeVisible();
-  await page.getByRole('link', { name: 'Мои стены', exact: true }).click();
+  await page.getByRole('link', { name: 'Моя стена', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Моя стена', exact: true }),
+  ).toBeVisible();
   await expect(page.getByLabel('Количество мест', { exact: true })).toHaveCount(
     0,
   );
@@ -57,6 +60,12 @@ test('owner sets up a profile, creates a draft and explicitly publishes their ow
   ).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Открыть стену', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('link', { name: 'Оформить стену', exact: true }),
+  ).toHaveAttribute('href', '/me/walls/design');
+  await expect(
+    page.getByRole('button', { name: 'Создать черновик стены', exact: true }),
   ).toHaveCount(0);
   await page
     .getByRole('button', { name: 'Опубликовать стену', exact: true })

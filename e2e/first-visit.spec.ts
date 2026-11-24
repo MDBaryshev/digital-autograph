@@ -9,10 +9,12 @@ test('a visitor can draw and edit a demo autograph with the keyboard without upl
     if (['POST', 'PUT', 'PATCH'].includes(request.method()))
       writes.push(request.url());
   });
-  await page.goto('/design-lab');
-  await expect(
-    page.getByRole('link', { name: 'Вернуться на основную главную' }),
-  ).toHaveAttribute('href', '/');
+  await page.goto('/walls/demo');
+  const dock = page.getByRole('navigation', { name: 'Product navigation' });
+  await expect(dock.getByRole('link', { name: 'Home' })).toHaveAttribute(
+    'href',
+    '/',
+  );
 
   const place = page.getByRole('button', {
     name: 'Sign demo place 4',
@@ -59,11 +61,14 @@ test('a visitor can draw and edit a demo autograph with the keyboard without upl
   await page.reload();
   await expect(place).toBeVisible();
 
-  await page.getByRole('link', { name: 'Войти', exact: true }).click();
-  await expect(page).toHaveURL(/\/me$/);
+  await dock.getByRole('link', { name: 'Studio' }).click();
   await expect(
     page.getByRole('heading', { name: 'Sign in to continue' }),
   ).toBeVisible();
+  await expect(dock.getByRole('link', { name: 'Studio' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
 });
 
 test('an invitation opens a real Wall and its selection offers a way back to the place', async ({

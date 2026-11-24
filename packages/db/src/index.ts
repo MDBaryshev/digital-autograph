@@ -107,3 +107,8 @@ export {
   type WallAppearance,
   type PrivateAppearance,
 } from './appearance-repository';
+export {
+  createPgWallDesignRepository,
+  WallDesignError,
+  type WallDesignRepository,
+} from './wall-design-repository';

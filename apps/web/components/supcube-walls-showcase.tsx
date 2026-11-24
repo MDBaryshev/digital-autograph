@@ -1,5 +1,6 @@
 import { SignatureArt } from './signature-art';
 import { Icon } from './ui-icon';
+import { myWallPath } from '../lib/wall-design-links';
 import styles from './supcube-design-lab.module.css';
 
 /** Illustrations describe the product; they do not stand in for live creators. */
@@ -50,12 +51,13 @@ export function SupcubeWallsShowcase() {
           кто <em>рядом.</em>
         </h3>
         <p>
-          Создай стену, отправь приглашение и сохрани почерки людей, которые
-          тебе важны.
+          У каждого автора одна стена на 10 мест. Пригласи людей, чьи автографы
+          хочешь сохранить.
         </p>
-        <a href="/me/walls">
-          Создать свою стену <Icon name="arrow" size={18} />
+        <a href={myWallPath}>
+          Моя стена <Icon name="arrow" size={18} />
         </a>
+        <a href="/walls/demo">Попробовать без входа</a>
         <small>Есть приглашение? Открой его ниже.</small>
       </aside>
     </div>

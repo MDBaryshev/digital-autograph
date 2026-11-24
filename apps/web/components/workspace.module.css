@@ -91,6 +91,28 @@
   margin-top: 1rem;
   min-width: 0;
 }
+.wallCard {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+.wallHeading h2 {
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+.wallHeading p {
+  margin: 0.45rem 0 0;
+  color: var(--color-muted);
+}
+.wallCard > .actions:empty {
+  display: none;
+}
+.wallCard .wallControls {
+  margin-top: 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
 .wallControls p {
   margin: 0;
   overflow-wrap: anywhere;
@@ -247,14 +269,6 @@
   object-fit: cover;
   border-radius: 50%;
 }
-.coverPreview {
-  width: 100%;
-  max-width: 36rem;
-  aspect-ratio: 3/1;
-  object-fit: cover;
-  border-radius: 1rem;
-}
-
 .form fieldset {
   min-inline-size: 0;
   border: 0;

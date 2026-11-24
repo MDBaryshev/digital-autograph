@@ -515,3 +515,220 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+.page[data-wall-theme] {
+  --wall-field: #2d1a13;
+  --wall-dark: #190f0c;
+  --wall-glow: color-mix(in srgb, var(--wall-accent) 35%, var(--wall-field));
+}
+.page[data-wall-theme='stage'] {
+  --wall-field: #291742;
+  --wall-dark: #121020;
+}
+.page[data-wall-theme='poster'] {
+  --wall-field: #562819;
+  --wall-dark: #23130c;
+}
+.page[data-wall-theme] .header {
+  min-height: clamp(18rem, 34vw, 29rem);
+  align-items: center;
+  color: #fff9f3;
+  background:
+    radial-gradient(ellipse at 86% 26%, var(--wall-glow), transparent 62%),
+    linear-gradient(130deg, var(--wall-dark), var(--wall-field));
+}
+.page[data-wall-theme] .header::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(90deg, #100b12ea 0%, #100b12bc 58%, #100b124d);
+  pointer-events: none;
+}
+.page[data-wall-theme] .wallIdentity {
+  max-width: min(100%, 48rem);
+}
+.page[data-wall-theme] .header p,
+.page[data-wall-theme] .header a:not(.designAction) {
+  color: #fff9f3;
+}
+.page[data-wall-theme] .header p {
+  white-space: pre-wrap;
+}
+.page[data-wall-theme] .header .designEvent {
+  margin-block: 0 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+}
+.designCover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.page[data-wall-crop='top'] .designCover {
+  object-position: center top;
+}
+.page[data-wall-crop='bottom'] .designCover {
+  object-position: center bottom;
+}
+.page[data-wall-align='center'] .header {
+  justify-content: center;
+  text-align: center;
+}
+.page[data-wall-align='center'] .wallTools {
+  justify-content: center;
+}
+.page[data-wall-align='center'] .header::after {
+  background: #100b12c2;
+}
+.page[data-wall-type='editorial'] .header :is(h1, .designTitle) {
+  font-family: Georgia, serif;
+  font-weight: 600;
+}
+.page[data-wall-frame='square'] :is(.header, .slot, .cubeOpen, .slotAction) {
+  border-radius: 0.14rem;
+}
+.page[data-wall-theme] .designAction {
+  padding: 0.55rem 0.95rem;
+  border-radius: 0.45rem;
+  background: var(--wall-accent);
+  color: var(--wall-on-accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+.page[data-wall-theme] .segments [data-filled] {
+  background: var(--wall-accent);
+}
+.page[data-wall-layout='gallery'] .grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.page[data-wall-layout='gallery'] .grid .slot {
+  grid-column: span 1;
+  --slot-height: clamp(5rem, 8vw, 7rem);
+  --slot-cube-size: clamp(3rem, 5vw, 4rem);
+}
+@media (max-width: 42rem) {
+  .page[data-wall-layout='gallery'] .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Local palette values are inherited by the shared preview and by each place. */
+.page[data-wall-custom-surface] {
+  background: var(--wall-surface);
+  color: var(--wall-surface-text);
+  border-radius: 1.15rem;
+  padding-block: clamp(0.65rem, 2vw, 1.5rem);
+  --color-ink: var(--wall-surface-text);
+  --color-muted: color-mix(
+    in srgb,
+    var(--wall-surface-text) 82%,
+    var(--wall-surface)
+  );
+  --color-link: var(--wall-surface-text);
+  --brand-color-surface: color-mix(
+    in srgb,
+    var(--wall-surface) 92%,
+    var(--wall-surface-text)
+  );
+}
+.page[data-wall-theme] .header {
+  border: 2px solid var(--wall-frame-color, transparent);
+  color: var(--wall-heading, #fff9f3);
+}
+.page[data-wall-custom-cover] .header {
+  background:
+    radial-gradient(ellipse at 84% 12%, var(--wall-glow), transparent 68%),
+    linear-gradient(
+      130deg,
+      color-mix(in srgb, var(--wall-cover) 82%, black),
+      var(--wall-cover)
+    );
+}
+.page[data-wall-custom-cover] .header:not(:has(.designCover))::after {
+  background: none;
+}
+.page[data-wall-theme] .header :is(p, a:not(.designAction), .state strong) {
+  color: var(--wall-heading, #fff9f3);
+}
+.page[data-wall-pattern='grid'] .header::before,
+.page[data-wall-pattern='spotlight'] .header::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+.page[data-wall-pattern='grid'] .header::before {
+  background-image:
+    linear-gradient(#ffffff25 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff25 1px, transparent 1px);
+  background-size: 2.1rem 2.1rem;
+  mask-image: linear-gradient(125deg, transparent 20%, #000);
+}
+.page[data-wall-pattern='spotlight'] .header::before {
+  background: repeating-radial-gradient(
+    ellipse at 85% 20%,
+    #ffffff35 0 1px,
+    transparent 2px 2.55rem
+  );
+  mask-image: linear-gradient(100deg, transparent 25%, #000);
+}
+.page[data-wall-theme] :is(.wallSummary, .picker, .panel) {
+  border: 1px solid var(--wall-frame-color, var(--brand-color-border));
+  background-color: var(--brand-color-surface);
+}
+.page[data-wall-theme] .slotAction > span:last-child {
+  border-color: var(--wall-frame-color, var(--brand-color-border));
+}
+
+.inkFilter {
+  position: absolute;
+  pointer-events: none;
+}
+
+.page[data-wall-podium='jewels'] .slot[data-podium] {
+  padding: clamp(0.25rem, 0.65vw, 0.65rem);
+  border: 1px solid color-mix(in srgb, var(--podium-rail) 55%, transparent);
+  border-radius: 0.8rem;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--podium-rail) 14%, transparent),
+    transparent 76%
+  );
+}
+.page[data-wall-podium='jewels'] .slot[data-podium='diamond'] {
+  --podium-rail: #85d8f1;
+  --slot-height: clamp(7rem, 13vw, 10.2rem);
+}
+.page[data-wall-podium='jewels'] .slot[data-podium='gold'] {
+  --podium-rail: #e4bc75;
+}
+.page[data-wall-podium='jewels'] .slot[data-podium='silver'] {
+  --podium-rail: #b9cce2;
+}
+
+.page[data-wall-podium='jewels'][data-wall-layout='podium'] .slot[data-podium] {
+  --slot-height: clamp(6.25rem, 11vw, 9rem);
+}
+.page[data-wall-podium='jewels'][data-wall-layout='podium']
+  .slot[data-podium='diamond'] {
+  grid-column: span 5;
+  --slot-height: clamp(7rem, 12vw, 10rem);
+}
+.page[data-wall-podium='jewels'][data-wall-layout='podium']
+  .slot[data-podium='silver'] {
+  grid-column: span 3;
+}
+@media (max-width: 42rem) {
+  .page[data-wall-podium='jewels'][data-wall-layout='podium']
+    .slot[data-podium='diamond'] {
+    grid-column: span 12;
+  }
+  .page[data-wall-podium='jewels'][data-wall-layout='podium']
+    .slot:is([data-podium='gold'], [data-podium='silver']) {
+    grid-column: span 6;
+  }
+}

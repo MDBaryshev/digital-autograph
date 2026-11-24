@@ -1,130 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { drawingBounds, type Stroke } from '../lib/drawing';
-import { CanvasEditor } from './canvas-editor';
+import { useState } from 'react';
+import { DemoDrawingDialog, DemoInk, type DemoMark } from './demo-wall-drawing';
 import { useLocale } from './locale-provider';
 import { SignatureArt } from './signature-art';
 import { CubePreview, CubeViewer, type CubeDetails } from './autograph-cube';
 import { Icon } from './ui-icon';
 import styles from './try-wall.module.css';
 
-type Mark = { place: number; strokes: readonly Stroke[] };
 const places = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-function Ink({ strokes }: { strokes: readonly Stroke[] }) {
-  const bounds = drawingBounds(strokes);
-  if (!bounds) return null;
-  const { left, top, width, height } = bounds;
-  return (
-    <svg
-      viewBox={`${left} ${top} ${width} ${height}`}
-      fill="none"
-      aria-hidden="true"
-    >
-      {strokes.map(({ points }, index) => (
-        <path
-          key={index}
-          d={points
-            .map(({ x, y }, point) => `${point ? 'L' : 'M'}${x} ${y}`)
-            .join(' ')}
-          stroke="currentColor"
-          strokeWidth="2"
-          vectorEffect="non-scaling-stroke"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ))}
-    </svg>
-  );
-}
-
-function DrawingDialog({
-  place,
-  initialStrokes,
-  moving,
-  onClose,
-  onSave,
-}: {
-  place: number;
-  initialStrokes?: readonly Stroke[];
-  moving: boolean;
-  onClose: () => void;
-  onSave: (mark: Mark) => void;
-}) {
-  const { t } = useLocale();
-  const dialog = useRef<HTMLDialogElement>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
-  const strokes = useRef<readonly Stroke[]>(initialStrokes ?? []);
-  const [hasMarks, setHasMarks] = useState(Boolean(initialStrokes));
-
-  useEffect(() => {
-    const element = dialog.current;
-    element?.showModal();
-    heading.current?.focus();
-    return () => element?.close();
-  }, []);
-
-  const close = () => {
-    dialog.current?.close();
-    onClose();
-  };
-
-  return (
-    <dialog
-      className={styles.dialog}
-      ref={dialog}
-      aria-labelledby="try-drawing-title"
-      aria-describedby="try-drawing-note"
-      onCancel={(event) => {
-        event.preventDefault();
-        close();
-      }}
-    >
-      <div className={styles.dialogHeader}>
-        <div>
-          <h3 id="try-drawing-title" ref={heading} tabIndex={-1}>
-            {t('Your autograph · place {place}', { place })}
-          </h3>
-          <p id="try-drawing-note">
-            {t('This is a demo. Your drawing stays in this tab.')}
-          </p>
-        </div>
-        <button
-          className={styles.close}
-          type="button"
-          aria-label={t('Close')}
-          onClick={close}
-        >
-          <Icon name="close" />
-        </button>
-      </div>
-      <CanvasEditor
-        compact
-        initialStrokes={initialStrokes}
-        onDrawingChange={setHasMarks}
-        onStrokesChange={(next) => (strokes.current = next)}
-      />
-      <button
-        type="button"
-        className={styles.show}
-        disabled={!hasMarks}
-        onClick={() => {
-          dialog.current?.close();
-          onSave({ place, strokes: strokes.current });
-        }}
-      >
-        {t(moving ? 'Move to this place' : 'Show on the demo Wall')}{' '}
-        <Icon name="arrow" size={18} />
-      </button>
-    </dialog>
-  );
-}
 
 export function TryWall() {
   const { t } = useLocale();
   const [editing, setEditing] = useState<number | null>(null);
-  const [mark, setMark] = useState<Mark | null>(null);
+  const [mark, setMark] = useState<DemoMark | null>(null);
   const [viewing, setViewing] = useState<CubeDetails | null>(null);
 
   return (
@@ -140,9 +29,7 @@ export function TryWall() {
           </h2>
           <p>
             <span className={styles.pointerHint}>
-              {t(
-                'Hover over a place to unfold it. Click an autograph to rotate.',
-              )}
+              {t('Click an autograph to open its cube, or sign a free place.')}
             </span>
             <span className={styles.touchHint}>
               {t('Tap an autograph to rotate its cube. Or sign a free place.')}
@@ -160,7 +47,7 @@ export function TryWall() {
               place <= 3 ? (
                 <SignatureArt variant={place - 1} />
               ) : drawn ? (
-                <Ink strokes={mark.strokes} />
+                <DemoInk strokes={mark.strokes} />
               ) : (
                 <span>+</span>
               ),
@@ -237,7 +124,7 @@ export function TryWall() {
         <CubeViewer details={viewing} onClose={() => setViewing(null)} />
       )}
       {editing !== null && (
-        <DrawingDialog
+        <DemoDrawingDialog
           place={editing}
           initialStrokes={mark?.strokes}
           moving={Boolean(mark && mark.place !== editing)}

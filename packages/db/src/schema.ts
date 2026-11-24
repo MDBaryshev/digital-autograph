@@ -532,6 +532,46 @@ export const walls = pgTable(
   ],
 );
 
+export const wallDesigns = pgTable(
+  'wall_designs',
+  {
+    wallId: uuid('wall_id')
+      .primaryKey()
+      .references(() => walls.id, { onDelete: 'cascade' }),
+    revision: uuid('revision').notNull().defaultRandom(),
+    design: jsonb('design').notNull(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    check(
+      'wall_design_bounded',
+      sql`jsonb_typeof(${table.design}) = 'object' AND octet_length(${table.design}::text) < 710000`,
+    ),
+  ],
+);
+
+export const wallDesignTemplates = pgTable(
+  'wall_design_templates',
+  {
+    tokenHash: varchar('token_hash', { length: 64 }).primaryKey(),
+    authorUserId: uuid('author_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    design: jsonb('design').notNull(),
+    createdAt: createdAt(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check(
+      'wall_design_template_bounded',
+      sql`jsonb_typeof(${table.design}) = 'object' AND octet_length(${table.design}::text) < 710000`,
+    ),
+  ],
+);
+
 export const slots = pgTable(
   'slots',
   {

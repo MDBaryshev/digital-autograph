@@ -3,7 +3,7 @@ let activeDecoders = 0;
 
 export async function normalizeAppearanceImage(
   dataUrl: string,
-  kind: 'avatar' | 'cover',
+  kind: 'avatar' | 'cover' | 'wall-cover',
 ): Promise<string> {
   const match =
     /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
@@ -35,13 +35,19 @@ export async function normalizeAppearanceImage(
     });
     const meta = await decoder.metadata();
     if (meta.format !== signature || (meta.pages ?? 1) !== 1) throw Error();
+    const sizes = {
+      avatar: { width: 256, height: 256, fit: 'cover' },
+      cover: { width: 1200, height: 400, fit: 'cover' },
+      'wall-cover': {
+        width: 1200,
+        height: 1200,
+        fit: 'inside',
+        withoutEnlargement: true,
+      },
+    } as const;
     const result = await decoder
       .rotate()
-      .resize(
-        kind === 'avatar'
-          ? { width: 256, height: 256, fit: 'cover' }
-          : { width: 1200, height: 400, fit: 'cover' },
-      )
+      .resize(sizes[kind])
       .flatten({ background: '#fff' })
       .jpeg({ quality: 80 })
       .toBuffer();

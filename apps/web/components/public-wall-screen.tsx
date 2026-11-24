@@ -28,6 +28,7 @@ import { WallCountdown } from './wall-countdown';
 import { Icon } from './ui-icon';
 import { CobaltSignature } from './cobalt-signature';
 import { ShareControls } from './share-controls';
+import { wallDesignPresentation } from '../lib/wall-design-presentation';
 import styles from '../app/walls/[id]/page.module.css';
 
 type AuthState = 'checking' | 'anonymous' | 'authenticated' | 'unavailable';
@@ -264,9 +265,18 @@ export function PublicWallScreen({
     document.getElementById(`slot-action-${id}`)?.focus();
   };
 
+  const wallStyle = wall.appearance?.style;
+  const designAction = showChoosePlace
+    ? '#slots-heading'
+    : canClaim &&
+        occupiedCount < wall.slotCount &&
+        auth === 'authenticated' &&
+        ready?.length === 0
+      ? studioPath
+      : null;
   return (
-    <main className={styles.page}>
-      {wall.appearance?.coverDataUrl && (
+    <main className={styles.page} {...wallDesignPresentation(wallStyle)}>
+      {!wallStyle && wall.appearance?.coverDataUrl && (
         <img
           className={styles.cover}
           src={wall.appearance.coverDataUrl}
@@ -275,9 +285,18 @@ export function PublicWallScreen({
       )}
       <header
         className={styles.header}
-        data-custom-cover={wall.appearance?.coverDataUrl ? '' : undefined}
+        data-custom-cover={
+          !wallStyle && wall.appearance?.coverDataUrl ? '' : undefined
+        }
       >
-        {!wall.appearance?.coverDataUrl && <CobaltSignature />}
+        {wallStyle && wall.appearance?.coverDataUrl && (
+          <img
+            className={styles.designCover}
+            src={wall.appearance.coverDataUrl}
+            alt=""
+          />
+        )}
+        {!wallStyle && !wall.appearance?.coverDataUrl && <CobaltSignature />}
         <div className={styles.wallIdentity}>
           {wall.appearance?.avatarDataUrl && (
             <img
@@ -286,11 +305,19 @@ export function PublicWallScreen({
               alt={t('Wall owner avatar')}
             />
           )}
+          {wallStyle?.event && (
+            <p className={styles.designEvent}>{wallStyle.event}</p>
+          )}
           <h1>
             {wall.appearance?.title ||
               t("{name}'s Wall", { name: wall.creator.displayName })}
           </h1>
           {wall.appearance?.description && <p>{wall.appearance.description}</p>}
+          {wallStyle && designAction && (
+            <a className={styles.designAction} href={designAction}>
+              {wallStyle.actionLabel || t('Find a place')}
+            </a>
+          )}
           <p className={styles.state}>
             {t('Wall status: ')}
             <strong>{t(wall.status)}</strong>
@@ -522,7 +549,7 @@ export function PublicWallScreen({
               />
             ))}
           </div>
-          {showChoosePlace && (
+          {showChoosePlace && !wallStyle && (
             <a className={styles.choose} href="#slots-heading">
               {t('Find a place')} <Icon name="down" size={18} />
             </a>
@@ -561,6 +588,7 @@ export function PublicWallScreen({
                   key={slot.id}
                   slot={slot}
                   apiOrigin={apiOrigin}
+                  design={wallStyle}
                   actionLabel={actionLabel}
                   selected={Boolean(target?.id === slot.id && !slot.occupied)}
                   arrived={

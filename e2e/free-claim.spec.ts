@@ -226,9 +226,9 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   await expect(
     page.getByRole('heading', { name: 'E2E Creator', exact: true }),
   ).toBeVisible();
-  await expect(page).toHaveTitle('E2E Creator — public Walls | supcube');
+  await expect(page).toHaveTitle('E2E Creator — public Wall | supcube');
   await responsive(page);
-  await page.getByRole('link', { name: 'E2E Creator’s Wall' }).click();
+  await page.getByRole('link', { name: 'Open Wall', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: "E2E Creator's Wall" }),
   ).toBeVisible();

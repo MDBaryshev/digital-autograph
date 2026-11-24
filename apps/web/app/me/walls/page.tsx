@@ -8,7 +8,7 @@ export default async function Page() {
   const t = await getTranslator();
   return (
     <main className={`${workspaceStyles.page} ${workspaceStyles.wallsPage}`}>
-      <h1>{t('My Walls')}</h1>
+      <h1>{t('My Wall')}</h1>
       <AccountWorkspace
         apiOrigin={loadWebConfig().API_PUBLIC_ORIGIN}
         section="walls"
