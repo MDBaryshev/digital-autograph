@@ -13,7 +13,7 @@
     "@digital-autograph/contracts": "workspace:*",
     "@digital-autograph/domain": "workspace:*",
     "@digital-autograph/ui": "workspace:*",
-    "next": "16.4.1",
+    "next": "16.4.5",
     "qrcode-generator": "2.0.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

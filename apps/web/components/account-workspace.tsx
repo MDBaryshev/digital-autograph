@@ -18,6 +18,7 @@ import { myWallPath, wallDesignPath } from '../lib/wall-design-links';
 import { autographApi } from '../lib/autograph-api';
 import { CleanedAutographReview } from './cleaned-autograph-review';
 import { FirstUseActionNotice } from './first-use-action-notice';
+import { OpenInvitation } from './open-invitation';
 import styles from './workspace.module.css';
 type Section = 'overview' | 'autographs' | 'walls' | 'settings';
 const statuses: Record<AutographStatus | WallStatus, string> = {
@@ -236,6 +237,7 @@ export function AccountWorkspace({
               </a>
             </section>
           </div>
+          <OpenInvitation />
         </>
       )}
       {section === 'autographs' && (

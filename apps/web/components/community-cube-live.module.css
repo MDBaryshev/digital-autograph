@@ -1,0 +1,223 @@
+.page {
+  max-width: 76rem;
+  margin-top: clamp(1rem, 4vw, 3rem);
+}
+
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  margin: 0;
+  letter-spacing: -0.04em;
+}
+
+.header p {
+  margin: 0.6rem 0 0;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.header > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+.layout:has(.account:empty) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.facePanel {
+  padding: clamp(1rem, 3vw, 1.8rem);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--ui-surface-subtle);
+}
+
+.facePanel h2,
+.account h2 {
+  margin-top: 0;
+}
+
+.faces {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.faces button {
+  min-width: 0;
+  padding: 0.55rem 0.4rem;
+  font-size: 0.88rem;
+}
+
+.faces button[aria-pressed='true'],
+.cells button[aria-pressed='true'] {
+  border-color: var(--color-link);
+  background: var(--brand-color-primarySoft);
+  color: var(--color-ink);
+}
+
+.faceHeading,
+.pagination,
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
+.faceHeading {
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.faceHeading h2 {
+  margin: 0;
+}
+
+.secondary {
+  background: transparent;
+}
+
+.cells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cells[data-compact] {
+  width: min(100%, 21rem);
+  margin-inline: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cells li {
+  min-width: 0;
+}
+
+.cells li > :is(div, button) {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: 100%;
+  min-height: 48px;
+  aspect-ratio: 1.12;
+  padding: 0;
+  border: 1px dashed var(--brand-color-control);
+  border-radius: 0.6rem;
+  color: var(--color-muted);
+}
+
+.cells button {
+  background: var(--color-surface);
+}
+
+.cells button:is(:hover:not(:disabled), [aria-pressed='true']),
+.cells [data-filled] {
+  border-style: solid;
+}
+
+.cells [data-filled] {
+  background: var(--color-surface);
+}
+
+.cells [data-own] {
+  border-color: var(--color-link);
+}
+
+.cells img {
+  position: absolute;
+  inset: 12%;
+  width: 76%;
+  height: 66%;
+  object-fit: contain;
+  background: white;
+  border-radius: 0.25rem;
+}
+
+.cells li > :is(div, button) > span:first-of-type {
+  position: absolute;
+  bottom: 0.28rem;
+  left: 0.38rem;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ownMark {
+  position: absolute;
+  right: 0.4rem;
+  bottom: 0.24rem;
+  color: var(--color-link);
+}
+
+.pagination {
+  justify-content: space-between;
+  margin-top: 1rem;
+  font-size: 0.88rem;
+}
+
+.account {
+  min-width: 0;
+}
+
+.account:empty {
+  display: none;
+}
+
+.account > :is(p, section):first-child,
+.account form > section:first-child {
+  margin-top: 0;
+}
+
+.account form > button[type='submit'],
+.actions button:not(.secondary) {
+  color: var(--ui-action-ink);
+  background: var(--ui-action-surface);
+  border-color: var(--ui-action-surface);
+}
+
+.account form > button[type='submit']:hover:not(:disabled),
+.actions button:not(.secondary):hover:not(:disabled) {
+  background: var(--ui-action-hover);
+}
+
+.confirmWithdrawal {
+  margin-top: 1rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 52rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 34rem) {
+  .cells {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .cells[data-compact] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

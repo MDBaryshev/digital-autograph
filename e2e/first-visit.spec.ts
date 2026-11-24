@@ -1,4 +1,6 @@
-import { expect, test, e2eWallId } from './fixtures';
+import { e2eUserId, e2eWallId, expect, test } from './fixtures';
+
+const webUrl = process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000';
 
 test('a visitor can draw and edit a demo autograph with the keyboard without uploading it', async ({
   page,
@@ -76,20 +78,26 @@ test('an invitation opens a real Wall and its selection offers a way back to the
   scenario,
 }) => {
   await page.setViewportSize({ width: 390, height: 800 });
-  await page.goto('/');
-  await page.getByText('Open an invitation', { exact: true }).click();
-  const invitation = page.getByLabel('Paste your supcube invitation link');
+  const account = await scenario.actorContext(e2eUserId);
+  const accountPage = await account.newPage();
+  await accountPage.setViewportSize({ width: 390, height: 800 });
+  await accountPage.goto(`${webUrl}/me`);
+  await accountPage.getByText('Open an invitation', { exact: true }).click();
+  const invitation = accountPage.getByLabel(
+    'Paste your supcube invitation link',
+  );
   await invitation.fill(`https://example.test/walls/${e2eWallId}`);
   await invitation.press('Enter');
   await expect(invitation).toBeFocused();
-  await expect(page.getByRole('main').getByRole('alert')).toHaveText(
+  await expect(accountPage.getByRole('main').getByRole('alert')).toHaveText(
     'Paste the Wall link from your invitation.',
   );
   await invitation.fill(
     `https://destka.ru/walls/${e2eWallId}?source=invitation`,
   );
   await invitation.press('Enter');
-  await expect(page).toHaveURL(new RegExp(`/walls/${e2eWallId}$`));
+  await expect(accountPage).toHaveURL(`${webUrl}/walls/${e2eWallId}`);
+  await page.goto(accountPage.url());
   await expect(
     page.getByRole('heading', { name: "E2E Creator's Wall" }),
   ).toBeVisible();

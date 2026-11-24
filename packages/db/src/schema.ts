@@ -606,6 +606,56 @@ export const autographs = pgTable(
   ],
 );
 
+export const communityCubeState = pgTable(
+  'community_cube_state',
+  {
+    id: integer('id').primaryKey(),
+    generation: integer('generation').notNull(),
+  },
+  (table) => [
+    check('community_cube_singleton', sql`${table.id} = 1`),
+    check(
+      'community_cube_generation_range',
+      sql`${table.generation} BETWEEN 1 AND 4`,
+    ),
+  ],
+);
+
+export const communityCubePlacements = pgTable(
+  'community_cube_placements',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    autographId: uuid('autograph_id')
+      .notNull()
+      .references(() => autographs.id, { onDelete: 'cascade' }),
+    requestId: uuid('request_id').notNull(),
+    generation: integer('generation').notNull(),
+    cell: integer('cell').notNull(),
+    createdAt: createdAt(),
+    withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('community_cube_placement_request_uidx').on(
+      table.userId,
+      table.requestId,
+    ),
+    uniqueIndex('community_cube_active_user_uidx')
+      .on(table.userId)
+      .where(sql`${table.withdrawnAt} IS NULL`),
+    uniqueIndex('community_cube_active_cell_uidx')
+      .on(table.cell)
+      .where(sql`${table.withdrawnAt} IS NULL`),
+    index('community_cube_placement_autograph_idx').on(table.autographId),
+    check(
+      'community_cube_placement_cell_range',
+      sql`${table.cell} BETWEEN 1 AND CASE ${table.generation} WHEN 1 THEN 24 WHEN 2 THEN 144 WHEN 3 THEN 864 WHEN 4 THEN 5184 ELSE 0 END`,
+    ),
+  ],
+);
+
 export const autographAssets = pgTable(
   'autograph_assets',
   {

@@ -908,17 +908,17 @@
   font-size: 0.72rem;
   margin-top: 1rem;
 }
+.heroNote a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
 .homepage .wallSection {
   padding-block: 4.5rem;
 }
-.wallShowcase {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr);
-  gap: 2rem;
-  align-items: stretch;
-  margin-bottom: 1.5rem;
-}
 .wallIllustration {
+  max-width: 56rem;
+  margin-inline: auto;
   padding: 1.5rem;
   border: 1px solid #d6c3aa;
   border-radius: 1rem;
@@ -962,48 +962,74 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.wallTiles > div {
+.wallTile {
   position: relative;
-  display: grid;
-  place-items: center;
   aspect-ratio: 1.05;
   min-height: 66px;
+}
+.wallTileCard {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
   padding: 0.5rem 0.35rem 1.1rem;
   border: 1px dashed #b49d81;
   border-radius: 0.6rem;
   color: #806348;
   background: #f5ede155;
 }
-.wallTiles > div[data-filled] {
+.wallTileCard[data-filled] {
   background: #fbf5ea;
   border-style: solid;
   border-color: #cdb89e;
   box-shadow: 0 5px 12px #52361808;
 }
-.wallTiles > div[data-rank='1'] {
+.wallTileCard[data-rank='1'] {
   background: #e7c791;
   color: #68471f;
 }
-.wallTiles > div[data-rank='2'] {
+.wallTileCard[data-rank='2'] {
   background: #dfdcd3;
   color: #5e594f;
 }
-.wallTiles > div[data-rank='3'] {
+.wallTileCard[data-rank='3'] {
   background: #e6c4a7;
   color: #70492f;
 }
-.wallTiles > div[data-filled] > svg {
+.wallTileCard[data-filled] > svg {
   width: 100%;
   height: 100%;
   max-height: 95px;
 }
-.wallTiles > div > span {
+.wallTileCard > span {
   position: absolute;
   bottom: 0.35rem;
   left: 0.5rem;
   font-size: 0.55rem;
   color: #59422c;
+}
+.wallTile > span {
+  display: none;
+}
+@supports (scale: calc(1px / 1px)) {
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .wallTile:hover {
+      z-index: 1;
+    }
+    .wallTile:hover > span {
+      --slot-height: 100%;
+      position: absolute;
+      inset: 0;
+      display: grid;
+    }
+    .wallTile:hover > .wallTileCard {
+      visibility: hidden;
+    }
+  }
 }
 .wallIllustrationFooter {
   display: flex;
@@ -1017,46 +1043,6 @@
   font:
     italic 0.9rem Georgia,
     serif;
-}
-.wallInvitation {
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem 0.5rem 1rem;
-}
-.wallInvitation h3 {
-  font-size: clamp(1.9rem, 3cqw, 2.8rem);
-  line-height: 1.05;
-  letter-spacing: -0.055em;
-  font-weight: 550;
-  margin: 0 0 1rem;
-}
-.wallInvitation > p {
-  color: #75614f;
-  font-size: 0.83rem;
-  line-height: 1.8;
-  max-width: 32ch;
-}
-.wallInvitation > a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 48px;
-  padding: 0.8rem 1rem;
-  margin-top: auto;
-  border: 1px solid #ad8d6e;
-  border-radius: 0.5rem;
-  color: #62432d;
-  background: #f3e9dc;
-  font-size: 0.78rem;
-}
-.wallInvitation > a:hover {
-  background: #e9dccb;
-}
-.wallInvitation > small {
-  margin-top: 0.75rem;
-  color: #75614f;
-  font-size: 0.64rem;
 }
 .memberStamp {
   position: absolute;
@@ -1160,20 +1146,6 @@
     padding: 0.6rem 0.9rem;
     font-size: 0.85rem;
   }
-  .wallShowcase {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-  .wallInvitation {
-    padding: 1rem 0.2rem;
-  }
-  .wallInvitation > a {
-    max-width: 360px;
-    margin-top: 0.6rem;
-  }
-  .wallInvitation > p {
-    max-width: 48ch;
-  }
 }
 @container site-preview (max-width: 480px) {
   .wallIllustration {
@@ -1189,8 +1161,10 @@
   .wallTiles {
     gap: 0.4rem;
   }
-  .wallTiles > div {
+  .wallTile {
     min-height: 55px;
+  }
+  .wallTileCard {
     border-radius: 0.35rem;
   }
   .wallIllustrationFooter > span {
