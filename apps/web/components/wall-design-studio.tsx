@@ -436,6 +436,8 @@ export function WallDesignStudio({
         <WallDesignPreview
           design={design}
           owner={ownsWall ? ownerName : author}
+          onChange={update}
+          materialsDisabled={pending || !editable}
         />
       </div>
     </>

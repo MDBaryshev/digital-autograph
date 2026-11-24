@@ -30,6 +30,11 @@ export function WallDesignDemo({
   const [processingFile, setProcessingFile] = useState(false);
   const fileBusy = useRef(false);
 
+  function update(next: WallDesign) {
+    setDesign(next);
+    setDesignFileLoaded(false);
+  }
+
   async function loadFile(field: DesignImage | 'design', file: File) {
     if (fileBusy.current) return;
     fileBusy.current = true;
@@ -152,10 +157,7 @@ export function WallDesignDemo({
           )}
           <WallDesignFields
             value={design}
-            update={(next) => {
-              setDesign(next);
-              setDesignFileLoaded(false);
-            }}
+            update={update}
             onImage={(field, file) => void loadFile(field, file)}
           />
         </fieldset>
@@ -163,6 +165,8 @@ export function WallDesignDemo({
           design={design}
           owner="Nova Ray"
           renderPlace={renderPlace}
+          onChange={update}
+          materialsDisabled={processingFile}
         />
       </div>
       {mark && (

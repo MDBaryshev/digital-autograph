@@ -3,6 +3,7 @@ import { e2eWallId, expect, test } from './fixtures';
 
 test('owner manages the profile avatar separately and edits the appearance of their Wall in the studio', async ({
   scenario,
+  page: guest,
 }, testInfo) => {
   test.setTimeout(120_000);
   const provider =
@@ -65,12 +66,43 @@ test('owner manages the profile avatar separately and edits the appearance of th
     buffer: photo,
   });
   await expect(page.locator('[data-wall-theme] header > img')).toBeVisible();
+  const sharedMaterial = page.getByRole('combobox', {
+    name: 'Shared cube material',
+  });
+  const secondMaterial = page.getByRole('combobox', {
+    name: 'Material for cube 2',
+    exact: true,
+  });
+  await sharedMaterial.selectOption('satin-glass');
+  await secondMaterial.selectOption('stone');
   await page
     .getByRole('button', { name: 'Save Wall design', exact: true })
     .click();
   await expect(
     page.getByText('Wall design saved.', { exact: true }),
   ).toBeVisible();
+  await page.reload();
+  await expect(sharedMaterial).toHaveValue('satin-glass');
+  await expect(secondMaterial).toHaveValue('stone');
+
+  await guest.goto(web + '/walls/' + e2eWallId);
+  await expect(
+    guest.getByRole('heading', { name: 'Our ten places', exact: true }),
+  ).toBeVisible();
+  await expect(
+    guest
+      .getByRole('listitem', { name: 'Slot 1', exact: true })
+      .locator('[data-cube-object]'),
+  ).toHaveAttribute('data-cube-finish', 'satin-glass');
+  await expect(
+    guest
+      .getByRole('listitem', { name: 'Slot 2', exact: true })
+      .locator('[data-cube-object]'),
+  ).toHaveAttribute('data-cube-finish', 'stone');
+  await expect(
+    guest.getByRole('combobox', { name: /^Material for cube / }),
+  ).toHaveCount(0);
+
   await page.goto(web + '/me/settings');
   for (const theme of ['light', 'dark']) {
     await page

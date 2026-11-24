@@ -1,8 +1,15 @@
 import { useId, type ReactNode } from 'react';
-import { wallCubeFinish, type WallDesign } from '@digital-autograph/domain';
+import {
+  wallCubeFinish,
+  wallDesignPlaceKeys,
+  type WallCubeFinish,
+  type WallDesign,
+  type WallDesignPlaceKey,
+} from '@digital-autograph/domain';
 import { CubePreview } from './autograph-cube';
 import { useLocale } from './locale-provider';
 import { SignatureArt } from './signature-art';
+import { WallCubeMaterialSelect } from './wall-cube-materials';
 import { wallPodiumPlace } from '../lib/wall-podium';
 import { wallDesignPresentation } from '../lib/wall-design-presentation';
 import wall from '../app/walls/[id]/page.module.css';
@@ -12,17 +19,29 @@ export function WallDesignPreview({
   design,
   owner,
   renderPlace,
+  onChange,
+  materialsDisabled,
 }: {
   design: WallDesign;
   owner: string;
   renderPlace?: (place: number) => ReactNode;
+  onChange: (design: WallDesign) => void;
+  materialsDisabled: boolean;
 }) {
   const { t } = useLocale();
   const slotsId = useId();
   const action = design.style.actionLabel || t('Find a place');
+
+  function setPlaceFinish(key: WallDesignPlaceKey, finish?: WallCubeFinish) {
+    const placeFinishes = { ...design.style.placeFinishes };
+    if (finish) placeFinishes[key] = finish;
+    else delete placeFinishes[key];
+    onChange({ ...design, style: { ...design.style, placeFinishes } });
+  }
+
   return (
     <section className={styles.preview} aria-labelledby="wall-design-preview">
-      <h2 id="wall-design-preview">{t('Guest preview')}</h2>
+      <h2 id="wall-design-preview">{t('Wall preview')}</h2>
       <div
         className={`${wall.page} ${styles.mock}`}
         {...wallDesignPresentation(design.style)}
@@ -67,9 +86,9 @@ export function WallDesignPreview({
           className={`${wall.grid} ${styles.previewSlots}`}
           aria-label={t('Places')}
         >
-          {Array.from({ length: 10 }, (_, index) => (
+          {wallDesignPlaceKeys.map((key, index) => (
             <li
-              key={index}
+              key={key}
               className={wall.slot}
               data-podium={wallPodiumPlace(index + 1, design.style.podium)?.key}
             >
@@ -91,6 +110,14 @@ export function WallDesignPreview({
                   }}
                 />
               )}
+              <WallCubeMaterialSelect
+                label={t('Material for cube {place}', { place: key })}
+                className={styles.placeMaterial}
+                value={design.style.placeFinishes?.[key]}
+                defaultFinish={design.style.finish ?? 'metallic'}
+                disabled={materialsDisabled}
+                onChange={(finish) => setPlaceFinish(key, finish)}
+              />
             </li>
           ))}
         </ol>

@@ -1,18 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import {
-  isWallGlassFinish,
-  wallCubeFinish,
   wallDesignFinishes,
-  wallDesignPlaceKeys,
   type WallCubeFinish,
-  type WallDesignPlaceKey,
   type WallDesignPodium,
   type WallDesignStyle,
 } from '@digital-autograph/domain';
 import { useLocale } from './locale-provider';
-import cube from './autograph-cube.module.css';
 import styles from './wall-design-studio.module.css';
 
 const finishLabels = {
@@ -27,7 +21,45 @@ const finishLabels = {
   weave: 'Carbon weave',
 } satisfies Record<WallCubeFinish, string>;
 
-type Target = 'wall' | WallDesignPlaceKey;
+export function WallCubeMaterialSelect({
+  label,
+  value,
+  defaultFinish,
+  onChange,
+  disabled,
+  className,
+}: {
+  label: string;
+  value?: WallCubeFinish;
+  defaultFinish?: WallCubeFinish;
+  onChange: (finish: WallCubeFinish | undefined) => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { t } = useLocale();
+  const material = value ?? defaultFinish;
+  return (
+    <select
+      aria-label={label}
+      className={className}
+      value={value ?? ''}
+      disabled={disabled}
+      title={material ? t(finishLabels[material]) : undefined}
+      onChange={(event) =>
+        onChange(
+          (event.currentTarget.value as WallCubeFinish | '') || undefined,
+        )
+      }
+    >
+      {defaultFinish && <option value="">{t('Shared')}</option>}
+      {wallDesignFinishes.map((finish) => (
+        <option key={finish} value={finish}>
+          {t(finishLabels[finish])}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function WallCubeMaterials({
   value,
@@ -37,31 +69,19 @@ export function WallCubeMaterials({
   onChange: (next: Partial<WallDesignStyle>) => void;
 }) {
   const { t } = useLocale();
-  const [target, setTarget] = useState<Target>('wall');
-  const override =
-    target === 'wall' ? undefined : value.placeFinishes?.[target];
-  const active =
-    target === 'wall'
-      ? (value.finish ?? 'metallic')
-      : wallCubeFinish(value, Number(target));
-
-  function choose(finish: WallCubeFinish) {
-    if (target === 'wall') onChange({ finish });
-    else
-      onChange({ placeFinishes: { ...value.placeFinishes, [target]: finish } });
-  }
-
-  function useDefault() {
-    if (target === 'wall') return;
-    const placeFinishes = { ...value.placeFinishes };
-    delete placeFinishes[target];
-    onChange({ placeFinishes });
-  }
-
+  const label = t('Shared cube material');
   return (
     <section className={styles.group}>
       <h2>{t('Cube materials')}</h2>
-      <div className={styles.materialTarget}>
+      <div className={styles.options}>
+        <label>
+          {label}
+          <WallCubeMaterialSelect
+            label={label}
+            value={value.finish ?? 'metallic'}
+            onChange={(finish) => onChange({ finish })}
+          />
+        </label>
         <label>
           {t('Top three style')}
           <select
@@ -74,45 +94,6 @@ export function WallCubeMaterials({
             <option value="jewels">{t('Diamond podium')}</option>
           </select>
         </label>
-        <label>
-          {t('Apply material to')}
-          <select
-            value={target}
-            onChange={(event) => setTarget(event.target.value as Target)}
-          >
-            <option value="wall">{t('Wall default')}</option>
-            {wallDesignPlaceKeys.map((place) => (
-              <option key={place} value={place}>
-                {t('Place {place}', { place })}
-                {value.placeFinishes?.[place] ? ' •' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-        {override && (
-          <button type="button" onClick={useDefault}>
-            {t('Use wall default')}
-          </button>
-        )}
-      </div>
-      <div className={styles.materials}>
-        {wallDesignFinishes.map((finish) => (
-          <button
-            key={finish}
-            type="button"
-            aria-pressed={active === finish}
-            onClick={() => choose(finish)}
-          >
-            <span className={cube.finishSample} aria-hidden="true">
-              <span
-                className={cube.finishSwatch}
-                data-cube-finish={finish}
-                data-glass={isWallGlassFinish(finish) ? '' : undefined}
-              />
-            </span>
-            {t(finishLabels[finish])}
-          </button>
-        ))}
       </div>
     </section>
   );

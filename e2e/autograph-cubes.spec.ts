@@ -26,8 +26,8 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
     exact: true,
   });
   await page
-    .getByRole('button', { name: 'Polished metal', exact: true })
-    .click();
+    .getByRole('combobox', { name: 'Shared cube material', exact: true })
+    .selectOption('metallic');
   const podium = [1, 2, 3].map((place) =>
     page
       .getByRole('button', {
@@ -86,6 +86,35 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   await expect.poll(sideOpacity).toBe('1');
   await expect(crown).toHaveCSS('opacity', '1');
   await expect(crown).not.toHaveCSS('transform', restingCrown);
+  const geometry = await object.evaluate((element) => {
+    const front = element.querySelector<HTMLElement>(
+      '[data-cube-face="front"]',
+    )!;
+    const crown = element.querySelector<HTMLImageElement>(
+      '[data-crown-thumbnail]',
+    )!;
+    const side = getComputedStyle(element, '::before');
+    const top = getComputedStyle(element, '::after');
+    return {
+      frontWidth: front.clientWidth,
+      otherEdges: [
+        front.clientHeight,
+        Number.parseFloat(side.width),
+        Number.parseFloat(side.height),
+        Number.parseFloat(top.width),
+        Number.parseFloat(top.height),
+      ],
+      crownWidth: crown.clientWidth,
+      crownTop: crown.getBoundingClientRect().top,
+      previewTop: element.parentElement!.getBoundingClientRect().top,
+    };
+  });
+  for (const edge of geometry.otherEdges) {
+    expect(Math.abs(edge - geometry.frontWidth)).toBeLessThan(1);
+  }
+  expect(geometry.crownWidth / geometry.frontWidth).toBeGreaterThan(0.5);
+  expect(geometry.crownWidth / geometry.frontWidth).toBeLessThan(0.6);
+  expect(geometry.crownTop).toBeGreaterThanOrEqual(geometry.previewTop);
   await expect(open.locator('[data-solid-crown]')).toHaveCount(0);
   expect(await open.boundingBox()).toEqual(cardSize);
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -249,6 +278,18 @@ test('wall materials look distinct and defaults and individual places can be edi
     .selectOption('classic');
   const gold = page.locator('[data-wall-theme] [data-material="gold"]');
   const front = gold.locator('[data-cube-face="front"]');
+  const shared = page.getByRole('combobox', { name: 'Shared cube material' });
+  const firstMaterial = page.getByRole('combobox', {
+    name: 'Material for cube 1',
+    exact: true,
+  });
+  const lastMaterial = page.getByRole('combobox', {
+    name: 'Material for cube 10',
+    exact: true,
+  });
+  await expect(
+    page.getByRole('combobox', { name: /^Material for cube / }),
+  ).toHaveCount(10);
   const baseColor = await front.evaluate((element) =>
     getComputedStyle(element).getPropertyValue('--face-paper'),
   );
@@ -274,7 +315,7 @@ test('wall materials look distinct and defaults and individual places can be edi
   const rendered = new Set<string>();
   const alphas = new Map<string, number>();
   for (const [label, value] of materials) {
-    await page.getByRole('button', { name: label, exact: true }).click();
+    await shared.selectOption({ label });
     await expect(gold).toHaveAttribute('data-cube-finish', value!);
     const image = await front.evaluate(
       (element) => getComputedStyle(element).backgroundImage,
@@ -294,17 +335,15 @@ test('wall materials look distinct and defaults and individual places can be edi
   expect(alphas.get('smoked-glass')).toBeLessThan(alphas.get('satin-glass')!);
   expect(alphas.get('metallic')).toBe(255);
 
-  const target = page.getByRole('combobox', { name: 'Apply material to' });
   const last = page
     .getByRole('button', { name: 'Sign demo place 10', exact: true })
     .locator('[data-cube-object]');
-  await target.selectOption('10');
-  await page.getByRole('button', { name: 'Terrazzo', exact: true }).click();
+  await expect(lastMaterial).toHaveValue('');
+  await lastMaterial.selectOption('stone');
   await expect(last).toHaveAttribute('data-cube-finish', 'stone');
   await expect(gold).toHaveAttribute('data-cube-finish', 'weave');
   await expect.poll(() => front.evaluate(frontAlpha)).toBe(255);
-  await target.selectOption('1');
-  await page.getByRole('button', { name: 'Clear glass', exact: true }).click();
+  await firstMaterial.selectOption('glass');
   await expect.poll(() => front.evaluate(frontAlpha)).toBeLessThan(100);
   await expect(gold.locator('[data-glass-interior="back"]')).toHaveCount(1);
   await page
@@ -357,8 +396,14 @@ test('wall materials look distinct and defaults and individual places can be edi
     expect(await face.evaluate(frontAlpha)).toBeLessThan(100);
   }
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Use wall default' }).click();
-  await expect(gold).toHaveAttribute('data-cube-finish', 'weave');
+  await shared.selectOption('brushed');
+  await expect(gold).toHaveAttribute('data-cube-finish', 'glass');
+  await expect(last).toHaveAttribute('data-cube-finish', 'stone');
+  await expect(
+    page.locator('[data-wall-theme] [data-cube-finish="brushed"]'),
+  ).toHaveCount(8);
+  await firstMaterial.selectOption({ label: 'Shared' });
+  await expect(gold).toHaveAttribute('data-cube-finish', 'brushed');
   await expect(last).toHaveAttribute('data-cube-finish', 'stone');
 });
 
@@ -394,9 +439,7 @@ test('the diamond podium has its own three sculptures and fixed colors', async (
   await expect(sculpture).toHaveCSS('opacity', '1');
   await expect
     .poll(() =>
-      sculpture
-        .locator('img')
-        .evaluate((image: HTMLImageElement) => image.naturalWidth),
+      sculpture.evaluate((image: HTMLImageElement) => image.naturalWidth),
     )
     .toBeGreaterThan(0);
   await expect(page.locator('[data-crown-model]')).toHaveCount(0);
@@ -475,7 +518,9 @@ test('crown is visible through glass when viewed from below', async ({
     'Smoked glass',
     'Polished metal',
   ]) {
-    await page.getByRole('button', { name: finish, exact: true }).click();
+    await page
+      .getByRole('combobox', { name: 'Shared cube material' })
+      .selectOption({ label: finish });
     await page
       .getByRole('button', {
         name: 'Explore demo cube in place 1',

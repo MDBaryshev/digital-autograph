@@ -6,38 +6,14 @@ import styles from './wall-design-studio.module.css';
 
 const selects = [
   {
-    key: 'pattern',
-    label: 'Cover pattern',
-    options: {
-      plain: 'Plain cover',
-      grid: 'Grid pattern',
-      spotlight: 'Spotlight rings',
-    },
-  },
-  {
     key: 'layout',
     label: 'Place layout',
     options: { podium: 'Podium', gallery: 'Gallery' },
   },
   {
-    key: 'alignment',
-    label: 'Heading alignment',
-    options: { left: 'Left', center: 'Center' },
-  },
-  {
-    key: 'typeface',
-    label: 'Heading font',
-    options: { display: 'Supcube', editorial: 'Editorial' },
-  },
-  {
     key: 'frame',
     label: 'Corner style',
     options: { soft: 'Rounded', square: 'Square' },
-  },
-  {
-    key: 'coverPosition',
-    label: 'Cover position',
-    options: { top: 'Top', center: 'Center', bottom: 'Bottom' },
   },
 ] as const;
 
@@ -67,7 +43,7 @@ export function WallDesignFields({
             <label key={key}>
               {t(label)}
               <select
-                value={value.style[key] ?? 'plain'}
+                value={value.style[key]}
                 onChange={(e) => style({ [key]: e.target.value })}
               >
                 {Object.entries(options).map(([option, text]) => (

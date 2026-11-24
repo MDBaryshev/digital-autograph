@@ -1,3 +1,9 @@
+@property --autograph-cube-reveal {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 .preview {
   --cube-size: var(--slot-cube-size, clamp(3.75rem, 6.5vw, 5.5rem));
   position: relative;
@@ -34,99 +40,96 @@
   height: 68%;
 }
 
-/* Decorative geometry animates without changing the card layout. */
-@supports (scale: calc(1px / 1px)) {
+@supports (width: 1cqw) {
   @media (prefers-reduced-motion: no-preference) {
     .preview {
       container-type: size;
-      --preview-reveal: 0;
+      --autograph-cube-reveal: 0;
+      transition: --autograph-cube-reveal 230ms cubic-bezier(0.2, 0.75, 0.25, 1);
     }
 
     button:focus-visible > .preview {
-      --preview-reveal: 1;
+      --autograph-cube-reveal: 1;
     }
 
     @media (hover: hover) and (pointer: fine) {
       :is(button, li):hover > .preview {
-        --preview-reveal: 1;
+        --autograph-cube-reveal: 1;
       }
     }
 
     .preview .object {
-      --preview-edge: min(var(--cube-size), 76cqw, 73cqh);
-      --preview-depth: calc(var(--preview-edge) / 2);
-      --preview-flat: calc(1 - var(--preview-reveal));
-      --preview-front-x: calc(
-        var(--preview-flat) + var(--preview-reveal) * var(--preview-edge) /
-          100cqw
+      /* All three faces share the same dimensions and animation progress. */
+      --preview-edge: min(var(--cube-size), 74cqw, 74cqh);
+      --preview-offset: -2px;
+      --preview-width: calc(
+        100cqw + (var(--preview-edge) - 100cqw) * var(--autograph-cube-reveal)
       );
-      --preview-front-y: calc(
-        var(--preview-flat) + var(--preview-reveal) * var(--preview-edge) /
-          100cqh
+      --preview-height: calc(
+        100cqh + (var(--preview-edge) - 100cqh) * var(--autograph-cube-reveal)
       );
-      transform: translateY(calc(-4px * var(--preview-reveal)))
-        rotateX(calc(-18deg * var(--preview-reveal)))
-        rotateY(calc(-28deg * var(--preview-reveal)));
+      --preview-depth: calc(var(--preview-edge) * var(--autograph-cube-reveal));
+      --cube-half: calc(var(--preview-depth) / 2);
+      width: var(--preview-width);
+      height: var(--preview-height);
+      transform: translateY(
+          calc(var(--preview-offset) * var(--autograph-cube-reveal))
+        )
+        rotateX(calc(-15deg * var(--autograph-cube-reveal)))
+        rotateY(calc(-22deg * var(--autograph-cube-reveal)));
+    }
+
+    .preview .object:has(> .crownThumbnail) {
+      --preview-edge: min(var(--cube-size), 74cqw, 61cqh);
+      --preview-offset: calc(var(--preview-edge) * 0.12);
     }
 
     .preview .front {
-      transform: translateZ(calc(var(--preview-depth) * var(--preview-reveal)))
-        scale(var(--preview-front-x), var(--preview-front-y));
-      transition: transform 230ms cubic-bezier(0.2, 0.75, 0.25, 1);
+      border-radius: calc(
+        var(--custom-cube-rounding, 0.7rem) * (1 - var(--autograph-cube-reveal))
+      );
     }
 
     .preview .object::before,
     .preview .object::after {
       content: '';
       position: absolute;
-      inset: 0;
-      width: var(--preview-edge);
-      height: var(--preview-edge);
-      margin: auto;
+      top: 50%;
+      left: 50%;
       background:
         var(--finish, var(--default-finish)),
         var(--finish-paper, var(--face-paper));
       box-shadow: inset 0 0 0 1px var(--cube-edge);
       backface-visibility: hidden;
-      opacity: var(--preview-reveal);
-      transition: opacity 190ms ease;
+      opacity: var(--autograph-cube-reveal);
     }
 
     .preview .object::before {
-      transform: rotateY(90deg) translateZ(var(--preview-depth));
+      width: var(--preview-depth);
+      height: var(--preview-height);
+      transform: translate(-50%, -50%) rotateY(90deg)
+        translateZ(calc(var(--preview-width) / 2));
     }
 
     .preview .object::after {
-      transform: rotateX(90deg) translateZ(var(--preview-depth));
+      width: var(--preview-width);
+      height: var(--preview-depth);
+      transform: translate(-50%, -50%) rotateX(90deg)
+        translateZ(calc(var(--preview-height) / 2));
     }
 
-    .preview .object .sculpture {
-      --sculpture-size: calc(var(--preview-edge) * var(--sculpture-proportion));
+    .preview .crownThumbnail {
       display: block;
-      top: 50%;
-      opacity: var(--preview-reveal);
-      transform: translate(
-          -50%,
-          calc(
-            -1 * var(--sculpture-rise) - var(--preview-depth) *
-              var(--preview-reveal)
-          )
-        )
-        rotateY(16deg) scaleY(calc(0.58 + 0.42 * var(--preview-reveal)));
-      transition:
-        opacity 190ms ease,
-        transform 230ms cubic-bezier(0.2, 0.75, 0.25, 1);
+      width: calc(var(--preview-edge) * var(--thumbnail-width, 0.56));
+      opacity: var(--autograph-cube-reveal);
+      transform: translate(-50%, -100%)
+        rotateY(calc(14deg * var(--autograph-cube-reveal)))
+        scale(var(--autograph-cube-reveal));
     }
 
     .preview .object[data-glass] .glassInterior {
       display: flex;
-      inset: 50% auto auto 50%;
-      width: var(--preview-edge);
-      height: var(--preview-edge);
-      transform: translate(-50%, -50%) var(--face-turn)
-        translateZ(calc(var(--preview-depth) - 1px)) rotateY(180deg) scaleX(-1);
-      opacity: calc(var(--glass-etch-opacity) * var(--preview-reveal));
-      transition: opacity 190ms ease;
+      opacity: calc(var(--glass-etch-opacity) * var(--autograph-cube-reveal));
     }
 
     .preview::before {
@@ -135,8 +138,7 @@
       inset: auto 18% 4% 18%;
       height: 16%;
       background: radial-gradient(ellipse, var(--cube-shadow), transparent 73%);
-      opacity: var(--preview-reveal);
-      transition: opacity 190ms ease;
+      opacity: var(--autograph-cube-reveal);
     }
   }
 }
@@ -165,43 +167,7 @@
   transform: rotateX(var(--rx)) rotateY(var(--ry));
 }
 
-.finishSample {
-  display: block;
-  overflow: hidden;
-  border-radius: 0.45rem;
-}
-.finishSample:has([data-glass]) {
-  background:
-    linear-gradient(
-      135deg,
-      transparent 0 43%,
-      #83b6d5 43% 58%,
-      transparent 58%
-    ),
-    linear-gradient(23deg, #101d2d, #364d61);
-}
-.finishSwatch {
-  --face-paper: #777f8c;
-  --cube-frame: #39424e;
-  position: relative;
-  display: block;
-  width: 100%;
-  aspect-ratio: 2.75;
-  border-radius: 0.45rem;
-  background: var(--finish), var(--finish-paper, var(--face-paper));
-  box-shadow:
-    inset 0 0 0 1px var(--cube-frame),
-    var(--finish-depth, inset 0 0 0 transparent);
-}
-.finishSwatch::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border: 1px solid var(--finish-rim, transparent);
-  border-radius: 0.28rem;
-}
-
-:is(.object, .finishSwatch)[data-cube-finish='metallic'] {
+.object[data-cube-finish='metallic'] {
   --finish: linear-gradient(
     153deg,
     #fbf7f342 0%,
@@ -214,7 +180,7 @@
   );
   --finish-depth: inset 0 1px #fff9ec72, inset 0 -1px #121b2e59;
 }
-:is(.object, .finishSwatch)[data-cube-finish='brushed'] {
+.object[data-cube-finish='brushed'] {
   --finish:
     repeating-linear-gradient(
       90deg,
@@ -226,7 +192,7 @@
     linear-gradient(105deg, #111d2d33, #ffffff49 31%, #e1e8ef13 63%, #1423353d);
   --finish-depth: inset 0 1px #eff7fd55, inset 0 -1px #1124394a;
 }
-:is(.object, .finishSwatch)[data-glass] {
+.object[data-glass] {
   --glass-tint-strength: 12%;
   --glass-etch-opacity: 0.24;
   --glass-etch-blur: 0.3px;
@@ -242,7 +208,7 @@
     inset 0 1px #ffffffa3, inset 1px 0 #ecf6ff7c, inset 0 -1px #deedff64,
     inset -1px 0 #e6f3ff48, inset 0 0 9px #ddecff26;
 }
-:is(.object, .finishSwatch)[data-cube-finish='satin-glass'] {
+.object[data-cube-finish='satin-glass'] {
   --glass-tint-strength: 39%;
   --glass-etch-opacity: 0.16;
   --glass-etch-blur: 1.15px;
@@ -251,7 +217,7 @@
     linear-gradient(156deg, #fafbff14, #eef3ff0c 58%, #e8f1ff25);
   --finish-depth: inset 0 1px #f3f9ff91, inset 0 0 13px #d6e5ff50;
 }
-:is(.object, .finishSwatch)[data-cube-finish='smoked-glass'] {
+.object[data-cube-finish='smoked-glass'] {
   --glass-tint-strength: 31%;
   --glass-etch-opacity: 0.15;
   --glass-etch-blur: 0.65px;
@@ -275,8 +241,7 @@
 }
 .object[data-glass] .face,
 .preview .object[data-glass]::before,
-.preview .object[data-glass]::after,
-.finishSwatch[data-glass] {
+.preview .object[data-glass]::after {
   --finish-paper: color-mix(
     in srgb,
     var(--face-paper)
@@ -357,26 +322,23 @@
   --sculpture-rise: 75%;
   --sculpture-proportion: 0.88;
 }
-:where(.preview) .sculpture {
-  display: none;
-}
-
 .sculpture[data-diamond-crown] {
   --sculpture-proportion: 0.96;
   --sculpture-rise: 87%;
 }
-.sculpture[data-crown-thumbnail] {
-  --sculpture-proportion: 0.89;
-  --sculpture-rise: 90%;
-}
 .crownThumbnail {
-  width: 88%;
-  height: 72%;
-  object-fit: contain;
-  object-position: center bottom;
+  display: none;
   position: absolute;
-  left: 6%;
-  bottom: 10%;
+  top: 0;
+  left: 50%;
+  height: auto;
+  transform-origin: center bottom;
+}
+.crownThumbnail[data-crown-thumbnail='gold'] {
+  --thumbnail-width: 0.52;
+}
+.crownThumbnail[data-crown-thumbnail='diamond'] {
+  --thumbnail-width: 0.58;
 }
 .diamondCrownDefs {
   position: absolute;
@@ -453,19 +415,19 @@
 .manipulator .object[data-glass] .front .artwork {
   filter: drop-shadow(0 1px 0 #182b415c);
 }
-:is(.object, .finishSwatch)[data-cube-finish='matte'] {
+.object[data-cube-finish='matte'] {
   --finish:
     repeating-linear-gradient(113deg, #ffffff07 0 1px, transparent 1px 3px),
     linear-gradient(145deg, #fffaf21a, transparent 54%, #0a152328);
   --finish-depth: inset 0 1px #ffffff29, inset 0 -1px #15223640;
 }
-:is(.object, .finishSwatch)[data-cube-finish='enamel'] {
+.object[data-cube-finish='enamel'] {
   --finish:
     linear-gradient(163deg, #fffafa65, #fffafa22 20%, transparent 42%),
     linear-gradient(37deg, #ffffff26, #10172523 27%, transparent 69%, #ffffff28);
   --finish-depth: inset 0 1px 2px #ffffff8c, inset 0 -1px 2px #131c344f;
 }
-:is(.object, .finishSwatch)[data-cube-finish='stone'] {
+.object[data-cube-finish='stone'] {
   --finish:
     radial-gradient(
         ellipse 1.8px 0.9px at 24% 31%,
@@ -488,7 +450,7 @@
     linear-gradient(142deg, #f2e9da22, #19253527);
   --finish-depth: inset 0 1px #fff6e147, inset 0 -1px #1926363f;
 }
-:is(.object, .finishSwatch)[data-cube-finish='weave'] {
+.object[data-cube-finish='weave'] {
   --finish:
     repeating-linear-gradient(
       35deg,

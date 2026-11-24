@@ -319,18 +319,14 @@ export function CubeObject({
         </span>
       </CubeFace>
       {flat && place && (
-        <span
-          className={styles.sculpture}
+        <img
+          className={styles.crownThumbnail}
           data-crown-thumbnail={place.key}
+          src={'/crown-models/' + place.key + '.webp'}
+          alt=""
           aria-hidden="true"
-        >
-          <img
-            className={styles.crownThumbnail}
-            src={'/crown-models/' + place.key + '.webp'}
-            alt=""
-            draggable={false}
-          />
-        </span>
+          draggable={false}
+        />
       )}
       {!flat && jewel === 'diamond' && <DiamondCrown />}
       {!flat && jewel === 'silver' && <SilverSculpture />}
