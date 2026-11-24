@@ -123,7 +123,7 @@ export function ShareControls({
                 ).catch(() => {});
                 if (navigator.share) {
                   try {
-                    await navigator.share({ title: 'Destka', url });
+                    await navigator.share({ title: 'supcube', url });
                     return;
                   } catch (e) {
                     if (e instanceof Error && e.name === 'AbortError') return;

@@ -123,7 +123,7 @@ export function WallInvite({
             href={
               'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qr.svg)
             }
-            download="destka-wall-qr.svg"
+            download="supcube-wall-qr.svg"
           >
             {t('Download QR code')}
           </a>

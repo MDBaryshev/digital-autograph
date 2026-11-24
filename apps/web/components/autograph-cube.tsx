@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  memo,
   useEffect,
   useId,
   useRef,
@@ -51,7 +52,7 @@ function RankCrown({ place }: { place: number }) {
 }
 
 /** A hollow metal crown, built from capped segments in the cube's 3D space. */
-function SolidCrown({ place }: { place: number }) {
+const SolidCrown = memo(function SolidCrown({ place }: { place: number }) {
   if (place < 1 || place > 3) return null;
   const rank = (place - 1) as 0 | 1 | 2;
   const height = ([32, 34, 28] as const)[rank];
@@ -61,6 +62,8 @@ function SolidCrown({ place }: { place: number }) {
   const width = 100 * Math.sin(step / 2);
   const radius = 50 * Math.cos(step / 2);
   const band = 9;
+  // Ignore subpixel differences in trigonometry across the server and browser.
+  const coordinate = (value: number) => Number(value.toFixed(6));
   const top = (angle: number) =>
     (height - band) * (1 - Math.pow((1 + Math.cos(angle * tips)) / 2, 1.5));
   return (
@@ -70,9 +73,8 @@ function SolidCrown({ place }: { place: number }) {
       aria-hidden="true"
       style={
         {
-          '--crown-unit': 'calc(var(--cube-size) * 0.0094)',
           '--crown-height': height,
-          '--crown-inner-inset': `calc(var(--crown-unit) * ${3.5 * Math.tan(step / 2)})`,
+          '--crown-inner-inset': coordinate(3.5 * Math.tan(step / 2)),
         } as CSSProperties
       }
     >
@@ -80,8 +82,6 @@ function SolidCrown({ place }: { place: number }) {
         const angle = index * step;
         const left = top(angle - step / 2);
         const right = top(angle + step / 2);
-        const outline = (a: number, b: number) =>
-          `polygon(0 ${(a / height) * 100}%, 100% ${(b / height) * 100}%, 100% 100%, 0 100%)`;
         const light = Math.cos(angle + 0.7);
         return (
           <span
@@ -89,30 +89,31 @@ function SolidCrown({ place }: { place: number }) {
             key={index}
             style={
               {
-                width: `calc(var(--crown-unit) * ${width})`,
+                '--crown-wall-width': coordinate(width),
+                '--crown-radius': coordinate(radius),
+                '--crown-angle': `${coordinate(angle)}rad`,
+                '--crown-left-top': `${coordinate((left / height) * 100)}%`,
+                '--crown-right-top': `${coordinate((right / height) * 100)}%`,
                 '--crown-shade':
                   light > 0
-                    ? `rgb(255 250 230 / ${light * 0.32})`
-                    : `rgb(48 26 10 / ${-light * 0.24})`,
-                transform: `translateX(-50%) rotateY(${angle}rad) translateZ(calc(var(--crown-unit) * ${radius}))`,
+                    ? `rgb(255 250 230 / ${coordinate(light * 0.32)})`
+                    : `rgb(48 26 10 / ${coordinate(-light * 0.24)})`,
               } as CSSProperties
             }
           >
-            <span
-              className={styles.crownOutside}
-              style={{ clipPath: outline(left, right) }}
-            />
-            <span
-              className={styles.crownInside}
-              style={{ clipPath: outline(right, left) }}
-            />
+            <span className={styles.crownOutside} />
+            <span className={styles.crownInside} />
             <span
               className={styles.crownEdge}
-              style={{
-                top: `calc(var(--crown-unit) * ${left})`,
-                width: `calc(var(--crown-unit) * ${Math.hypot(width, right - left)})`,
-                transform: `rotateZ(${Math.atan2(right - left, width)}rad) rotateX(-90deg)`,
-              }}
+              style={
+                {
+                  '--crown-edge-top': coordinate(left),
+                  '--crown-edge-width': coordinate(
+                    Math.hypot(width, right - left),
+                  ),
+                  '--crown-edge-angle': `${coordinate(Math.atan2(right - left, width))}rad`,
+                } as CSSProperties
+              }
             />
             {((place === 1 && index % 16 === 0) ||
               (place === 2 && index === 0)) && (
@@ -140,12 +141,16 @@ function SolidCrown({ place }: { place: number }) {
                   <span
                     className={styles.crownArchLink}
                     key={segment}
-                    style={{
-                      left: `calc(var(--crown-unit) * ${x})`,
-                      top: `calc(var(--crown-unit) * ${y})`,
-                      width: `calc(var(--crown-unit) * ${Math.hypot(dx, dy) + 0.3})`,
-                      transform: `rotateZ(${Math.atan2(dy, dx)}rad)`,
-                    }}
+                    style={
+                      {
+                        '--crown-arch-x': coordinate(x),
+                        '--crown-arch-y': coordinate(y),
+                        '--crown-arch-width': coordinate(
+                          Math.hypot(dx, dy) + 0.3,
+                        ),
+                        '--crown-arch-angle': `${coordinate(Math.atan2(dy, dx))}rad`,
+                      } as CSSProperties
+                    }
                   />
                 );
               })}
@@ -159,7 +164,7 @@ function SolidCrown({ place }: { place: number }) {
       )}
     </span>
   );
-}
+});
 
 function SlotPlaque({ place }: { place: number }) {
   return (
@@ -259,7 +264,7 @@ export function CubeObject({
         </span>
       </span>
       <span className={`${styles.face} ${styles.left}`} aria-hidden="true">
-        <span className={styles.faceIndex}>Destka</span>
+        <span className={styles.faceIndex}>supcube</span>
         <span className={styles.edition}>
           {String(details.place).padStart(2, '0')}
         </span>
@@ -267,7 +272,7 @@ export function CubeObject({
       </span>
       <span className={`${styles.face} ${styles.top}`} aria-hidden="true">
         {details.place <= 3 && <span className={styles.crownSeat} />}
-        <span>destka</span>
+        <span>supcube</span>
         <span>{String(details.place).padStart(2, '0')}</span>
       </span>
       <span className={`${styles.face} ${styles.bottom}`} aria-hidden="true">

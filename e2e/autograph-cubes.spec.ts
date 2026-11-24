@@ -13,11 +13,16 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   page,
 }) => {
   const writes: string[] = [];
+  const hydrationErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /hydrat/i.test(message.text()))
+      hydrationErrors.push(message.text());
+  });
   page.on('request', (request) => {
     if (['POST', 'PUT', 'PATCH'].includes(request.method()))
       writes.push(request.url());
   });
-  await page.goto('/');
+  await page.goto('/design-lab');
   const open = page.getByRole('button', {
     name: 'Explore demo cube in place 1',
     exact: true,
@@ -35,6 +40,7 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   });
   const close = viewer.getByRole('button', { name: 'Close', exact: true });
   await expect(close).toBeFocused();
+  expect(hydrationErrors).toEqual([]);
   const controls = viewer.getByRole('group', {
     name: 'Cube faces',
     exact: true,
@@ -64,7 +70,7 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   await page.mouse.move(
     box.x + box.width / 2 + 140,
     box.y + box.height / 2 + 30,
-    { steps: 10 },
+    { steps: 3 },
   );
   await page.mouse.up();
   await expect(
@@ -98,7 +104,10 @@ test('cube inspection stays usable on touch screens and with reduced motion', as
       },
     ]);
     const page = await context.newPage();
-    await page.goto(process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000');
+    await page.goto(
+      new URL('/design-lab', process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000')
+        .href,
+    );
     await page
       .getByRole('button', {
         name: 'Explore demo cube in place 2',

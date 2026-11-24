@@ -9,9 +9,9 @@
   <title id="title">Stories share-card design specimen</title>
   <rect width="1080" height="1920" fill="#16171d" />
   <g transform="translate(72 220) scale(1.5555555555555556)">
-    <rect width="36" height="36" rx="11" fill="#b0bfff" />
+    <path d="m18 2 14 8v16l-14 8-14-8V10Z" fill="#b0bfff" />
     <path
-      d="M8 24C12 19 16 9 19 9c4 0-6 20-3 18 2-1 5-12 8-11 2 1-2 6 0 6l5-4M9 28l18-3"
+      d="m4 10 14 8 14-8M18 18v16M11 6l14 8"
       fill="none"
       stroke="#1d2857"
       stroke-width="1.8"
@@ -27,7 +27,7 @@
     fill="#b0bfff"
     font-weight="700"
   >
-    Destka
+    supcube
   </text>
   <text
     x="72"
@@ -60,9 +60,9 @@
     CREATOR / DEMO WALL
   </text>
   <g transform="translate(108 764) scale(4.444444444444445)">
-    <rect width="36" height="36" rx="11" fill="#b0bfff" />
+    <path d="m18 2 14 8v16l-14 8-14-8V10Z" fill="#b0bfff" />
     <path
-      d="M8 24C12 19 16 9 19 9c4 0-6 20-3 18 2-1 5-12 8-11 2 1-2 6 0 6l5-4M9 28l18-3"
+      d="m4 10 14 8 14-8M18 18v16M11 6l14 8"
       fill="none"
       stroke="#1d2857"
       stroke-width="1.8"

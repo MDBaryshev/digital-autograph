@@ -30,7 +30,7 @@ export async function DocumentLinks({
 
   return (
     <nav className={styles.navigation} aria-label={t('Другие документы')}>
-      <h2>{t('Документы Destka')}</h2>
+      <h2>{t('Документы supcube')}</h2>
       <ul>
         {documentRoutes.map((route) => {
           const versions = documents.filter((d) => d.type === route.type);
@@ -73,7 +73,7 @@ export async function UnavailableDocument() {
 
   return (
     <main className={styles.page}>
-      <p className="eyebrow">{t('Destka')}</p>
+      <p className="eyebrow">{t('supcube')}</p>
       <h1>{t('Документы временно недоступны')}</h1>
       <p role="alert">
         {t(
@@ -91,7 +91,7 @@ export async function LegalIndex() {
     const documents = await loadPublications();
     return (
       <main className={styles.page}>
-        <p className="eyebrow">{t('Destka')}</p>
+        <p className="eyebrow">{t('supcube')}</p>
         <h1>{t('Юридические документы')}</h1>
         {!documents.length && (
           <div className={styles.emptyState} role="status">
@@ -130,7 +130,7 @@ export async function DocumentPage({
           <span aria-current="page">{title}</span>
         </nav>
         <header className={styles.documentHeader}>
-          <p className="eyebrow">{t('Destka')}</p>
+          <p className="eyebrow">{t('supcube')}</p>
           <h1>{title}</h1>
           <div className={styles.documentToolbar}>
             <p className={styles.meta}>
@@ -185,7 +185,7 @@ export async function DocumentArchive({ type }: { type: DocumentType }) {
     if (!versions.length) throw new PublicationError(404);
     return (
       <main className={`${styles.page} ${styles.readingPage}`}>
-        <p className="eyebrow">{t('Destka')}</p>
+        <p className="eyebrow">{t('supcube')}</p>
         <h1>{t('Архив редакций')}</h1>
         <h2>{t(documentRoutes.find((d) => d.type === type)!.title)}</h2>
         <ul className={`contentList ${styles.archiveList}`}>
