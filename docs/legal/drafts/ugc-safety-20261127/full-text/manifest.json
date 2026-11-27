@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "issue": "EGO-215",
+  "status": "unpublished/lawyer-and-implementation-acceptance-required",
+  "artifact_type": "proposed-full-text-review-copies",
+  "assembly_date": "2026-11-27",
+  "source_edition_date": "2026-10-10",
+  "base_pull_request": "https://github.com/MDBaryshev/digital-autograph/pull/34",
+  "base_commit": "a626529196e77c2245df0ec8ec7f40d3fc2a22c4",
+  "new_legal_identity_assigned": false,
+  "publication_approved": false,
+  "legal_acceptance": "required",
+  "implementation_acceptance": "required",
+  "canonical_sources_changed": false,
+  "publication_registry_changed": false,
+  "original_docx_changed": false,
+  "EGO_209_manifest_changed": false,
+  "hash_semantics": {
+    "algorithm": "SHA-256",
+    "git_blob_sha256": "Exact Git blob bytes at base_commit, not Git object IDs.",
+    "checkout_raw_sha256": "Exact local checkout bytes at manifest preparation; reported separately from normalized content.",
+    "lf_sha256": "UTF-8 bytes after CRLF to LF only; no trimming, BOM removal, reflow, or Unicode normalization.",
+    "verification": "Text must match lf_sha256 and protected Git blob after CRLF to LF only. Raw checkout hash matches are counted explicitly; newline-only checkout variance is permitted for text. All transferred sources under docs/legal/sources are opaque bytes and must match both raw hashes exactly.",
+    "manifest_self_hash": "Excluded to avoid recursion; reviewer records manifest hash separately."
+  },
+  "assembly": {
+    "documents": 4,
+    "literal_edits": 16,
+    "substantive_sections": 11,
+    "clause_paragraphs": 24,
+    "editorial_preserve_no_edit": 1,
+    "content_changes_beyond_mapped_edits": false,
+    "normalization": "CRLF to LF only; exact source body is restored by reversing all literal edits.",
+    "source_identity_note": "Preserved source revision1.0/date/effective-language belong to the 10.10.2026 originals, not a newly adopted edition."
+  },
+  "publication_blockers": [
+    {
+      "id": "source-placeholders",
+      "description": "All original [[...]] placeholders remain unresolved, including the agreement archive URL; no replacement values are inferred."
+    },
+    {
+      "id": "legal-and-operational-acceptance",
+      "description": "Lawyer and implementation acceptance remain required; agent build review does not approve publication or assert reports/hide/restore/OCR/QR availability."
+    },
+    {
+      "id": "auth-privacy-alignment",
+      "description": "Owner target changed in EGO-216 / PR41: remove Google; Yandex and verified email/password via UniSender Go; Telegram optional private linking after primary login. Full texts retain source wording outside the 16 UGC edits. Separate auth/privacy reconciliation against actual implementation, processors and data flows is required before publication; this assembly does not confirm implementation or legal acceptability."
+    }
+  ],
+  "protected_files": [
+    {
+      "path": "docs/legal/destka-source-integrity.json",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "9500f4692f7c6e764581706ae5404fbd57121f4f40118486352f89b859db3fd9",
+      "lf_sha256": "9500f4692f7c6e764581706ae5404fbd57121f4f40118486352f89b859db3fd9",
+      "git_blob_sha256": "9500f4692f7c6e764581706ae5404fbd57121f4f40118486352f89b859db3fd9"
+    },
+    {
+      "path": "docs/legal/destka-source-map.json",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "429b9041477dd381c6f1ef576dad06eeaae446486f3bd16b4cbd62a641154128",
+      "lf_sha256": "429b9041477dd381c6f1ef576dad06eeaae446486f3bd16b4cbd62a641154128",
+      "git_blob_sha256": "429b9041477dd381c6f1ef576dad06eeaae446486f3bd16b4cbd62a641154128"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/manifest.json",
+      "role": "unchanged-EGO-209-input",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "3985a44c429eb839fc5722a9e09a420386c1802ab941683b3ec0e3613917c955",
+      "lf_sha256": "77373108636e527374da575d1507d9917f86b13f5d46cae3df1baa92599736bc",
+      "git_blob_sha256": "77373108636e527374da575d1507d9917f86b13f5d46cae3df1baa92599736bc"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/proposed-clauses.md",
+      "role": "unchanged-EGO-209-input",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "bea620b74d94861820cdc9c2d13cac698c2fb96be0a731dd6ff22442629dc319",
+      "lf_sha256": "bea620b74d94861820cdc9c2d13cac698c2fb96be0a731dd6ff22442629dc319",
+      "git_blob_sha256": "bea620b74d94861820cdc9c2d13cac698c2fb96be0a731dd6ff22442629dc319"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/review-notes.md",
+      "role": "unchanged-EGO-209-input",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "1c912c5830253f978180b01c2f2163f7a524a8721fb98de70118e077c309d527",
+      "lf_sha256": "1c912c5830253f978180b01c2f2163f7a524a8721fb98de70118e077c309d527",
+      "git_blob_sha256": "1c912c5830253f978180b01c2f2163f7a524a8721fb98de70118e077c309d527"
+    },
+    {
+      "path": "docs/legal/public/content-rules-destka-20261010.md",
+      "role": "canonical-fulltext-input",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "9b096d9b5040f6f56b3919a948f4c2baeb063c0764d38317604dc57f3a4fe4b5",
+      "lf_sha256": "9b096d9b5040f6f56b3919a948f4c2baeb063c0764d38317604dc57f3a4fe4b5",
+      "git_blob_sha256": "9b096d9b5040f6f56b3919a948f4c2baeb063c0764d38317604dc57f3a4fe4b5"
+    },
+    {
+      "path": "docs/legal/public/content-rules-v1.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "491a04094596ed6710d7957040e583755a564d8d86cb338c925874248a8af3f1",
+      "lf_sha256": "491a04094596ed6710d7957040e583755a564d8d86cb338c925874248a8af3f1",
+      "git_blob_sha256": "491a04094596ed6710d7957040e583755a564d8d86cb338c925874248a8af3f1"
+    },
+    {
+      "path": "docs/legal/public/dissemination-consent-destka-20261010.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "8b0066536b56d7adb656c6ee01ba3bf8296bb28625d1eda4e6183e365d8d2b27",
+      "lf_sha256": "8b0066536b56d7adb656c6ee01ba3bf8296bb28625d1eda4e6183e365d8d2b27",
+      "git_blob_sha256": "8b0066536b56d7adb656c6ee01ba3bf8296bb28625d1eda4e6183e365d8d2b27"
+    },
+    {
+      "path": "docs/legal/public/dissemination-consent-v1.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "7a54dd4790cbf0787667e978a58c1fb9025f29cb7ab3d5a3d5af0836d645ed3c",
+      "lf_sha256": "7a54dd4790cbf0787667e978a58c1fb9025f29cb7ab3d5a3d5af0836d645ed3c",
+      "git_blob_sha256": "7a54dd4790cbf0787667e978a58c1fb9025f29cb7ab3d5a3d5af0836d645ed3c"
+    },
+    {
+      "path": "docs/legal/public/personal-data-consent-destka-20261010.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "027f60b4f8165e4a2d4399a2d11cabc9aa1e03ef68b75cb6a1cc4fdf1a300390",
+      "lf_sha256": "027f60b4f8165e4a2d4399a2d11cabc9aa1e03ef68b75cb6a1cc4fdf1a300390",
+      "git_blob_sha256": "027f60b4f8165e4a2d4399a2d11cabc9aa1e03ef68b75cb6a1cc4fdf1a300390"
+    },
+    {
+      "path": "docs/legal/public/personal-data-consent-v1.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "d89694ffc6e68d1d9303934e908d78a3f195f5d12f769e096150f811e56e370e",
+      "lf_sha256": "d89694ffc6e68d1d9303934e908d78a3f195f5d12f769e096150f811e56e370e",
+      "git_blob_sha256": "d89694ffc6e68d1d9303934e908d78a3f195f5d12f769e096150f811e56e370e"
+    },
+    {
+      "path": "docs/legal/public/privacy-policy-destka-20261010.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "9fc032339bd6b504c19a4aeeba0b01998e9fb60173716cea178be194ffc5c4ce",
+      "lf_sha256": "9fc032339bd6b504c19a4aeeba0b01998e9fb60173716cea178be194ffc5c4ce",
+      "git_blob_sha256": "9fc032339bd6b504c19a4aeeba0b01998e9fb60173716cea178be194ffc5c4ce"
+    },
+    {
+      "path": "docs/legal/public/privacy-policy-v1.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "0c8d6bf406936b961467baf249ad962799562812baeedf5186ff64d750d2507d",
+      "lf_sha256": "0c8d6bf406936b961467baf249ad962799562812baeedf5186ff64d750d2507d",
+      "git_blob_sha256": "0c8d6bf406936b961467baf249ad962799562812baeedf5186ff64d750d2507d"
+    },
+    {
+      "path": "docs/legal/public/public-offer-destka-20261010.md",
+      "role": "canonical-fulltext-input",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "45ac7dd0d5a258e6684db6298f03f55cf60ea4f87f06e10ef8f2efa35394d5be",
+      "lf_sha256": "45ac7dd0d5a258e6684db6298f03f55cf60ea4f87f06e10ef8f2efa35394d5be",
+      "git_blob_sha256": "45ac7dd0d5a258e6684db6298f03f55cf60ea4f87f06e10ef8f2efa35394d5be"
+    },
+    {
+      "path": "docs/legal/public/public-offer-v1.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "9c382276d7f44aa25ac2fe9f189c6bbafc6fd088a4e580563272d6a6b6ef0367",
+      "lf_sha256": "9c382276d7f44aa25ac2fe9f189c6bbafc6fd088a4e580563272d6a6b6ef0367",
+      "git_blob_sha256": "9c382276d7f44aa25ac2fe9f189c6bbafc6fd088a4e580563272d6a6b6ef0367"
+    },
+    {
+      "path": "docs/legal/public/refund-policy-destka-20261010.md",
+      "role": "canonical-fulltext-input",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "9249777a71aacc018162a1261fb75f44af3c764ebe18668b5c10d9b44397b7fc",
+      "lf_sha256": "9249777a71aacc018162a1261fb75f44af3c764ebe18668b5c10d9b44397b7fc",
+      "git_blob_sha256": "9249777a71aacc018162a1261fb75f44af3c764ebe18668b5c10d9b44397b7fc"
+    },
+    {
+      "path": "docs/legal/public/refund-policy-v1.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "0c39a13bae00ff48e15958158e727de8b966b0193a87c9cea1b1b3c96bbb5e08",
+      "lf_sha256": "0c39a13bae00ff48e15958158e727de8b966b0193a87c9cea1b1b3c96bbb5e08",
+      "git_blob_sha256": "0c39a13bae00ff48e15958158e727de8b966b0193a87c9cea1b1b3c96bbb5e08"
+    },
+    {
+      "path": "docs/legal/public/user-agreement-destka-20261010.md",
+      "role": "canonical-fulltext-input",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "683da46a621c5ddf0fa9c9f8e5da6947be9110e0eddffbb036c76ef814b54107",
+      "lf_sha256": "683da46a621c5ddf0fa9c9f8e5da6947be9110e0eddffbb036c76ef814b54107",
+      "git_blob_sha256": "683da46a621c5ddf0fa9c9f8e5da6947be9110e0eddffbb036c76ef814b54107"
+    },
+    {
+      "path": "docs/legal/public/user-agreement-v1.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "d05ea92089545f8dd823dbb93fd291df6441f54538149bba63f37d9b857c3f5b",
+      "lf_sha256": "d05ea92089545f8dd823dbb93fd291df6441f54538149bba63f37d9b857c3f5b",
+      "git_blob_sha256": "d05ea92089545f8dd823dbb93fd291df6441f54538149bba63f37d9b857c3f5b"
+    },
+    {
+      "path": "docs/legal/security/vulnerability-disclosure-destka-20261010.md",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "f3375dc1c6a0a1fc6c6c8f87f1ea20c34620d39390ea8a42c42094b463ee6d87",
+      "lf_sha256": "f3375dc1c6a0a1fc6c6c8f87f1ea20c34620d39390ea8a42c42094b463ee6d87",
+      "git_blob_sha256": "f3375dc1c6a0a1fc6c6c8f87f1ea20c34620d39390ea8a42c42094b463ee6d87"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/destka_uploaded_public_source_manifest_2026-10-10.csv",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "a3db27706b739c2593ce354a6445a2d5b752ca967fecf5ff9995abb4036fc351",
+      "git_blob_sha256": "a3db27706b739c2593ce354a6445a2d5b752ca967fecf5ff9995abb4036fc351"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/destka_uploaded_public_source_manifest_2026-10-10.json",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "8f1420c0d515aa90c38ef4337b45c0cd89ee08c6fbc312405393855315919843",
+      "git_blob_sha256": "8f1420c0d515aa90c38ef4337b45c0cd89ee08c6fbc312405393855315919843"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/01_Публичная_оферта_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "17b9ec6ee9db76e0542b0240b02334adf28f96c5919a57c1472752d40c674197",
+      "git_blob_sha256": "17b9ec6ee9db76e0542b0240b02334adf28f96c5919a57c1472752d40c674197"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/02_Пользовательское_соглашение_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "0097c73ea7b1309f9ae3ddb8bde3137c6ba3e81caeaff4e7c9e438fa86adee9e",
+      "git_blob_sha256": "0097c73ea7b1309f9ae3ddb8bde3137c6ba3e81caeaff4e7c9e438fa86adee9e"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/03_Правила_размещения_контента_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "5bf5ca69753fd9173b59b6d6291e1eab6bc2a6d61202ceeb1dab37f6f2bd6b40",
+      "git_blob_sha256": "5bf5ca69753fd9173b59b6d6291e1eab6bc2a6d61202ceeb1dab37f6f2bd6b40"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/04_Политика_возвратов_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "49b6c6b467431dbee9c4539360ad53a48a7ccd8254325c8513e890273c542669",
+      "git_blob_sha256": "49b6c6b467431dbee9c4539360ad53a48a7ccd8254325c8513e890273c542669"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/05_Политика_обработки_персональных_данных_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "4b675e457ddc527a1b3ab82b1f41c710da4a581d1b7e63716b6d7bb9296e9651",
+      "git_blob_sha256": "4b675e457ddc527a1b3ab82b1f41c710da4a581d1b7e63716b6d7bb9296e9651"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/06_Согласие_на_обработку_персональных_данных_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "94acaa853c1e4215fee1c2adf5b908ec7041f8d38ce61c601653d54240ddefb1",
+      "git_blob_sha256": "94acaa853c1e4215fee1c2adf5b908ec7041f8d38ce61c601653d54240ddefb1"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/07_Согласие_на_распространение_персональных_данных_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "bd4a2c23fc67815f125a8e93e65ae34370a6e943c24462df0a2a55e0bea4e48b",
+      "git_blob_sha256": "bd4a2c23fc67815f125a8e93e65ae34370a6e943c24462df0a2a55e0bea4e48b"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/original_docx/33_Политика_сообщения_об_уязвимостях_редакция_1.0.docx",
+      "role": "immutable-docx",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "fdcf42084f9b8a709f24af56a38afdb22dccde492b681ad6cef4ae19a2027155",
+      "git_blob_sha256": "fdcf42084f9b8a709f24af56a38afdb22dccde492b681ad6cef4ae19a2027155"
+    },
+    {
+      "path": "docs/legal/sources/destka-20261010/publication-notice.txt",
+      "role": "unchanged-legal-source-or-metadata",
+      "encoding": "opaque-bytes",
+      "checkout_raw_sha256": "cc68260fb525c786ad206d318b179f74fff00eae03ed17e30b04b6e536e2a502",
+      "git_blob_sha256": "cc68260fb525c786ad206d318b179f74fff00eae03ed17e30b04b6e536e2a502"
+    },
+    {
+      "path": "packages/config/src/legal-documents.json",
+      "role": "publication-registry",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "ddb1ace0aa2e20ac1f644488d67ee6bee9956b0616ce4233ac4ac47101513695",
+      "lf_sha256": "fa745e96413faba6caedc519d5af79dcb3c18c98d9e9ded2834ae1f404c48306",
+      "git_blob_sha256": "fa745e96413faba6caedc519d5af79dcb3c18c98d9e9ded2834ae1f404c48306"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/public-offer-destka-20261010.md",
+      "role": "full-text-draft",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "82a473b654b40c92337c467f8e1a58403f7cb418cbde3d298955ab7c17a31821",
+      "lf_sha256": "82a473b654b40c92337c467f8e1a58403f7cb418cbde3d298955ab7c17a31821"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/content-rules-destka-20261010.md",
+      "role": "full-text-draft",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "950466074421b75e3f942e0b5ae3b48521edf42b2647d86084397798f853e63e",
+      "lf_sha256": "950466074421b75e3f942e0b5ae3b48521edf42b2647d86084397798f853e63e"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/user-agreement-destka-20261010.md",
+      "role": "full-text-draft",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "c338e94b16337cdedaae6b4dd4116f71a31042767e3e654e913ea3e969def8e3",
+      "lf_sha256": "c338e94b16337cdedaae6b4dd4116f71a31042767e3e654e913ea3e969def8e3"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/refund-policy-destka-20261010.md",
+      "role": "full-text-draft",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "49476c200e908673bfd6a4168042ebbe76c0e31d775b2dd09482310ab61976a5",
+      "lf_sha256": "49476c200e908673bfd6a4168042ebbe76c0e31d775b2dd09482310ab61976a5"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/README.md",
+      "role": "review-guidance",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "68e4bb7ca926377cfd4cc7288b4e04365ce5e1dfcdb834d1317491b1e0f45194",
+      "lf_sha256": "68e4bb7ca926377cfd4cc7288b4e04365ce5e1dfcdb834d1317491b1e0f45194"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/edits.json",
+      "role": "exact-edit-map",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "47e8f55540d7000c6ff2370a4e95061c5f03c760f52836b2492f20403e8d2bde",
+      "lf_sha256": "47e8f55540d7000c6ff2370a4e95061c5f03c760f52836b2492f20403e8d2bde"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/build.mjs",
+      "role": "verification-or-build-tool",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "c96ec373e3f96b9632573ad8eb78fe0b67392f388adabe3c785ad36a05f93d8c",
+      "lf_sha256": "c96ec373e3f96b9632573ad8eb78fe0b67392f388adabe3c785ad36a05f93d8c"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/full-text/verify-manifest.mjs",
+      "role": "verification-or-build-tool",
+      "encoding": "utf-8",
+      "checkout_raw_sha256": "689433876ea4386b35c3cadb4bb96e3aec8e08eb5353f55d2a34c07dab9e0d89",
+      "lf_sha256": "689433876ea4386b35c3cadb4bb96e3aec8e08eb5353f55d2a34c07dab9e0d89"
+    }
+  ],
+  "readonly_checks": {
+    "build": "node docs/legal/drafts/ugc-safety-20261127/full-text/build.mjs --check",
+    "manifest": "node docs/legal/drafts/ugc-safety-20261127/full-text/verify-manifest.mjs --check",
+    "canonical8": "python scripts/legal-canonical.py --check"
+  },
+  "observed_checks": {
+    "build_check": "passed-four-documents-sixteen-edits-reverse-reconstruction",
+    "canonical8": "passed-eight-canonical-docx-conversions",
+    "independent_final_manifest_review": "confirmed-read-only-artifact-consistency-review-no-legal-or-operational-acceptance",
+    "note": "These checks establish artifact consistency only, not legal or operational acceptance."
+  }
+}
