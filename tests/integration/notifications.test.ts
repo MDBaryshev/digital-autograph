@@ -542,6 +542,12 @@ it('shares require own placement and fixed text; archival/revocation stops publi
   expect(card.publicAlias).toBeNull();
   expect(JSON.stringify(card)).not.toContain(f.userId);
   const png = await renderShareCard(card);
+  // The real native/font render runs in integration, not the parallel unit pool.
+  expect(
+    png.equals(
+      await renderShareCard({ ...card, publicAlias: 'Synthetic_channel' }),
+    ),
+  ).toBe(true);
   expect(await sharp(png).metadata()).toMatchObject({
     format: 'png',
     width: 1200,
