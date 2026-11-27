@@ -55,11 +55,26 @@ test('durable displacement inbox, slot deep link, preferences and final Wall sha
   expect(ended.status()).toBe(200);
   const ownerPage = await owner.newPage();
   await ownerPage.goto(`${origin}/walls/${e2eWallId}`);
+  await expect(ownerPage.getByLabel('Public username (optional)')).toHaveCount(
+    0,
+  );
   await ownerPage.getByRole('button', { name: 'Create share card' }).click();
   const link = ownerPage.getByRole('link', { name: 'Open share card' });
   await expect(link).toBeVisible();
   const shareId = (await link.getAttribute('href'))!.split('/').pop()!;
+  // Simulate a pre-existing alias without creating an unreviewed text flow.
+  await scenario.database.pool.query(
+    'UPDATE share_links SET public_alias=$2 WHERE id=$1',
+    [shareId, 'Synthetic_channel'],
+  );
   await link.click();
+  await expect(ownerPage).toHaveURL(new RegExp(`/s/${shareId}$`));
+  await expect(
+    ownerPage.getByText('Synthetic_channel', { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    ownerPage.locator('meta[property="og:description"]'),
+  ).toHaveAttribute('content', 'View this digital autograph Wall.');
   await expect(ownerPage.locator('meta[property="og:image"]')).toHaveAttribute(
     'content',
     `${api}/public/shares/${shareId}/card`,
@@ -71,6 +86,12 @@ test('durable displacement inbox, slot deep link, preferences and final Wall sha
     await owner.request.get(`${api}/public/shares/${shareId}`)
   ).json();
   expect(JSON.stringify(data)).not.toContain(scenario.ownerId);
+  expect(data.publicAlias).toBeNull();
+  expect(JSON.stringify(data)).not.toContain('Synthetic_channel');
+  const owned = await (await owner.request.get(`${api}/me/shares`)).json();
+  expect(
+    owned.items.find((item: { id: string }) => item.id === shareId).publicAlias,
+  ).toBe('Synthetic_channel');
   await expect
     .poll(
       async () =>

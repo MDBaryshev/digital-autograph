@@ -87,7 +87,7 @@ including revoked links or links whose Wall is no longer public. The authenticat
 an opaque UUID cursor owned by that same user. PostgreSQL orders by
 `created_at DESC, id DESC` and compares cursor timestamps in SQL, preserving
 microsecond ordering. The DTO contains only share/Wall IDs, slot number, event,
-the owner's public alias and creation/revocation dates; user/Placement/asset IDs
+the owner's stored historical alias and creation/revocation dates; user/Placement/asset IDs
 and private media metadata are excluded. Responses remain `no-store`.
 
 The account screen confirms the existing owner-checked DELETE action, then reads
@@ -96,19 +96,39 @@ explicit GET before another revocation; it never replays a write automatically.
 Reads and body parsing have a ten-second deadline and are canceled on origin
 change/unmount. Revocation disables future public metadata/card reads in Destka;
 it cannot recall copies already saved by third parties. Share creation, public
-availability, alias consent and revocation semantics are unchanged.
+availability and revocation remain server-authorized.
 
 An authenticated owner creates a share for their own ready autograph Placement
 on a public Wall, or for a final ended Wall they own/participated in. The server
-selects event, creator and slot number. A public username is optional and requires
-separate explicit publication consent; no provider username is inferred. There
+selects event, creator and slot number. EGO-212 suspends the optional freeform
+public alias because it has no content-review evidence. The strict creation
+contract rejects both `publicAlias` and `publishAlias`, including legacy clients
+that send them; the repository also rejects a supplied alias. The current form
+omits these fields and explains their unavailability. No provider username is inferred. There
 is a 20-share/hour owner budget. Links can be revoked by their owner. Archived
 Walls, nonready autographs and revoked links fail closed for public reads/cards.
 
 `/s/:id` provides OG and Twitter large-image metadata. The API renders a fixed
-1200×630 PNG containing creator, one-based slot number, optional public username,
+1200×630 PNG containing creator, one-based slot number,
 event and CTA. It renders escaped text only and never reads original/private
 autograph bytes, avatars, keys, signed URLs, payments or claimant identifiers.
+Existing alias values and creation/revocation evidence are not rewritten. Only
+the authenticated owner history returns those values; public JSON returns
+`publicAlias: null`. The PNG renderer and SSR/OG/Twitter page ignore an alias
+even if an older API/repository supplies one. Publication consent alone does not
+provide content review. Restoring custom text requires a separate approved
+moderation flow; no automatic screening or legal acceptance is claimed here.
+Creator names and other public fields are separate safety surfaces, and EGO-134
+reports/actions/appeals remain incomplete. Replacing this field does not close
+them or recall aliases already copied by social platforms.
+
+Roll out API, web and PNG renderer together: an old API can still return legacy
+aliases, and old web/renderer binaries can still display them. Existing system
+share URLs remain valid without the optional participant name; old clients that
+send alias/publication fields receive an explicit 400 and must omit them. This
+restriction is not a finding against an owner and does not revoke their link,
+Placement, Order or financial rights, or create an automatic refund.
+
 The API runtime image includes DejaVu fonts so a minimal Linux image renders text.
 PNG and share metadata use `no-store`; previously copied social previews cannot
 be recalled from a third-party cache.

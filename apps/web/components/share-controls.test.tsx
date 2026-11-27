@@ -7,7 +7,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 import { cleanup } from '@testing-library/react';
-it('requires separate username publication consent and provides a copy fallback', async () => {
+it('creates a fixed-text card without arbitrary publication fields and provides a copy fallback', async () => {
   const request = vi.fn(
     async () => new Response(JSON.stringify({ id: 'public-share' })),
   );
@@ -31,21 +31,15 @@ it('requires separate username publication consent and provides a copy fallback'
   fireEvent.change(screen.getByLabelText('Your slot'), {
     target: { value: 'slot' },
   });
-  fireEvent.change(screen.getByLabelText('Public username (optional)'), {
-    target: { value: 'Fan' },
-  });
-  expect(
-    (
-      screen.getByRole('button', {
-        name: 'Create share card',
-      }) as HTMLButtonElement
-    ).disabled,
-  ).toBe(true);
-  fireEvent.click(
-    screen.getByLabelText('Publish this username on a public card'),
-  );
+  expect(screen.queryByLabelText('Public username (optional)')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Create share card' }));
   await screen.findByText('Open share card');
+  expect(
+    JSON.parse(
+      (request.mock.calls[0] as unknown as [string, RequestInit])[1]
+        .body as string,
+    ),
+  ).toEqual({ wallId: 'wall', slotId: 'slot' });
   fireEvent.click(screen.getByRole('button', { name: 'Share or copy link' }));
   await screen.findByText('Link copied.');
   expect(copy).toHaveBeenCalledWith(expect.stringContaining('/s/public-share'));

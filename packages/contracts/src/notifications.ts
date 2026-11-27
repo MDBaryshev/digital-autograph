@@ -41,17 +41,8 @@ export const shareCreateBody = z
   .object({
     wallId: z.uuid(),
     slotId: z.uuid().optional(),
-    publicAlias: z
-      .string()
-      .trim()
-      .min(1)
-      .max(40)
-      .regex(/^[\p{L}\p{N}_ .-]+$/u)
-      .optional(),
-    publishAlias: z.boolean().optional(),
   })
-  .strict()
-  .refine((v) => !v.publicAlias || v.publishAlias === true);
+  .strict();
 export const shareInteractionBody = z
   .object({
     kind: z.enum(['share_clicked', 'referral_arrived']),
