@@ -84,14 +84,28 @@ export function registerSharingRoutes(
       return share;
     });
     app.get('/public/shares/:id/card', async (request, reply) => {
-      const share = await repository.public(
-        notificationIdParams.parse(request.params).id,
-      );
+      const id = notificationIdParams.parse(request.params).id;
+      const share = await repository.public(id);
       if (!share) throw new NotificationError('NOT_FOUND');
+      const png = await renderShareCard(share);
+      // Rendering is asynchronous. Do not deliver an obsolete card after
+      // revocation, account disabling, archival or a public-text change.
+      const current = await repository.public(id);
+      if (
+        !current ||
+        current.id !== share.id ||
+        current.wallId !== share.wallId ||
+        current.slotId !== share.slotId ||
+        current.slotNumber !== share.slotNumber ||
+        current.creator !== share.creator ||
+        current.publicAlias !== share.publicAlias ||
+        current.event !== share.event
+      )
+        throw new NotificationError('NOT_FOUND');
       return reply
         .type('image/png')
         .header('X-Content-Type-Options', 'nosniff')
-        .send(await renderShareCard(share));
+        .send(png);
     });
     app.post('/public/shares/:id/interactions', async (request, reply) => {
       const body = shareInteractionBody.parse(request.body);

@@ -107,6 +107,13 @@ that send them; the repository also rejects a supplied alias. The current form
 omits these fields and explains their unavailability. No provider username is inferred. There
 is a 20-share/hour owner budget. Links can be revoked by their owner. Archived
 Walls, nonready autographs and revoked links fail closed for public reads/cards.
+EGO-213 also requires an active share owner and, for a linked Placement, active
+signer on every public resolution. Inactive accounts retain their existing
+share/Placement history; visibility does not free a Slot or rewrite money.
+The PNG route re-resolves the complete public share after asynchronous rendering
+and withholds the bytes if availability or any rendered/link field changed.
+A final read-time check cannot recall bytes already delivered before a later
+change; there is no post-publication moderation overlay in this change.
 
 `/s/:id` provides OG and Twitter large-image metadata. The API renders a fixed
 1200×630 PNG containing creator, one-based slot number,

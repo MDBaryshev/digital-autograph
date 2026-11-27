@@ -22,9 +22,11 @@ async function publicShare(
     // but never project its freeform text into public JSON, cards or metadata.
     `SELECT sh.id,sh.wall_id,sh.slot_id,s.position,cp.display_name,NULL::text AS public_alias,sh.event
     FROM share_links sh JOIN walls w ON w.id=sh.wall_id JOIN creator_profiles cp ON cp.creator_id=w.creator_id
+    JOIN users share_owner ON share_owner.id=sh.user_id AND share_owner.status='active'
     LEFT JOIN slots s ON s.id=sh.slot_id
     WHERE sh.id=$1 AND sh.revoked_at IS NULL AND w.status IN ('scheduled','live','paused','ended')
     AND (sh.placement_id IS NULL OR EXISTS (SELECT 1 FROM placements p JOIN autographs a ON a.id=p.autograph_id
+      JOIN users signer ON signer.id=p.user_id AND signer.status='active'
       WHERE p.id=sh.placement_id AND a.user_id=p.user_id AND a.status='ready'))`,
     [id],
   );
