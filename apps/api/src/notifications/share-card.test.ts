@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
-import { renderShareCard } from './share-card';
+import { buildShareCardSvg } from './share-card';
 
-it('does not render an unreviewed legacy alias even if supplied by an older repository', async () => {
+it('excludes an unreviewed legacy alias from the rasterizer input even from an older repository', () => {
   const share = {
     id: 'id',
     wallId: 'wall',
@@ -11,8 +11,6 @@ it('does not render an unreviewed legacy alias even if supplied by an older repo
     event: 'slot_claimed' as const,
   };
   expect(
-    (
-      await renderShareCard({ ...share, publicAlias: 'Synthetic_channel' })
-    ).equals(await renderShareCard({ ...share, publicAlias: null })),
-  ).toBe(true);
+    buildShareCardSvg({ ...share, publicAlias: 'Synthetic_channel' }),
+  ).toBe(buildShareCardSvg({ ...share, publicAlias: null }));
 });
