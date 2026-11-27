@@ -567,6 +567,47 @@ it('shares require own placement and fixed text; archival/revocation stops publi
   ]);
   expect(await shares.public(next.id)).toBeNull();
 });
+it('withholds a linked-placement share after disabling its signer and preserves occupied history', async () => {
+  const f = await fixture();
+  await placement(f);
+  const share = await shares.create(f.userId, {
+    wallId: f.wallId,
+    slotId: f.slotId,
+  });
+  const before = (
+    await database.pool.query('SELECT * FROM placements WHERE slot_id=$1', [
+      f.slotId,
+    ])
+  ).rows;
+  await database.pool.query("UPDATE users SET status='disabled' WHERE id=$1", [
+    f.userId,
+  ]);
+  expect(await shares.public(share.id)).toBeNull();
+  expect(
+    (
+      await database.pool.query('SELECT * FROM placements WHERE slot_id=$1', [
+        f.slotId,
+      ])
+    ).rows,
+  ).toEqual(before);
+  expect(
+    (
+      await database.pool.query(
+        'SELECT count(*)::int n FROM placements WHERE slot_id=$1 AND ended_at IS NULL',
+        [f.slotId],
+      )
+    ).rows[0].n,
+  ).toBe(1);
+  expect(
+    (
+      await database.pool.query(
+        'SELECT revoked_at FROM share_links WHERE id=$1',
+        [share.id],
+      )
+    ).rows[0].revoked_at,
+  ).toBeNull();
+});
+
 it('final-wall sharing requires ended Wall and owner or participant, no arbitrary username', async () => {
   const f = await fixture();
   await expect(shares.create(f.userId, { wallId: f.wallId })).rejects.toThrow();

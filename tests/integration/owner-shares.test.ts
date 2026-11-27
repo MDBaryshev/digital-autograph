@@ -148,6 +148,45 @@ it('rejects alias publication through both the HTTP contract and repository boun
   ).toBe(before);
 });
 
+it.each(['disabled', 'anonymized'])(
+  'withholds public shares of a %s account without rewriting share history',
+  async (status) => {
+    const f = await fixture();
+    const id = await seedShare(f.userId, f.wallId);
+    expect((await app.inject({ url: `/public/shares/${id}` })).statusCode).toBe(
+      200,
+    );
+    const before = (
+      await database.pool.query('SELECT * FROM share_links WHERE id=$1', [id])
+    ).rows[0];
+    await database.pool.query('UPDATE users SET status=$2 WHERE id=$1', [
+      f.userId,
+      status,
+    ]);
+    for (const path of [`/public/shares/${id}`, `/public/shares/${id}/card`]) {
+      const result = await app.inject({ url: path });
+      expect(result.statusCode).toBe(404);
+      expect(result.headers['cache-control']).toBe('no-store');
+      expect(result.json()).toEqual({ error: { code: 'NOT_FOUND' } });
+    }
+    await expect(
+      shares.interact(id, 'share_clicked', randomUUID()),
+    ).rejects.toThrow('NOT_FOUND');
+    expect(
+      (await database.pool.query('SELECT * FROM share_links WHERE id=$1', [id]))
+        .rows[0],
+    ).toEqual(before);
+    expect(
+      (
+        await database.pool.query(
+          'SELECT count(*)::int n FROM share_interactions WHERE share_id=$1',
+          [id],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+  },
+);
+
 it('requires a session and returns only the authenticated owner minimal DTO', async () => {
   const f = await fixture();
   const slot = (
