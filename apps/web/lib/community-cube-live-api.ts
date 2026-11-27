@@ -87,13 +87,24 @@ export async function withCubeDeadline<T>(
 ): Promise<T> {
   const controller = new AbortController();
   const cancel = () => controller.abort();
-  if (signal.aborted) cancel();
+  const requestSignal = controller.signal;
+  let rejectAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = () => reject(requestSignal.reason);
+    requestSignal.addEventListener('abort', rejectAbort, { once: true });
+  });
   signal.addEventListener('abort', cancel, { once: true });
   const timer = window.setTimeout(cancel, 10_000);
+  if (signal.aborted) cancel();
   try {
-    return await work(controller.signal);
+    if (requestSignal.aborted) return await aborted;
+    // Include body reading and clients that cannot finish aborting their I/O.
+    const result = await Promise.race([work(requestSignal), aborted]);
+    requestSignal.throwIfAborted();
+    return result;
   } finally {
     signal.removeEventListener('abort', cancel);
+    requestSignal.removeEventListener('abort', rejectAbort);
     window.clearTimeout(timer);
   }
 }
@@ -111,8 +122,10 @@ export function communityCubeLiveApi(origin: string) {
         ...options,
         signal: requestSignal,
       });
+      requestSignal.throwIfAborted();
       if (response.status === 204) return null;
       const body: unknown = await response.json().catch(() => null);
+      requestSignal.throwIfAborted();
       if (!response.ok) {
         const code = asObject(asObject(body)?.error)?.code;
         throw new CommunityCubeApiError(
