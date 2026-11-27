@@ -1,10 +1,12 @@
 import type { Pool } from 'pg';
+import type { WallDesignStyle } from '@digital-autograph/domain';
 
 export type WallAppearance = {
   title: string;
   description: string;
   avatarDataUrl: string | null;
   coverDataUrl: string | null;
+  style?: WallDesignStyle;
 };
 export type PrivateAppearance = WallAppearance & {
   providerAvatarDataUrl: string | null;

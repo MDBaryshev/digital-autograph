@@ -2,7 +2,7 @@ import { localizeMetadata } from '../../lib/i18n-server';
 import type { Metadata } from 'next';
 const pageMetadata: Metadata = {
   robots: { index: false, follow: false },
-  title: { default: 'Безопасность | Destka', template: '%s | Destka' },
+  title: { default: 'Безопасность | supcube', template: '%s | supcube' },
 };
 export async function generateMetadata() {
   return localizeMetadata(pageMetadata);

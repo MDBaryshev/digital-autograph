@@ -52,6 +52,14 @@ same GET-only recovery path available.
 No backend transition, database, payment, reservation or Placement writer changes
 are introduced by these controls.
 
+Workspace HTTP calls have a ten-second budget covering headers and JSON body,
+including transports that ignore abort. Account profile saves and draft creation
+keep write controls locked until a valid fresh workspace is read. After an
+unconfirmed save or failed read, Refresh account status performs only a GET;
+it never replays the write. Reads begun before the write are canceled, and late
+responses cannot unlock controls or replace the recovered state. Owner preview
+reads use the same bounded transport without replaying an upload or approval.
+
 | State     | Public Wall                | Public Creator summary |
 | --------- | -------------------------- | ---------------------- |
 | draft     | 404                        | Omitted                |

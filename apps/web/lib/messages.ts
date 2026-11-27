@@ -40,6 +40,7 @@ export const messages: Record<string, string> = {
   'Profile not published': 'Профиль не опубликован',
   'Autograph author': 'Автор автографа',
   'Your place': 'Твоё место',
+  'Refresh account status': 'Обновить состояние аккаунта',
   'Public profile setup is temporarily unavailable.':
     'Настройка публичного профиля временно недоступна.',
   'Wall creation is temporarily unavailable':
@@ -70,8 +71,9 @@ export const messages: Record<string, string> = {
   'No account needed': 'Без регистрации',
   'Go to studio': 'В студию',
   'Open an invitation': 'Открыть приглашение',
-  'Paste your Destka invitation link': 'Вставь ссылку из приглашения Destka',
-  'Paste a link to a Wall on destka.ru.': 'Вставь ссылку на стену с destka.ru.',
+  'Paste your supcube invitation link': 'Вставь ссылку из приглашения supcube',
+  'Paste the Wall link from your invitation.':
+    'Вставь ссылку на стену из приглашения.',
   Home: 'Главная',
   Studio: 'Студия',
   Create: 'Создание',
@@ -79,7 +81,7 @@ export const messages: Record<string, string> = {
   'Studio progress': 'Этапы создания',
   'Try drawing without signing in': 'Попробовать рисовать без входа',
   Close: 'Закрыть',
-  'Product navigation': 'Навигация Destka',
+  'Product navigation': 'Навигация supcube',
   '10 places': '10 мест',
   'From drawing to Wall': 'Как разместить автограф',
   'With an approved autograph, you can use one free placement on each Wall that has room.':
@@ -159,6 +161,7 @@ export const messages: Record<string, string> = {
   'One Wall. Ten places. Send the link to someone who should be here.':
     'Одна стена. Десять мест. Отправь ссылку тем, кого хочешь здесь видеть.',
   'Share invitation': 'Поделиться приглашением',
+  'Share Wall link in Telegram': 'Поделиться ссылкой в Telegram',
   'Copy Wall link': 'Скопировать ссылку на стену',
   'Open invitation card': 'Открыть карточку приглашения',
   'Wall invitation link': 'Ссылка на стену',
@@ -167,13 +170,139 @@ export const messages: Record<string, string> = {
   'QR code for this Wall': 'QR-код этой стены',
   'Download QR code': 'Скачать QR-код',
   'Wall invitation card': 'Карточка приглашения на стену',
+  'Try the Wall Design Studio': 'Демо студии оформления',
+  'Try without signing in': 'Попробовать без входа',
+  'Change the design, rotate a cube or sign a free place. Your changes stay in this tab.':
+    'Меняй оформление, крути кубы и расписывайся на свободном месте. Изменения остаются в этой вкладке.',
+  'Ten places for everyone who joined us on tour. Leave your autograph.':
+    'Десять мест для тех, кто был с нами в туре. Оставь подпись на память.',
+  'Leave an autograph': 'Оставить подпись',
+  'Sign this place': 'Подписать',
+  'Reset demo': 'Сбросить демо',
+  'Wall palette': 'Палитра стены',
+  'Ready-made palettes': 'Готовые палитры',
+  'Face colors tint the three podium metals. The other cubes take the chosen colors.':
+    'Золото, серебро и бронза сохраняют основу. Выбранные цвета тонируют призовые места и задают оттенки остальным кубам.',
+  'Wall background': 'Фон стены',
+  'Cover background': 'Фон обложки',
+  'Cover text': 'Текст обложки',
+  'Frames and borders': 'Рамки и контуры',
+  'Cube front': 'Лицевая грань',
+  'Other cube faces': 'Остальные грани',
+  'Autograph ink': 'Чернила автографов',
+  Ultraviolet: 'Ультрафиолет',
+  'Sunset poster': 'Розовый закат',
+  'Arctic chrome': 'Северный хром',
+  'Midnight graphite': 'Ночной графит',
+  'Jade atelier': 'Нефрит',
+  'Lavender ink': 'Лавандовые чернила',
+  'Oxblood velvet': 'Винный бархат',
+  Lagoon: 'Лагуна',
+  Champagne: 'Шампань',
+  'Cube colors are blended to soften sharp transitions.':
+    'Оттенки граней сближены, чтобы переход выглядел мягче.',
+  '{label}, HEX': '{label}, HEX',
+  'Theme color': 'Цвет темы',
+  'Cube materials': 'Материалы кубов',
+  'Shared cube material': 'Общий материал',
+  'Material for cube {place}': 'Материал куба №{place}',
+  Shared: 'Общий',
+  'Place {place}': 'Место №{place}',
+  'Polished metal': 'Полированный металл',
+  'Brushed metal': 'Шлифованный металл',
+  'Glazed enamel': 'Глянцевая эмаль',
+  Terrazzo: 'Терраццо',
+  'Carbon weave': 'Карбоновое плетение',
+  Metallic: 'Металл',
+  Matte: 'Матовая поверхность',
+  'Clear glass': 'Прозрачное стекло',
+  'Satin glass': 'Сатиновое стекло',
+  'Smoked glass': 'Дымчатое стекло',
+  'Cover pattern': 'Узор обложки',
+  'Plain cover': 'Без узора',
+  'Grid pattern': 'Сетка',
+  'Spotlight rings': 'Световые кольца',
+  'Click an autograph to open its cube, or sign a free place.':
+    'Нажми на автограф, чтобы открыть куб, или распишись на свободном месте.',
+  'Wall Design Studio': 'Студия оформления стены',
+  'Wall templates': 'Шаблоны стен',
+  'Wall preview': 'Предпросмотр стены',
+  'Wall content': 'Содержание',
+  'Event or collection': 'Событие или коллекция',
+  'Placement button label': 'Текст кнопки для гостей',
+  'Wall theme': 'Тема стены',
+  'Warm paper': 'Тёплая бумага',
+  'Night stage': 'Ночная сцена',
+  'Concert poster': 'Концертная афиша',
+  'Accent color': 'Акцентный цвет',
+  'Top three style': 'Стиль топ‑3',
+  'Classic podium': 'Классический подиум',
+  'Diamond podium': 'Алмазный подиум',
+  Diamond: 'Алмаз',
+  'Diamond place': 'Алмазное место',
+  'The diamond podium keeps its own colors. Finish and autograph ink still follow your settings.':
+    'Алмаз, золото и серебро сохраняют свои цвета. Можно менять фактуру и чернила автографа.',
+  'Place layout': 'Вид мест',
+  Podium: 'Подиум',
+  Gallery: 'Галерея',
+  'Heading alignment': 'Выравнивание заголовка',
+  Left: 'Слева',
+  Center: 'По центру',
+  'Heading font': 'Шрифт заголовка',
+  Editorial: 'С засечками',
+  'Corner style': 'Форма углов',
+  Rounded: 'Скруглённые',
+  Square: 'Прямые',
+  'Cover position': 'Положение обложки',
+  Top: 'Сверху',
+  Bottom: 'Снизу',
+  'Import a template': 'Загрузить шаблон',
+  'Template link': 'Ссылка на шаблон',
+  'Load template': 'Загрузить оформление',
+  'Wall design file': 'Файл оформления',
+  'Import design file': 'Загрузить файл оформления',
+  'Download design file': 'Скачать файл оформления',
+  'Download an example design': 'Скачать пример оформления',
+  'Choose a valid Supcube wall design file.':
+    'Выберите корректный JSON-файл оформления Supcube.',
+  'Design file loaded into the preview.':
+    'Оформление из файла загружено в предпросмотр.',
+  'Author username': 'Имя пользователя автора',
+  'Save Wall design': 'Сохранить оформление',
+  'Create template link': 'Создать ссылку на шаблон',
+  'Reload saved design': 'Открыть сохранённую версию',
+  'Share this link with the author': 'Ссылка для автора',
+  'Copy template link': 'Скопировать ссылку',
+  'Template link copied.': 'Ссылка скопирована.',
+  'Link expires {date}.': 'Ссылка действует до {date}.',
+  'Create your Wall to customize it': 'Создай свою стену, чтобы её оформить',
+  'Your Wall is archived': 'Твоя стена в архиве',
+  'No active author has this username.': 'Автор с таким именем не найден.',
+  'This template is expired or belongs to another author.':
+    'Ссылка просрочена или предназначена для другого автора.',
+  'Paste a template link from this Supcube site.':
+    'Вставьте ссылку на шаблон с этого сайта Supcube.',
+  'Someone saved another version. Reload the saved design before replacing it.':
+    'Оформление изменилось. Откройте сохранённую версию и повторите правки.',
+  'Wall design publishing is temporarily unavailable.':
+    'Сохранение оформления временно недоступно.',
+  'You do not have access to this editor.': 'У вас нет доступа к редактору.',
+  'Your session expired. Sign in again to edit your Wall.':
+    'Сессия истекла. Войдите снова, чтобы редактировать стену.',
+  'The image processor is busy. Try again in a moment.':
+    'Обработка изображений занята. Повторите попытку через минуту.',
+  'Could not complete the request.': 'Не удалось выполнить запрос.',
+  'Template loaded. Check the preview, then save the design.':
+    'Шаблон загружен. Проверьте предпросмотр и сохраните оформление.',
+  'Wall design saved.': 'Оформление сохранено.',
+  'Remove avatar': 'Убрать аватар',
   'Edit Wall appearance': 'Оформить стену',
   'Wall appearance': 'Оформление стены',
-  'Choose a name, avatar and cover. Saving publishes this appearance on your Wall.':
-    'Выбери название, аватар и обложку. После сохранения они появятся на твоей стене.',
-  'Could not load Wall appearance.': 'Не удалось загрузить оформление стены.',
-  'Could not save Wall appearance.': 'Не удалось сохранить оформление стены.',
-  'Wall appearance saved.': 'Оформление стены сохранено.',
+  'Profile avatar': 'Аватар профиля',
+  'Could not load your profile avatar.': 'Не удалось загрузить аватар профиля.',
+  'Could not save your profile avatar.': 'Не удалось сохранить аватар профиля.',
+  'Profile avatar saved.': 'Аватар профиля сохранён.',
+  'Save profile avatar': 'Сохранить аватар профиля',
   'Wall name': 'Название стены',
   'Wall description': 'Описание стены',
   'Avatar source': 'Аватар',
@@ -183,13 +312,9 @@ export const messages: Record<string, string> = {
   'Upload avatar': 'Загрузить аватар',
   'Upload cover': 'Загрузить обложку',
   'Avatar preview': 'Предпросмотр аватара',
-  'Cover preview': 'Предпросмотр обложки',
   'Remove cover': 'Убрать обложку',
-  'Images are cropped to fit. Check the previews before saving.':
-    'Изображения обрезаются по размеру. Проверь предпросмотр перед сохранением.',
   'Choose a PNG, JPEG or WebP image up to 10 MB and 20 megapixels.':
     'Выбери PNG, JPEG или WebP до 10 МБ и 20 мегапикселей.',
-  'Save Wall appearance': 'Сохранить оформление стены',
   'Wall cover': 'Обложка стены',
   'Wall owner avatar': 'Аватар владельца стены',
   'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.':
@@ -205,7 +330,7 @@ export const messages: Record<string, string> = {
   'Changes saved.': 'Изменения сохранены.',
   Overview: 'Обзор',
   'My autographs': 'Мои автографы',
-  'My Walls': 'Мои стены',
+  'My Wall': 'Моя стена',
   Settings: 'Настройки',
   'Settings (opens in a new tab)': 'Настройки (откроются в новой вкладке)',
   Menu: 'Меню',
@@ -219,14 +344,15 @@ export const messages: Record<string, string> = {
   'Could not save changes. Refresh before retrying.':
     'Не удалось подтвердить сохранение. Обнови страницу перед повторной попыткой.',
   'This username is already taken.': 'Этот ник уже занят.',
-  'Choose a name in settings to create your first Wall.':
-    'Выбери имя в настройках, чтобы создать первую стену.',
+  'Choose a name in settings to create your Wall.':
+    'Выбери имя в настройках, чтобы создать свою стену.',
   'Your drawings, private previews and moderation status.':
     'Твои рисунки, приватные предпросмотры и статус модерации.',
   'Open my autographs': 'Открыть мои автографы',
   'Create a Wall and invite people to leave their mark.':
     'Создай стену и пригласи людей оставить свой автограф.',
-  'Open my Walls': 'Открыть мои стены',
+  'Open my Wall': 'Перейти к моей стене',
+  'Manage my Wall': 'Управлять стеной',
   'Original uploads stay private. Only you can review these previews.':
     'Оригиналы остаются приватными. Эти предпросмотры видны только тебе.',
   'No autographs yet. Start with a drawing or a photo.':
@@ -236,7 +362,7 @@ export const messages: Record<string, string> = {
   'Your private cleaned autograph': 'Твой приватный очищенный автограф',
   'Showing up to 50 recent autographs. Refresh to update processing status.':
     'Показаны последние 50 автографов. Обнови список, чтобы проверить обработку.',
-  'Give your Wall a name': 'Твоя первая стена',
+  'Set up your public profile': 'Заполни публичный профиль',
   'Set up your public creator profile first. Your original uploads will remain private.':
     'Сначала заполни публичный профиль автора. Оригиналы автографов останутся приватными.',
   'Set up profile': 'Заполнить профиль',
@@ -245,11 +371,9 @@ export const messages: Record<string, string> = {
   'Number of places': 'Количество мест',
   'Saving…': 'Сохраняем…',
   'Create draft Wall': 'Создать черновик стены',
-  'Your Walls will appear here.': 'Здесь появятся твои стены.',
   places: 'мест',
   'Open Wall': 'Открыть стену',
   'Publish Wall': 'Опубликовать стену',
-  'Showing up to 50 recent Walls.': 'Показаны последние 50 стен.',
   'Public profile': 'Публичный профиль',
   'Your name and username appear on your creator page. Your sign-in details stay private.':
     'Имя и ник видны на странице автора. Данные входа остаются приватными.',
@@ -321,8 +445,6 @@ export const messages: Record<string, string> = {
   'Open a creator’s Wall link and choose an empty slot for your Free Claim.':
     'Открой стену по ссылке автора и выбери свободное место для бесплатного размещения.',
   'Already have a creator’s link?': 'Уже есть ссылка от автора?',
-  'Open it to see their public Walls. Each account has one Free Claim per Wall. A ready, moderated autograph is required; availability is checked when you confirm. Paid takeover is not available yet.':
-    'Открой её, чтобы увидеть стены автора. На каждой стене доступно одно бесплатное размещение на аккаунт. Нужен автограф, прошедший модерацию; доступность места проверяется при подтверждении. Платное замещение пока недоступно.',
   'View your placement history': 'Посмотреть историю размещений',
   'Your autograph studio': 'Твоя студия автографа',
   'Draw or upload a photo, edit it privately, and review the cleaned result.':
@@ -433,6 +555,8 @@ export const messages: Record<string, string> = {
     'Сессия истекла. Войди снова и повтори попытку.',
   'Approval could not be confirmed. Retry safely; this will not create a duplicate approval.':
     'Не удалось подтвердить одобрение. Повторная попытка безопасна и не создаст дубликат.',
+  'The status of this autograph has changed.':
+    'Статус этого автографа изменился.',
   'Could not refresh the private preview. Try again.':
     'Не удалось обновить приватный предпросмотр. Повтори попытку.',
   'Preview could not be loaded. Refresh it before approving.':
@@ -524,9 +648,8 @@ export const messages: Record<string, string> = {
   'Times are approximate; availability is checked when you confirm.':
     'Время приблизительное; доступность проверяется при подтверждении.',
   Creator: 'Автор',
-  'Public Walls': 'Публичные стены',
-  'No public Walls yet. Check back later.':
-    'Публичных стен пока нет. Загляни позже.',
+  'Autograph Wall': 'Стена автографов',
+  'This author has no public Wall yet.': 'У автора пока нет открытой стены.',
   'Status:': 'Статус:',
   'Prepare your digital autograph': 'Подготовь свой цифровой автограф',
   'Creator temporarily unavailable': 'Страница автора временно недоступна',
@@ -668,8 +791,8 @@ export const messages: Record<string, string> = {
   'My public links': 'Мои публичные ссылки',
   'Manage the share cards you created on Walls, including links created before this visit.':
     'Здесь можно управлять созданными тобой карточками стен, в том числе из прошлых посещений.',
-  'Revoking a link stops it opening in Destka. Copies already saved by social networks may remain.':
-    'После отзыва ссылка перестанет открываться в Destka. Копии, уже сохранённые соцсетями, могут остаться.',
+  'Revoking a link stops it opening in supcube. Copies already saved by social networks may remain.':
+    'После отзыва ссылка перестанет открываться в supcube. Копии, уже сохранённые соцсетями, могут остаться.',
   'Refresh links': 'Обновить ссылки',
   'Loading public links…': 'Загружаем публичные ссылки…',
   'No public links yet. Create a share card on a Wall to find it here.':
@@ -766,10 +889,10 @@ export const messages: Record<string, string> = {
   'Check saved payment status': 'Проверить сохранённый статус платежа',
   'Refresh payment status': 'Обновить статус оплаты',
   'Legal documents': 'Юридические документы',
-  'Destka legal documents': 'Юридические документы Destka',
+  'supcube legal documents': 'Юридические документы supcube',
   'Legal information': 'Юридическая информация',
   'Other documents': 'Другие документы',
-  'Destka documents': 'Документы Destka',
+  'supcube documents': 'Документы supcube',
   'Documents temporarily unavailable': 'Документы временно недоступны',
   'Could not load the published documents. Try refreshing this page later.':
     'Не удалось загрузить опубликованные документы. Попробуйте обновить страницу позже.',
@@ -791,7 +914,7 @@ export const messages: Record<string, string> = {
   'Published documents are provided in their original Russian. Changing the interface language does not translate the legal text.':
     'Опубликованные документы представлены в оригинале на русском языке. Переключение языка интерфейса не переводит юридический текст.',
   'Before your first action': 'Перед первым действием',
-  'Confirmations for Destka': 'Подтверждения для Destka',
+  'Confirmations for supcube': 'Подтверждения для supcube',
   'Confirm your age and read the service terms before creating an autograph or placing it on a Wall. Signing in with Google or Telegram does not mean accepting the terms.':
     'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход через Google или Telegram не означает принятия условий.',
   'An autograph is decorative content, not a legal signature. Do not upload a bank, official or other sensitive signature.':
@@ -877,8 +1000,8 @@ export const messages: Record<string, string> = {
   'Checking order…': 'Проверяем заказ…',
   'Confirm order and continue to payment':
     'Подтвердить заказ и перейти к оплате',
-  'Payment details are entered only on the secure YooKassa page. Destka never asks for card numbers, CVV/CVC, bank passwords or SMS codes.':
-    'Платёжные реквизиты вводятся только на защищённой странице ЮKassa. Destka не запрашивает номер карты, CVV/CVC, банковские пароли или SMS-коды.',
+  'Payment details are entered only on the secure YooKassa page. supcube never asks for card numbers, CVV/CVC, bank passwords or SMS codes.':
+    'Платёжные реквизиты вводятся только на защищённой странице ЮKassa. supcube не запрашивает номер карты, CVV/CVC, банковские пароли или SMS-коды.',
   'This confirmation is not consent to personal data processing or dissemination, and does not replace the 18+ declaration or Terms of use.':
     'Это подтверждение не является согласием на обработку или распространение персональных данных и не заменяет декларацию 18+ и Пользовательское соглашение.',
   'Checking terms…': 'Проверяем условия…',
@@ -918,9 +1041,9 @@ export const messages: Record<string, string> = {
   photo: 'Фото',
   "{name}'s Wall": 'Стена {name}',
   '{name}’s Wall': 'Стена {name}',
-  '{name} — public Walls': '{name} — публичные стены',
-  'Explore {name}’s public digital autograph Walls.':
-    'Публичные стены цифровых автографов автора {name}.',
+  '{name} — public Wall': '{name} — стена автографов',
+  'Explore {name}’s digital autograph Wall.':
+    'Стена цифровых автографов автора {name}.',
   'View {name}’s digital autograph Wall and its public placement history.':
     'Стена цифровых автографов автора {name} и публичная история размещений.',
   'Slot {number}': 'Место {number}',
@@ -961,9 +1084,9 @@ export const messages: Record<string, string> = {
   'Personal data dissemination consent':
     'Согласие на распространение персональных данных',
   'Vulnerability disclosure policy': 'Политика сообщения об уязвимостях',
-  'Security | Destka': 'Безопасность | Destka',
-  'Documents | Destka': 'Документы | Destka',
-  'Before your first action | Destka': 'Перед первым действием | Destka',
+  'Security | supcube': 'Безопасность | supcube',
+  'Documents | supcube': 'Документы | supcube',
+  'Before your first action | supcube': 'Перед первым действием | supcube',
   'Profile changes are temporarily unavailable.':
     'Изменение профиля временно недоступно.',
   'Use at most 200 characters for your display name.':
@@ -997,4 +1120,65 @@ export const messages: Record<string, string> = {
   'Generation has not finished. Retry with the same nickname to avoid another API charge.':
     'Генерация ещё не завершилась. Повтори запрос с тем же ником: повторной оплаты API не будет.',
   'Generation is unavailable.': 'Генерация недоступна.',
+  'Community cube': 'Общий куб',
+  'Try the cube demo': 'Открыть демо куба',
+  'Cube {generation} · {used} of {capacity} places occupied':
+    'Куб {generation} · занято {used} из {capacity} мест',
+  'Choose a cube face': 'Выбери грань куба',
+  'Front face': 'Лицевая грань',
+  'Right face': 'Правая грань',
+  'Back face': 'Обратная грань',
+  'Left face': 'Левая грань',
+  'Top face': 'Верхняя грань',
+  'Bottom face': 'Нижняя грань',
+  'Refresh cube': 'Обновить куб',
+  'Place {cell} · Your autograph': 'Место {cell} · Твой автограф',
+  'Place {cell} · Occupied': 'Место {cell} · Занято',
+  'Place {cell} · Free': 'Место {cell} · Свободно',
+  'Pages of cube places': 'Страницы мест на грани',
+  Previous: 'Назад',
+  Next: 'Вперёд',
+  'Page {current} of {total}': 'Страница {current} из {total}',
+  'The community cube is closed': 'Общий куб закрыт',
+  'Cube places': 'Места на кубе',
+  'Loading the cube…': 'Загружаем куб…',
+  'You can explore the cube in the demo while publication is closed.':
+    'Пока публикация закрыта, куб можно посмотреть в демо.',
+  'The cube could not be loaded. Check your connection and try again.':
+    'Не удалось загрузить куб. Проверь подключение и попробуй ещё раз.',
+  'Your place in the cube': 'Твоё место на кубе',
+  'Your cube placement could not be loaded. Refresh the cube to try again.':
+    'Не удалось загрузить твоё место. Обнови куб и попробуй ещё раз.',
+  'Your autograph is saved at place {cell}.':
+    'Твой автограф сохранён на месте {cell}.',
+  'Find my autograph': 'Найти мой автограф',
+  'Withdraw autograph': 'Убрать автограф',
+  'Withdraw this autograph from the cube? It will stay in your account.':
+    'Убрать этот автограф с куба? Он останется в твоём аккаунте.',
+  'Confirm withdrawal': 'Убрать с куба',
+  'Your autograph was withdrawn from the cube.': 'Автограф убран с куба.',
+  'Publish an autograph': 'Публикация автографа',
+  'You can publish an autograph after it passes moderation.':
+    'Автограф можно опубликовать после модерации.',
+  'Selected place {cell}': 'Выбрано место {cell}',
+  'Choose a free place on any face.': 'Выбери свободное место на любой грани.',
+  'Publishing will show this approved autograph on the public cube. You can withdraw it later.':
+    'После публикации одобренный автограф увидят все посетители куба. Потом его можно убрать.',
+  'Publishing…': 'Публикуем…',
+  'Publish autograph': 'Опубликовать автограф',
+  'The cube grew. Choose a place on the current cube.':
+    'Куб вырос. Выбери место на новом кубе.',
+  'Someone took that place. Choose another place.':
+    'Это место уже заняли. Выбери другое.',
+  'Your account already has a place in the cube.':
+    'У твоего аккаунта уже есть место на кубе.',
+  'The cube is full. You can still view the autographs.':
+    'Все места заняты. Автографы по-прежнему можно посмотреть.',
+  'That request has already been used. Choose a place again.':
+    'Этот запрос уже обработан. Выбери место заново.',
+  'That autograph is no longer available to publish.':
+    'Этот автограф больше нельзя опубликовать.',
+  'Could not confirm the change. Check your placement and try again.':
+    'Не удалось подтвердить изменение. Проверь своё место и попробуй снова.',
+  'Your autograph is published.': 'Твой автограф опубликован.',
 };

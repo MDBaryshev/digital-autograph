@@ -532,6 +532,46 @@ export const walls = pgTable(
   ],
 );
 
+export const wallDesigns = pgTable(
+  'wall_designs',
+  {
+    wallId: uuid('wall_id')
+      .primaryKey()
+      .references(() => walls.id, { onDelete: 'cascade' }),
+    revision: uuid('revision').notNull().defaultRandom(),
+    design: jsonb('design').notNull(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    check(
+      'wall_design_bounded',
+      sql`jsonb_typeof(${table.design}) = 'object' AND octet_length(${table.design}::text) < 710000`,
+    ),
+  ],
+);
+
+export const wallDesignTemplates = pgTable(
+  'wall_design_templates',
+  {
+    tokenHash: varchar('token_hash', { length: 64 }).primaryKey(),
+    authorUserId: uuid('author_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    design: jsonb('design').notNull(),
+    createdAt: createdAt(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check(
+      'wall_design_template_bounded',
+      sql`jsonb_typeof(${table.design}) = 'object' AND octet_length(${table.design}::text) < 710000`,
+    ),
+  ],
+);
+
 export const slots = pgTable(
   'slots',
   {
@@ -563,6 +603,56 @@ export const autographs = pgTable(
   (table) => [
     index('autographs_user_created_idx').on(table.userId, table.createdAt),
     index('autographs_created_idx').on(table.createdAt),
+  ],
+);
+
+export const communityCubeState = pgTable(
+  'community_cube_state',
+  {
+    id: integer('id').primaryKey(),
+    generation: integer('generation').notNull(),
+  },
+  (table) => [
+    check('community_cube_singleton', sql`${table.id} = 1`),
+    check(
+      'community_cube_generation_range',
+      sql`${table.generation} BETWEEN 1 AND 4`,
+    ),
+  ],
+);
+
+export const communityCubePlacements = pgTable(
+  'community_cube_placements',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    autographId: uuid('autograph_id')
+      .notNull()
+      .references(() => autographs.id, { onDelete: 'cascade' }),
+    requestId: uuid('request_id').notNull(),
+    generation: integer('generation').notNull(),
+    cell: integer('cell').notNull(),
+    createdAt: createdAt(),
+    withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('community_cube_placement_request_uidx').on(
+      table.userId,
+      table.requestId,
+    ),
+    uniqueIndex('community_cube_active_user_uidx')
+      .on(table.userId)
+      .where(sql`${table.withdrawnAt} IS NULL`),
+    uniqueIndex('community_cube_active_cell_uidx')
+      .on(table.cell)
+      .where(sql`${table.withdrawnAt} IS NULL`),
+    index('community_cube_placement_autograph_idx').on(table.autographId),
+    check(
+      'community_cube_placement_cell_range',
+      sql`${table.cell} BETWEEN 1 AND CASE ${table.generation} WHEN 1 THEN 24 WHEN 2 THEN 144 WHEN 3 THEN 864 WHEN 4 THEN 5184 ELSE 0 END`,
+    ),
   ],
 );
 

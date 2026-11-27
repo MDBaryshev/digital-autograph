@@ -56,7 +56,23 @@ export const test = base.extend<{ scenario: Scenario; uiLocale: 'en' | 'ru' }>({
         );
         for (const asset of assets.rows)
           await storage.deleteObject(asset.storage_key);
-        await database.pool.query('TRUNCATE TABLE users CASCADE');
+        // The synthetic worker polls during fixture cleanup. PostgreSQL rolls
+        // back the whole TRUNCATE when it chooses this connection as a victim.
+        for (let attempt = 1; ; attempt += 1) {
+          try {
+            await database.pool.query('TRUNCATE TABLE users CASCADE');
+            break;
+          } catch (error) {
+            if (
+              attempt >= 3 ||
+              !(error instanceof Error) ||
+              !('code' in error) ||
+              error.code !== '40P01'
+            ) {
+              throw error;
+            }
+          }
+        }
       };
       try {
         await cleanup();

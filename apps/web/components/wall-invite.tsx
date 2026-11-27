@@ -80,6 +80,15 @@ export function WallInvite({
         >
           {t('Share invitation')}
         </button>
+        {url && (
+          <a
+            href={`https://t.me/share/url?url=${encodeURIComponent(url)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('Share Wall link in Telegram')}
+          </a>
+        )}
         <button
           type="button"
           disabled={!url || pending}
@@ -123,7 +132,7 @@ export function WallInvite({
             href={
               'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qr.svg)
             }
-            download="destka-wall-qr.svg"
+            download="supcube-wall-qr.svg"
           >
             {t('Download QR code')}
           </a>

@@ -1,11 +1,13 @@
 import type { PublicWall } from './public-wall-api';
 import { PublicWallApiError } from './public-wall-api';
 
+type CreatorWall = Pick<PublicWall, 'id' | 'status' | 'startAt' | 'endAt'>;
+
 export type PublicCreator = {
   id: string;
   slug: string;
   displayName: string;
-  walls: Array<Pick<PublicWall, 'id' | 'status' | 'startAt' | 'endAt'>>;
+  wall: CreatorWall | null;
 };
 
 export async function getPublicCreator(
@@ -21,5 +23,9 @@ export async function getPublicCreator(
     },
   );
   if (!response.ok) throw new PublicWallApiError(response.status);
-  return (await response.json()) as PublicCreator;
+  const { walls, ...creator } = (await response.json()) as Omit<
+    PublicCreator,
+    'wall'
+  > & { walls: CreatorWall[] };
+  return { ...creator, wall: walls[0] ?? null };
 }

@@ -6,7 +6,7 @@ import { loadWebConfig } from '@digital-autograph/config';
 import { FirstUseGate } from '../../../components/first-use-gate';
 export const dynamic = 'force-dynamic';
 const pageMetadata = {
-  title: 'Перед первым действием | Destka',
+  title: 'Перед первым действием | supcube',
   robots: { index: false, follow: false },
 };
 export async function generateMetadata() {
@@ -39,7 +39,7 @@ export default async function FirstUsePage({
       : checkoutDestination || '/autograph/create';
   return (
     <main>
-      <h1>{t('Подтверждения для Destka')}</h1>
+      <h1>{t('Подтверждения для supcube')}</h1>
       <FirstUseGate
         apiOrigin={loadWebConfig().API_PUBLIC_ORIGIN}
         loginReturnTo={`/legal/first-use?returnTo=${encodeURIComponent(destination)}`}

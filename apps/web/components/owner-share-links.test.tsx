@@ -6,6 +6,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from '@testing-library/react';
 import { OwnerShareLinks } from './owner-share-links';
 import { LocaleProvider } from './locale-provider';
@@ -63,9 +64,11 @@ it('lists an existing share after mount and confirms or cancels revocation witho
   fireEvent.click(revoke);
   fireEvent.click(screen.getByRole('button', { name: 'Confirm revocation' }));
   expect(await screen.findByText('Public link revoked.')).toBeTruthy();
-  expect(document.activeElement).toBe(
-    screen.getByRole('button', { name: 'Refresh links' }),
-  );
+  await waitFor(() => {
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Refresh links' }),
+    );
+  });
   expect(
     screen.queryByRole('button', { name: 'Revoke public link' }),
   ).toBeNull();

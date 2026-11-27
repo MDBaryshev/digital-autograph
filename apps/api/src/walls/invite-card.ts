@@ -40,7 +40,7 @@ export async function renderWallInviteCard(
   // Text-only SVG: no autograph, avatar, cover, external URL, private candidate or provider data.
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><style>text{font-family:'DejaVu Sans',sans-serif}</style>
     <rect width="1200" height="630" fill="#f6f7fc"/><rect x="0" y="0" width="1200" height="14" fill="#3859ec"/>
-    <text x="64" y="94" font-size="32" font-weight="bold" fill="#3859ec">Destka.</text>
+    <text x="64" y="94" font-size="32" font-weight="bold" fill="#3859ec">supcube.</text>
     <text x="64" y="186" font-size="42" font-weight="bold" fill="#171717">${xml(first)}</text>
     <text x="64" y="244" font-size="42" font-weight="bold" fill="#171717">${xml(second)}</text>
     <text x="64" y="304" font-size="22" fill="#525b70">${xml(Array.from(wall.creator.displayName).slice(0, 46).join(''))}</text>

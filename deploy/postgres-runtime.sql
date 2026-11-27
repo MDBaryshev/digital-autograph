@@ -21,6 +21,12 @@ GRANT INSERT ON users,social_identities,sessions,oauth_login_attempts,walls,slot
  platform_pricing_default,takeover_quotes,takeover_reservations,payment_orders,payments,payment_event_receipts,
  creator_earnings,notification_events,notification_subscriptions,share_links,share_interactions TO da_api;
 GRANT SELECT,INSERT,UPDATE ON account_appearance TO da_api;
+GRANT SELECT,INSERT,UPDATE ON wall_designs TO da_api;
+GRANT SELECT,INSERT ON wall_design_templates TO da_api;
+GRANT SELECT,INSERT ON community_cube_placements TO da_api;
+GRANT UPDATE(withdrawn_at) ON community_cube_placements TO da_api;
+GRANT SELECT ON community_cube_state TO da_api;
+GRANT UPDATE(generation) ON community_cube_state TO da_api;
 GRANT SELECT,INSERT ON ai_autograph_requests TO da_api;
 GRANT UPDATE(state,result,finished_at) ON ai_autograph_requests TO da_api;
 GRANT INSERT ON creators,creator_profiles TO da_api;

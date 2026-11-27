@@ -1,4 +1,17 @@
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
+import {
+  autographSources,
+  autographStatuses,
+  wallStatuses,
+} from '@digital-autograph/domain';
+
+type WorkspaceWall = {
+  id: string;
+  status: WallStatus;
+  slotCount: number;
+  createdAt: string;
+};
+
 export type Workspace = {
   profile: {
     id: string;
@@ -12,15 +25,51 @@ export type Workspace = {
     status: AutographStatus;
     createdAt: string;
   }[];
-  walls: {
-    id: string;
-    status: WallStatus;
-    slotCount: number;
-    createdAt: string;
-  }[];
+  wall: WorkspaceWall | null;
   canModerate: boolean;
+  canManageWallDesigns?: boolean;
   canEditProfile: boolean;
 };
+
+export async function getWorkspace(origin: string, signal: AbortSignal) {
+  const response = await workspaceRequest<
+    Omit<Workspace, 'wall'> & { walls: WorkspaceWall[] }
+  >(origin, '/me/workspace', signal);
+  if (
+    !Array.isArray(response?.walls) ||
+    response.walls.length > 1 ||
+    !Array.isArray(response.autographs) ||
+    response.autographs.some(
+      (autograph) =>
+        !autograph ||
+        typeof autograph.id !== 'string' ||
+        !autographSources.some((source) => source === autograph.source) ||
+        !autographStatuses.includes(autograph.status) ||
+        !Number.isFinite(Date.parse(autograph.createdAt)),
+    ) ||
+    typeof response.canModerate !== 'boolean' ||
+    typeof response.canEditProfile !== 'boolean' ||
+    (response.profile !== null &&
+      (!response.profile ||
+        typeof response.profile.id !== 'string' ||
+        typeof response.profile.slug !== 'string' ||
+        typeof response.profile.displayName !== 'string'))
+  ) {
+    throw Error('INVALID_WORKSPACE');
+  }
+  const { walls, ...workspace } = response;
+  const wall = walls[0];
+  if (
+    walls.length &&
+    (!wall ||
+      typeof wall.id !== 'string' ||
+      !wallStatuses.includes(wall.status) ||
+      !Number.isInteger(wall.slotCount) ||
+      !Number.isFinite(Date.parse(wall.createdAt)))
+  )
+    throw Error('REQUEST_FAILED');
+  return { ...workspace, wall: wall ?? null };
+}
 export async function workspaceRequest<T>(
   origin: string,
   path: string,
@@ -28,21 +77,45 @@ export async function workspaceRequest<T>(
   body?: unknown,
   method = 'POST',
 ): Promise<T> {
-  const response = await fetch(origin + path, {
-    credentials: 'include',
-    cache: 'no-store',
-    signal,
-    method: body === undefined ? 'GET' : method,
-    headers:
-      body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  let rejectAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = () => reject(new Error('WORKSPACE_REQUEST_ABORTED'));
+    controller.signal.addEventListener('abort', rejectAbort, { once: true });
   });
-  const result = await response.json().catch(() => null);
-  if (!response.ok)
-    throw Error(
-      response.status === 401
-        ? 'SIGN_IN'
-        : (result?.error?.code ?? 'REQUEST_FAILED'),
-    );
-  return result as T;
+  signal.addEventListener('abort', cancel, { once: true });
+  const timer = setTimeout(cancel, 10_000);
+  if (signal.aborted) cancel();
+  try {
+    if (controller.signal.aborted) return await aborted;
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(origin + path, {
+          credentials: 'include',
+          cache: 'no-store',
+          signal: controller.signal,
+          method: body === undefined ? 'GET' : method,
+          headers:
+            body === undefined
+              ? undefined
+              : { 'Content-Type': 'application/json' },
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok)
+          throw Error(
+            response.status === 401
+              ? 'SIGN_IN'
+              : (result?.error?.code ?? 'REQUEST_FAILED'),
+          );
+        return result as T;
+      })(),
+      aborted,
+    ]);
+  } finally {
+    clearTimeout(timer);
+    signal.removeEventListener('abort', cancel);
+    controller.signal.removeEventListener('abort', rejectAbort);
+  }
 }

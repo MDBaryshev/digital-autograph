@@ -51,7 +51,7 @@ export function OpenInvitation() {
         <Icon name="down" size={16} />
       </summary>
       <form action="/#open-invitation" onSubmit={submit}>
-        <label htmlFor={field}>{t('Paste your Destka invitation link')}</label>
+        <label htmlFor={field}>{t('Paste your supcube invitation link')}</label>
         <div className={styles.fields}>
           <input
             id={field}
@@ -62,7 +62,7 @@ export function OpenInvitation() {
             autoCapitalize="off"
             spellCheck={false}
             maxLength={2048}
-            placeholder="https://destka.ru/walls/…"
+            placeholder="/walls/…"
             aria-invalid={invalid || undefined}
             aria-describedby={invalid ? `${field}-error` : undefined}
             onChange={() => setInvalid(false)}
@@ -71,7 +71,7 @@ export function OpenInvitation() {
         </div>
         {invalid && (
           <p id={`${field}-error`} role="alert">
-            {t('Paste a link to a Wall on destka.ru.')}
+            {t('Paste the Wall link from your invitation.')}
           </p>
         )}
       </form>

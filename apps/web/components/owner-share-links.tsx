@@ -157,7 +157,7 @@ function ShareLinks({ apiOrigin }: { apiOrigin: string }) {
       </p>
       <p>
         {t(
-          'Revoking a link stops it opening in Destka. Copies already saved by social networks may remain.',
+          'Revoking a link stops it opening in supcube. Copies already saved by social networks may remain.',
         )}
       </p>
       <button

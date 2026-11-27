@@ -1,9 +1,12 @@
+import type { WallDesignStyle } from '@digital-autograph/domain';
+
 export type PublicWall = {
   appearance?: {
     title: string;
     description: string;
     avatarDataUrl: string | null;
     coverDataUrl: string | null;
+    style?: WallDesignStyle;
   };
   id: string;
   status: 'scheduled' | 'live' | 'paused' | 'ended';

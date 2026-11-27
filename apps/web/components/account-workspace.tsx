@@ -1,18 +1,24 @@
 'use client';
-import { WallAppearanceEditor } from './wall-appearance-editor';
+import { ProfileAvatarEditor } from './profile-avatar-editor';
 import { OwnerRejectionDetails } from './owner-rejection-details';
 import { WallLifecycleControls } from './wall-lifecycle-controls';
 import type { AutographStatus, WallStatus } from '@digital-autograph/domain';
-import { isPublicWall, wallStatuses } from '@digital-autograph/domain';
+import { isPublicWall } from '@digital-autograph/domain';
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from './locale-provider';
 import { AccountSession } from './account-session';
 import { ThemeSwitcher } from './theme-switcher';
 import { LanguageSwitcher } from './language-switcher';
-import { workspaceRequest, type Workspace } from './workspace-api';
+import {
+  getWorkspace,
+  workspaceRequest,
+  type Workspace,
+} from './workspace-api';
+import { myWallPath, wallDesignPath } from '../lib/wall-design-links';
 import { autographApi } from '../lib/autograph-api';
 import { CleanedAutographReview } from './cleaned-autograph-review';
 import { FirstUseActionNotice } from './first-use-action-notice';
+import { OpenInvitation } from './open-invitation';
 import styles from './workspace.module.css';
 type Section = 'overview' | 'autographs' | 'walls' | 'settings';
 const statuses: Record<AutographStatus | WallStatus, string> = {
@@ -46,8 +52,12 @@ export function AccountWorkspace({
   const [version, setVersion] = useState(0);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [profileRevision, setProfileRevision] = useState(0);
+  const recoveryRequired = useRef(false);
   const busy = useRef(false);
   const mutation = useRef<AbortController | null>(null);
+  const reading = useRef<AbortController | null>(null);
   const [preview, setPreview] = useState<{
     id: string;
     status: string;
@@ -58,11 +68,15 @@ export function AccountWorkspace({
   useEffect(() => () => mutation.current?.abort(), []);
   useEffect(() => {
     const c = new AbortController();
-    workspaceRequest<Workspace>(apiOrigin, '/me/workspace', c.signal)
+    reading.current = c;
+    getWorkspace(apiOrigin, c.signal)
       .then((d) => {
         if (c.signal.aborted) return;
         setData(d);
         setError('');
+        if (recoveryRequired.current) setProfileRevision((value) => value + 1);
+        recoveryRequired.current = false;
+        setNeedsRefresh(false);
       })
       .catch((e) => {
         if (!c.signal.aborted)
@@ -78,8 +92,14 @@ export function AccountWorkspace({
     work: (signal: AbortSignal) => Promise<unknown>,
     notify = true,
   ) => {
-    if (busy.current) return;
+    if (busy.current || recoveryRequired.current) return;
     busy.current = true;
+    // A read started before this write cannot confirm its outcome.
+    reading.current?.abort();
+    if (notify) {
+      recoveryRequired.current = true;
+      setNeedsRefresh(true);
+    }
     setPending(true);
     setError('');
     setSaved(false);
@@ -113,6 +133,7 @@ export function AccountWorkspace({
         );
     } finally {
       busy.current = false;
+      if (mutation.current === c) mutation.current = null;
       if (!c.signal.aborted) setPending(false);
     }
   };
@@ -129,8 +150,11 @@ export function AccountWorkspace({
   const accountPath = section === 'overview' ? '/me' : `/me/${section}`;
   const returnTo =
     section === 'autographs' && wallId
-      ? `${accountPath}?wall=${wallId}`
+      ? `${accountPath}?wall=${encodeURIComponent(wallId)}`
       : accountPath;
+  const studioPath = wallId
+    ? `/autograph/create?wall=${encodeURIComponent(wallId)}`
+    : '/autograph/create';
   if (error === 'SIGN_IN')
     return (
       <div className={styles.workspace}>
@@ -154,7 +178,7 @@ export function AccountWorkspace({
         )}
       </section>
     );
-  const profile = data.profile;
+  const { profile, wall } = data;
   const date = (s: string) =>
     new Date(s).toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-GB');
   return (
@@ -164,7 +188,7 @@ export function AccountWorkspace({
           [
             ['overview', '/me', 'Overview'],
             ['autographs', '/me/autographs', 'My autographs'],
-            ['walls', '/me/walls', 'My Walls'],
+            ['walls', myWallPath, 'My Wall'],
             ['settings', '/me/settings', 'Settings'],
           ] as const
         ).map(([key, url, label]) => (
@@ -183,6 +207,17 @@ export function AccountWorkspace({
         error && <p role="alert">{t(error)}</p>
       )}
       {saved && <p role="status">{t('Changes saved.')}</p>}
+      {needsRefresh && !pending && (
+        <button
+          type="button"
+          onClick={() => {
+            setSaved(false);
+            setVersion((v) => v + 1);
+          }}
+        >
+          {t('Refresh account status')}
+        </button>
+      )}
       {section === 'overview' && (
         <>
           <div className={styles.actions}>
@@ -206,7 +241,7 @@ export function AccountWorkspace({
                 {profile
                   ? '@' + profile.slug
                   : data.canEditProfile
-                    ? t('Choose a name in settings to create your first Wall.')
+                    ? t('Choose a name in settings to create your Wall.')
                     : t('Public profile setup is temporarily unavailable.')}
               </p>
             </div>
@@ -220,11 +255,18 @@ export function AccountWorkspace({
               <a href="/me/autographs">{t('Open my autographs')} →</a>
             </section>
             <section className={styles.card}>
-              <h2>{t('My Walls')}</h2>
-              <p>{t('Create a Wall and invite people to leave their mark.')}</p>
-              <a href="/me/walls">{t('Open my Walls')} →</a>
+              <h2>{t('My Wall')}</h2>
+              <p>
+                {wall
+                  ? `${t(statuses[wall.status])} · ${t('Places: {count}', { count: wall.slotCount })}`
+                  : t('Create a Wall and invite people to leave their mark.')}
+              </p>
+              <a href={myWallPath}>
+                {t(wall ? 'Manage my Wall' : 'Open my Wall')} →
+              </a>
             </section>
           </div>
+          <OpenInvitation />
         </>
       )}
       {section === 'autographs' && (
@@ -234,7 +276,7 @@ export function AccountWorkspace({
               'Original uploads stay private. Only you can review these previews.',
             )}
           </p>
-          <a className={styles.primary} href="/autograph/create">
+          <a className={styles.primary} href={studioPath}>
             {t('Create autograph')}
           </a>
           {data.autographs.length === 0 ? (
@@ -259,11 +301,16 @@ export function AccountWorkspace({
                     'moderation_rejected',
                   ].includes(a.status) && (
                     <button
-                      disabled={pending}
+                      disabled={pending || needsRefresh}
                       onClick={() =>
                         void act(async (signal) => {
-                          const p = await autographApi(apiOrigin).preview(
-                            a.id,
+                          const p = await workspaceRequest<{
+                            assetId: string;
+                            url: string;
+                            expiresAt: string;
+                          }>(
+                            apiOrigin,
+                            `/autographs/${encodeURIComponent(a.id)}/preview`,
                             signal,
                           );
                           setPreview({ id: a.id, status: a.status, ...p });
@@ -289,6 +336,8 @@ export function AccountWorkspace({
                   api={autographApi(apiOrigin)}
                   initialPreview={preview}
                   onStartOver={() => setPreview(null)}
+                  wallId={wallId}
+                  studioPath={returnTo}
                 />
               ) : (
                 <img
@@ -308,17 +357,47 @@ export function AccountWorkspace({
               'Showing up to 50 recent autographs. Refresh to update processing status.',
             )}
           </p>
-          <button onClick={() => setVersion((v) => v + 1)}>
+          <button disabled={pending} onClick={() => setVersion((v) => v + 1)}>
             {t('Refresh')}
           </button>
         </>
       )}
       {section === 'walls' && (
         <>
-          {profile && data.canEditProfile && (
-            <a href="/me/settings">{t('Edit Wall appearance')}</a>
-          )}
-          {!profile && !data.canEditProfile ? (
+          {wall ? (
+            <article className={`${styles.card} ${styles.wallCard}`}>
+              <div className={styles.wallHeading}>
+                <h2>
+                  {profile
+                    ? t('{name}’s Wall', { name: profile.displayName })
+                    : t('Wall')}
+                </h2>
+                <p>
+                  {t(statuses[wall.status])} ·{' '}
+                  {t('Places: {count}', { count: wall.slotCount })}
+                </p>
+              </div>
+              <div className={styles.actions}>
+                {wall.status !== 'archived' && (
+                  <a className={styles.primary} href={wallDesignPath}>
+                    {t('Edit Wall appearance')}
+                  </a>
+                )}
+                {isPublicWall(wall.status) && (
+                  <a href={`/walls/${wall.id}`}>{t('Open Wall')}</a>
+                )}
+              </div>
+              <WallLifecycleControls
+                key={wall.id}
+                apiOrigin={apiOrigin}
+                wall={wall}
+                refresh={async (signal) => {
+                  const next = await getWorkspace(apiOrigin, signal);
+                  if (!signal.aborted) setData(next);
+                }}
+              />
+            </article>
+          ) : !data.canEditProfile ? (
             <section className={styles.card}>
               <h2>{t('Wall creation is temporarily unavailable')}</h2>
               <p>
@@ -332,7 +411,7 @@ export function AccountWorkspace({
             </section>
           ) : !profile ? (
             <section className={styles.card}>
-              <h2>{t('Give your Wall a name')}</h2>
+              <h2>{t('Set up your public profile')}</h2>
               <p>
                 {t(
                   'Set up your public creator profile first. Your original uploads will remain private.',
@@ -340,8 +419,8 @@ export function AccountWorkspace({
               </p>
               <a href="/me/settings">{t('Set up profile')} →</a>
             </section>
-          ) : data.walls.length === 0 ? (
-            <>
+          ) : (
+            <section className={styles.card}>
               <p>
                 {t(
                   'Your account has one Wall with exactly 10 places. A new Wall starts as a private draft.',
@@ -361,56 +440,11 @@ export function AccountWorkspace({
                   );
                 }}
               >
-                <button disabled={pending}>
+                <button disabled={pending || needsRefresh}>
                   {pending ? t('Saving…') : t('Create draft Wall')}
                 </button>
               </form>
-            </>
-          ) : (
-            <p>{t('Your account already has its Wall with 10 places.')}</p>
-          )}
-          {data.walls.length > 0 && (
-            <div className={styles.grid}>
-              {data.walls.map((w, i) => (
-                <article className={styles.card} key={w.id}>
-                  <h2>
-                    {t('Wall')} {data.walls.length - i}
-                  </h2>
-                  <p>
-                    {t(statuses[w.status] ?? w.status)} ·{' '}
-                    {t('Places: {count}', { count: w.slotCount })}
-                  </p>
-                  <p>{date(w.createdAt)}</p>
-                  <div className={styles.actions}>
-                    {isPublicWall(w.status) && (
-                      <a href={`/walls/${w.id}`}>{t('Open Wall')}</a>
-                    )}
-                  </div>
-                  <WallLifecycleControls
-                    apiOrigin={apiOrigin}
-                    wall={w}
-                    refresh={async (signal) => {
-                      const next = await workspaceRequest<Workspace>(
-                        apiOrigin,
-                        '/me/workspace',
-                        signal,
-                      );
-                      if (
-                        !Array.isArray(next?.walls) ||
-                        next.walls.some(
-                          (item) =>
-                            !item ||
-                            typeof item.id !== 'string' ||
-                            !wallStatuses.includes(item.status),
-                        )
-                      )
-                        throw Error('REQUEST_FAILED');
-                      if (!signal.aborted) setData(next);
-                    }}
-                  />
-                </article>
-              ))}
-            </div>
+            </section>
           )}
         </>
       )}
@@ -429,7 +463,7 @@ export function AccountWorkspace({
               )}
             </p>
             <form
-              key={profile?.slug ?? 'new'}
+              key={`${profile?.slug ?? 'new'}:${profileRevision}`}
               className={styles.form}
               onSubmit={(e) => {
                 e.preventDefault();
@@ -449,7 +483,7 @@ export function AccountWorkspace({
                 {t('Display name')}
                 <input
                   name="displayName"
-                  disabled={pending || !data.canEditProfile}
+                  disabled={pending || needsRefresh || !data.canEditProfile}
                   maxLength={400}
                   onInput={(event) =>
                     event.currentTarget.setCustomValidity(
@@ -467,7 +501,7 @@ export function AccountWorkspace({
                 {t('Username')}
                 <input
                   name="slug"
-                  disabled={pending || !data.canEditProfile}
+                  disabled={pending || needsRefresh || !data.canEditProfile}
                   minLength={1}
                   maxLength={128}
                   pattern="[a-z0-9]+(-[a-z0-9]+)*"
@@ -481,7 +515,9 @@ export function AccountWorkspace({
                   'Use lowercase Latin letters, numbers and hyphens. Changing this changes your public profile link.',
                 )}
               </p>
-              <button disabled={pending || !data.canEditProfile}>
+              <button
+                disabled={pending || needsRefresh || !data.canEditProfile}
+              >
                 {pending ? t('Saving…') : t('Save profile')}
               </button>
               {profile && (
@@ -491,7 +527,7 @@ export function AccountWorkspace({
               )}
             </form>
           </section>
-          <WallAppearanceEditor
+          <ProfileAvatarEditor
             apiOrigin={apiOrigin}
             canEdit={data.canEditProfile}
           />

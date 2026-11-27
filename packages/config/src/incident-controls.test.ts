@@ -58,3 +58,21 @@ describe('operator incident settings', () => {
     },
   );
 });
+
+describe('community cube publication', () => {
+  it('keeps publication off by default and requires first-use enforcement before enabling it', () => {
+    expect(loadApiConfig(base).COMMUNITY_CUBE_PUBLICATION_ENABLED).toBe(false);
+    expect(() =>
+      loadApiConfig({ ...base, COMMUNITY_CUBE_PUBLICATION_ENABLED: 'true' }),
+    ).toThrow(
+      /COMMUNITY_CUBE_PUBLICATION_ENABLED: requires first-use enforcement/,
+    );
+    expect(
+      loadApiConfig({
+        ...base,
+        COMMUNITY_CUBE_PUBLICATION_ENABLED: 'true',
+        FIRST_USE_ENFORCEMENT_ENABLED: 'true',
+      }).COMMUNITY_CUBE_PUBLICATION_ENABLED,
+    ).toBe(true);
+  });
+});

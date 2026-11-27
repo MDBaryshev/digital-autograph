@@ -93,8 +93,10 @@ export {
   type WallConfiguration,
 } from './wall';
 export * from './notifications';
+export * from './community-cube';
 export * from './legal';
 
 export type { AgeDeclarationRepository } from './first-use';
 
 export * from './checkout';
+export * from './wall-design';

@@ -21,7 +21,7 @@ export default async function UserPlacementsPage() {
   const { API_PUBLIC_ORIGIN } = loadWebConfig();
   return (
     <main>
-      <p className="eyebrow">{t('Destka')}</p>
+      <p className="eyebrow">{t('supcube')}</p>
       <h1>{t('Your placement history')}</h1>
       <p>
         {t(

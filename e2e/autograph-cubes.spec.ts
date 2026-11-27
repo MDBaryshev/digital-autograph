@@ -17,16 +17,111 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
     if (['POST', 'PUT', 'PATCH'].includes(request.method()))
       writes.push(request.url());
   });
-  await page.goto('/');
+  await page.goto('/walls/demo');
+  await page
+    .getByRole('combobox', { name: 'Top three style' })
+    .selectOption('classic');
   const open = page.getByRole('button', {
     name: 'Explore demo cube in place 1',
     exact: true,
   });
+  await page
+    .getByRole('combobox', { name: 'Shared cube material', exact: true })
+    .selectOption('metallic');
+  const podium = [1, 2, 3].map((place) =>
+    page
+      .getByRole('button', {
+        name: 'Explore demo cube in place ' + place,
+        exact: true,
+      })
+      .locator('[data-cube-face="front"]'),
+  );
+  const faceColor = (face: (typeof podium)[number]) =>
+    face.evaluate((element) => getComputedStyle(element).backgroundColor);
+  const originalColors = await Promise.all(podium.map(faceColor));
+  await page.getByRole('textbox', { name: 'Cube front, HEX' }).fill('#254c81');
+  await page
+    .getByRole('textbox', { name: 'Other cube faces, HEX' })
+    .fill('#c28a42');
+  await page
+    .getByRole('textbox', { name: 'Autograph ink, HEX' })
+    .fill('#aad550');
+  const newColors = await Promise.all(podium.map(faceColor));
+  expect(new Set(newColors).size).toBe(3);
+  for (const [index, color] of newColors.entries()) {
+    expect(color).not.toBe(originalColors[index]);
+    expect(color).not.toBe('rgb(37, 76, 129)');
+  }
+  await expect(
+    page
+      .getByRole('button', { name: 'Sign demo place 4' })
+      .locator('[data-cube-face="front"]'),
+  ).toHaveCSS('background-color', 'rgb(100, 101, 104)');
   const object = open.locator('[data-cube-object]');
+  await expect(object.locator('[data-cube-face]')).toHaveCount(1);
+  await expect(object.locator('[data-cube-artwork] path')).toHaveCSS(
+    'stroke',
+    'rgb(170, 213, 80)',
+  );
   await expect(object).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+  const front = object.locator('[data-cube-face="front"]');
+  const flatFront = await front.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  const cardSize = await open.boundingBox();
+  const crown = open.locator('[data-crown-thumbnail="gold"]');
+  await expect(crown).toHaveCSS('opacity', '0');
+  const otherCrowns = page.locator(
+    '[data-crown-thumbnail="silver"], [data-crown-thumbnail="bronze"]',
+  );
+  await expect(otherCrowns).toHaveCount(2);
+  const restingCrown = await crown.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  const sideOpacity = () =>
+    object.evaluate((element) => getComputedStyle(element, '::before').opacity);
   await open.hover();
   await expect(object).not.toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+  await expect(front).not.toHaveCSS('transform', flatFront);
+  await expect.poll(sideOpacity).toBe('1');
+  await expect(crown).toHaveCSS('opacity', '1');
+  await expect(crown).not.toHaveCSS('transform', restingCrown);
+  const geometry = await object.evaluate((element) => {
+    const front = element.querySelector<HTMLElement>(
+      '[data-cube-face="front"]',
+    )!;
+    const crown = element.querySelector<HTMLImageElement>(
+      '[data-crown-thumbnail]',
+    )!;
+    const side = getComputedStyle(element, '::before');
+    const top = getComputedStyle(element, '::after');
+    return {
+      frontWidth: front.clientWidth,
+      otherEdges: [
+        front.clientHeight,
+        Number.parseFloat(side.width),
+        Number.parseFloat(side.height),
+        Number.parseFloat(top.width),
+        Number.parseFloat(top.height),
+      ],
+      crownWidth: crown.clientWidth,
+      crownTop: crown.getBoundingClientRect().top,
+      previewTop: element.parentElement!.getBoundingClientRect().top,
+    };
+  });
+  for (const edge of geometry.otherEdges) {
+    expect(Math.abs(edge - geometry.frontWidth)).toBeLessThan(1);
+  }
+  expect(geometry.crownWidth / geometry.frontWidth).toBeGreaterThan(0.5);
+  expect(geometry.crownWidth / geometry.frontWidth).toBeLessThan(0.6);
+  expect(geometry.crownTop).toBeGreaterThanOrEqual(geometry.previewTop);
+  await expect(open.locator('[data-solid-crown]')).toHaveCount(0);
+  expect(await open.boundingBox()).toEqual(cardSize);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.mouse.move(0, 0);
+  await expect.poll(sideOpacity).toBe('0');
+  await expect(crown).toHaveCSS('opacity', '0');
+  await expect(front).toHaveCSS('transform', flatFront);
   await expect(object).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
   await open.click();
   const viewer = page.getByRole('dialog', {
@@ -35,6 +130,20 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   });
   const close = viewer.getByRole('button', { name: 'Close', exact: true });
   await expect(close).toBeFocused();
+  await expect(viewer.locator('[data-cube-face]')).toHaveCount(6);
+  await expect(viewer.locator('[data-crown-model="gold"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-solid-crown="1"]:visible',
+    ),
+  ).toHaveCount(1);
+  await expect(viewer.locator('[data-cube-face="front"]')).toHaveCSS(
+    'background-color',
+    newColors[0]!,
+  );
+  const side = viewer.locator('[data-cube-face="right"]');
+  await expect(side).not.toHaveCSS('background-color', 'rgb(194, 138, 66)');
+  await expect(side).not.toHaveCSS('background-color', newColors[0]!);
   const controls = viewer.getByRole('group', {
     name: 'Cube faces',
     exact: true,
@@ -98,7 +207,10 @@ test('cube inspection stays usable on touch screens and with reduced motion', as
       },
     ]);
     const page = await context.newPage();
-    await page.goto(process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000');
+    await page.goto(
+      new URL('/walls/demo', process.env.E2E_WEB_URL ?? 'http://127.0.0.1:3000')
+        .href,
+    );
     await page
       .getByRole('button', {
         name: 'Explore demo cube in place 2',
@@ -155,4 +267,347 @@ test('cube inspection stays usable on touch screens and with reduced motion', as
   } finally {
     await context.close();
   }
+});
+
+test('wall materials look distinct and defaults and individual places can be edited', async ({
+  page,
+}) => {
+  await page.goto('/walls/demo');
+  await page
+    .getByRole('combobox', { name: 'Top three style' })
+    .selectOption('classic');
+  const gold = page.locator('[data-wall-theme] [data-material="gold"]');
+  const front = gold.locator('[data-cube-face="front"]');
+  const shared = page.getByRole('combobox', { name: 'Shared cube material' });
+  const firstMaterial = page.getByRole('combobox', {
+    name: 'Material for cube 1',
+    exact: true,
+  });
+  const lastMaterial = page.getByRole('combobox', {
+    name: 'Material for cube 10',
+    exact: true,
+  });
+  await expect(
+    page.getByRole('combobox', { name: /^Material for cube / }),
+  ).toHaveCount(10);
+  const baseColor = await front.evaluate((element) =>
+    getComputedStyle(element).getPropertyValue('--face-paper'),
+  );
+  const materials = [
+    ['Polished metal', 'metallic'],
+    ['Brushed metal', 'brushed'],
+    ['Clear glass', 'glass'],
+    ['Satin glass', 'satin-glass'],
+    ['Smoked glass', 'smoked-glass'],
+    ['Matte', 'matte'],
+    ['Glazed enamel', 'enamel'],
+    ['Terrazzo', 'stone'],
+    ['Carbon weave', 'weave'],
+  ];
+  const frontAlpha = (element: Element) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = getComputedStyle(element).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    return context.getImageData(0, 0, 1, 1).data[3]!;
+  };
+  const rendered = new Set<string>();
+  const alphas = new Map<string, number>();
+  for (const [label, value] of materials) {
+    await shared.selectOption({ label });
+    await expect(gold).toHaveAttribute('data-cube-finish', value!);
+    const image = await front.evaluate(
+      (element) => getComputedStyle(element).backgroundImage,
+    );
+    expect(image).not.toBe('none');
+    rendered.add(image);
+    alphas.set(value!, await front.evaluate(frontAlpha));
+    expect(
+      await front.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue('--face-paper'),
+      ),
+    ).toBe(baseColor);
+  }
+  expect(rendered.size).toBe(materials.length);
+  expect(alphas.get('glass')).toBeGreaterThan(0);
+  expect(alphas.get('glass')).toBeLessThan(alphas.get('smoked-glass')!);
+  expect(alphas.get('smoked-glass')).toBeLessThan(alphas.get('satin-glass')!);
+  expect(alphas.get('metallic')).toBe(255);
+
+  const last = page
+    .getByRole('button', { name: 'Sign demo place 10', exact: true })
+    .locator('[data-cube-object]');
+  await expect(lastMaterial).toHaveValue('');
+  await lastMaterial.selectOption('stone');
+  await expect(last).toHaveAttribute('data-cube-finish', 'stone');
+  await expect(gold).toHaveAttribute('data-cube-finish', 'weave');
+  await expect.poll(() => front.evaluate(frontAlpha)).toBe(255);
+  await firstMaterial.selectOption('glass');
+  await expect.poll(() => front.evaluate(frontAlpha)).toBeLessThan(100);
+  await expect(gold.locator('[data-glass-interior="back"]')).toHaveCount(1);
+  await page
+    .getByRole('button', { name: 'Explore demo cube in place 1', exact: true })
+    .click();
+  const viewer = page.getByRole('dialog');
+  await expect(viewer.locator('[data-cube-object]')).toHaveAttribute(
+    'data-cube-finish',
+    'glass',
+  );
+  expect(
+    new Set(
+      await viewer
+        .locator('[data-cube-face]')
+        .evaluateAll((faces) =>
+          faces.map((face) => getComputedStyle(face).backgroundImage),
+        ),
+    ),
+  ).toEqual(
+    new Set([
+      await front.evaluate(
+        (element) => getComputedStyle(element).backgroundImage,
+      ),
+    ]),
+  );
+  await expect(viewer.locator('[data-glass-interior]')).toHaveCount(6);
+  for (const name of ['front', 'right', 'back', 'left', 'top', 'bottom']) {
+    const exterior = viewer.locator('[data-cube-face="' + name + '"]');
+    const interior = viewer.locator('[data-glass-interior="' + name + '"]');
+    expect(await interior.textContent()).toBe(await exterior.textContent());
+    await expect(interior).toHaveAttribute('aria-hidden', 'true');
+  }
+  const signOutside = viewer.locator(
+    '[data-cube-face="front"] [data-cube-artwork] path',
+  );
+  const signInside = viewer.locator(
+    '[data-glass-interior="front"] [data-cube-artwork] path',
+  );
+  expect(await signInside.getAttribute('d')).toBe(
+    await signOutside.getAttribute('d'),
+  );
+  const insideFront = viewer.locator('[data-glass-interior="front"]');
+  const orientation = await insideFront.evaluate((element) => {
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+    return { horizontal: matrix.m11, normal: matrix.m33 };
+  });
+  expect(orientation.horizontal).toBeCloseTo(1);
+  expect(orientation.normal).toBeCloseTo(-1);
+  for (const face of await viewer.locator('[data-cube-face]').all()) {
+    expect(await face.evaluate(frontAlpha)).toBeLessThan(100);
+  }
+  await page.keyboard.press('Escape');
+  await shared.selectOption('brushed');
+  await expect(gold).toHaveAttribute('data-cube-finish', 'glass');
+  await expect(last).toHaveAttribute('data-cube-finish', 'stone');
+  await expect(
+    page.locator('[data-wall-theme] [data-cube-finish="brushed"]'),
+  ).toHaveCount(8);
+  await firstMaterial.selectOption({ label: 'Shared' });
+  await expect(gold).toHaveAttribute('data-cube-finish', 'brushed');
+  await expect(last).toHaveAttribute('data-cube-finish', 'stone');
+});
+
+test('the diamond podium has its own three sculptures and fixed colors', async ({
+  page,
+}) => {
+  await page.goto('/walls/demo');
+  const stage = page.locator('[data-wall-theme]');
+  const top = stage.locator('li[data-podium]');
+  const style = page.getByRole('combobox', { name: 'Top three style' });
+  await expect(style).toHaveValue('jewels');
+  expect(
+    await top.evaluateAll((items) =>
+      items.map((item) => item.getAttribute('data-podium')),
+    ),
+  ).toEqual(['diamond', 'gold', 'silver']);
+  const parts = top.locator('[data-cube-face="front"]');
+  const baseColors = () =>
+    parts.evaluateAll((faces) =>
+      faces.map((face) =>
+        getComputedStyle(face).getPropertyValue('--face-paper'),
+      ),
+    );
+  const original = await baseColors();
+  await page.getByRole('textbox', { name: 'Cube front, HEX' }).fill('#7d2298');
+  expect(await baseColors()).toEqual(original);
+  const open = page.getByRole('button', {
+    name: 'Explore demo cube in place 1',
+    exact: true,
+  });
+  const sculpture = open.locator('[data-crown-thumbnail="diamond"]');
+  await open.hover();
+  await expect(sculpture).toHaveCSS('opacity', '1');
+  await expect
+    .poll(() =>
+      sculpture.evaluate((image: HTMLImageElement) => image.naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await expect(page.locator('[data-crown-model]')).toHaveCount(0);
+  await open.click();
+  const viewer = page.getByRole('dialog');
+  await expect(viewer.locator('[data-crown-model="diamond"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-diamond-crown="viewer"]:visible',
+    ),
+  ).toHaveCount(1);
+  await expect(viewer.locator('[data-glass-interior]')).toHaveCount(6);
+  await page.keyboard.press('Escape');
+  await page
+    .getByRole('button', { name: 'Explore demo cube in place 2', exact: true })
+    .click();
+  await expect(viewer.locator('[data-crown-model="gold"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-solid-crown="1"]:visible',
+    ),
+  ).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await page
+    .getByRole('button', { name: 'Explore demo cube in place 3', exact: true })
+    .click();
+  await expect(viewer.locator('[data-crown-model="silver"]')).toHaveCount(1);
+  await expect(
+    viewer.locator(
+      '[data-crown-ready]:visible, [data-podium-sculpture="silver"]:visible',
+    ),
+  ).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await style.selectOption('classic');
+  expect(
+    await top.evaluateAll((items) =>
+      items.map((item) => item.getAttribute('data-podium')),
+    ),
+  ).toEqual(['gold', 'silver', 'bronze']);
+});
+
+test('crown is visible through glass when viewed from below', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => {
+    // Keep the rendered pixels available for an alpha read after the frame.
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      kind: string,
+      options?: WebGLContextAttributes,
+    ) {
+      return Reflect.apply(getContext, this, [
+        kind,
+        kind === 'webgl2'
+          ? { ...options, preserveDrawingBuffer: true }
+          : options,
+      ]);
+    } as typeof getContext;
+  });
+  await page.goto('/walls/demo');
+  const supportsWebGL = await page.evaluate(() => {
+    const context = document
+      .createElement('canvas')
+      .getContext('webgl2') as WebGL2RenderingContext | null;
+    context?.getExtension('WEBGL_lose_context')?.loseContext();
+    return Boolean(context);
+  });
+  test.skip(!supportsWebGL, 'The GPU crown path requires WebGL 2.');
+
+  const opacitySums: number[] = [];
+  for (const finish of [
+    'Clear glass',
+    'Satin glass',
+    'Smoked glass',
+    'Polished metal',
+  ]) {
+    await page
+      .getByRole('combobox', { name: 'Shared cube material' })
+      .selectOption({ label: finish });
+    await page
+      .getByRole('button', {
+        name: 'Explore demo cube in place 1',
+        exact: true,
+      })
+      .click();
+    const viewer = page.getByRole('dialog');
+    const crown = viewer.locator('canvas[data-crown-ready]');
+    await expect(crown).toBeVisible();
+    const cube = viewer.getByRole('group', {
+      name: 'Rotate cube',
+      exact: true,
+    });
+    for (let step = 0; step < 5; step++) await cube.press('ArrowDown');
+    const opacity = await crown.evaluate(async (canvas: HTMLCanvasElement) => {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      const copy = document.createElement('canvas');
+      copy.width = canvas.width;
+      copy.height = canvas.height;
+      const context = copy.getContext('2d')!;
+      context.drawImage(canvas, 0, 0);
+      const { data } = context.getImageData(0, 0, copy.width, copy.height);
+      let sum = 0;
+      for (let i = 3; i < data.length; i += 4) sum += data[i]!;
+      return sum;
+    });
+    opacitySums.push(opacity);
+    await page.keyboard.press('Escape');
+  }
+
+  const [clear, satin, smoked, metal] = opacitySums as [
+    number,
+    number,
+    number,
+    number,
+  ];
+  expect(clear).toBeGreaterThan(satin);
+  expect(satin).toBeGreaterThan(smoked);
+  expect(smoked).toBeGreaterThan(metal * 2);
+});
+
+test('strongly contrasting cube colors share a base and keep their trim in the viewer', async ({
+  page,
+}) => {
+  await page.goto('/walls/demo');
+  await page
+    .getByRole('button', { name: 'Sunset poster', exact: true })
+    .click();
+  await page.getByRole('textbox', { name: 'Cube front, HEX' }).fill('#ffffff');
+  await page
+    .getByRole('textbox', { name: 'Other cube faces, HEX' })
+    .fill('#000000');
+  await expect(
+    page.getByText('Cube colors are blended to soften sharp transitions.'),
+  ).toBeVisible();
+  const place = page.getByRole('button', {
+    name: 'Sign demo place 4',
+    exact: true,
+  });
+  await expect(place.locator('[data-cube-face="front"]')).toHaveCSS(
+    'background-color',
+    'rgb(144, 144, 144)',
+  );
+  await place.click();
+  const drawing = page.getByRole('dialog').locator('canvas');
+  for (const key of ['Space', 'ArrowRight', 'ArrowDown', 'ArrowRight', 'Space'])
+    await drawing.press(key);
+  await page.getByRole('button', { name: 'Show on the demo Wall' }).click();
+  await page.getByRole('button', { name: 'Rotate cube', exact: true }).click();
+  const viewer = page.getByRole('dialog');
+  await expect(viewer.locator('[data-cube-face="front"]')).toHaveCSS(
+    'background-color',
+    'rgb(144, 144, 144)',
+  );
+  await expect(viewer.locator('[data-cube-face="right"]')).toHaveCSS(
+    'background-color',
+    'rgb(112, 112, 112)',
+  );
+  const edges = await viewer
+    .locator('[data-cube-face], [data-slot-plaque] span')
+    .evaluateAll((faces) =>
+      faces.map((face) =>
+        getComputedStyle(face).getPropertyValue('--cube-edge').trim(),
+      ),
+    );
+  expect(edges[0]).toBeTruthy();
+  expect(new Set(edges).size).toBe(1);
 });
