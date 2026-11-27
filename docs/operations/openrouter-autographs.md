@@ -54,7 +54,7 @@ Moderation is highly sensitive to the prompt and token limit. A separate nine-ca
 
 ### Evaluation contract and simple marks (EGO-178)
 
-Production and evaluation now share the exact request builder, 300-token limit, verdict parser and policy identifier `autograph-v2-simple-marks`. Use the repository's `tsx` loader in all standalone Node commands. Only an explicit `finish_reason=stop` and the exact three-field verdict are accepted. Truncation, unknown reason codes and invalid confidence are unusable responses. Raw model labels and actionable decisions at the shared 0.95 threshold are reported separately.
+Production and evaluation share the exact request builder, 300-token limit, verdict parser and policy identifier `autograph-v2-simple-marks`. Use the repository's `tsx` loader in all standalone Node commands. Only an explicit `finish_reason=stop` and the exact three-field verdict are accepted. Truncation, unknown reason codes and invalid confidence are unusable responses. The offline report retains its historical `auto*` comparison counters at a local 0.95 threshold; these simulate the former policy and never represent runtime publication decisions. The API has no automatic-decision threshold.
 
 Short nicknames and initials are decorative autographs even in block letters. Lack of cursive lettering alone is not a rejection reason. This guidance is consistent with the published content rules allowing decorative pseudoautographs and graphic elements; it does not relax forbidden-content rules. Ambiguous abstract marks remain manual. This is a classifier guidance update, not identity or handwriting verification, and no existing recorded evidence is rewritten or automatically re-dispatched.
 

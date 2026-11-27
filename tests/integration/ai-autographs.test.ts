@@ -1,11 +1,33 @@
 import { randomUUID } from 'node:crypto';
-import { beforeAll, afterAll, it, expect } from 'vitest';
+import { beforeAll, afterAll, afterEach, it, expect, vi } from 'vitest';
+import { buildApi } from '../../apps/api/src/app';
+import { SessionService } from '../../packages/auth/src/index';
+import { registerAiAutographs } from '../../apps/api/src/ai-autographs';
+import type { PrivateOriginalStorage } from '../../packages/autographs/src/index';
+import {
+  autographAssets,
+  autographUserApprovals,
+  autographs,
+  userRoles,
+  users,
+} from '../../packages/db/src/schema';
 import {
   createDatabase,
   migrate,
   createPgAiAutographRepository,
+  createPgAutographModerationRepository,
+  createPgSessionRepository,
   aiFingerprint,
 } from '../../packages/db/src/index';
+const provider = vi.hoisted(() => ({ moderate: vi.fn() }));
+vi.mock('../../packages/integrations/src/index', async (original) => ({
+  ...(await original<object>()),
+  createOpenRouter: () => provider,
+}));
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 const url = process.env.TEST_DATABASE_URL;
 if (
   !url ||
@@ -157,3 +179,156 @@ it('retains moderation admission and evidence against deletion in every state', 
     }
   }
 });
+
+it.each(['approved', 'rejected', 'manual', 'provider-failure'] as const)(
+  'keeps %s AI evidence separate from the PostgreSQL human decision and eligible queue',
+  async (decision) => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const network = vi
+      .fn()
+      .mockRejectedValue(Error('Unexpected external request'));
+    vi.stubGlobal('fetch', network);
+    provider.moderate.mockReset();
+    const moderator = randomUUID();
+    await db.db.insert(users).values({ id: moderator });
+    await db.db
+      .insert(userRoles)
+      .values({ userId: moderator, role: 'moderator' });
+    const [autograph] = await db.db
+      .insert(autographs)
+      .values({
+        userId: other,
+        source: 'canvas',
+        status: 'awaiting_moderation',
+      })
+      .returning();
+    const key = `autographs/${autograph!.id}/cleaned/synthetic.png`;
+    const [asset] = await db.db
+      .insert(autographAssets)
+      .values({
+        autographId: autograph!.id,
+        role: 'cleaned',
+        status: 'uploaded',
+        storageKey: key,
+        actualContentType: 'image/png',
+        verifiedSizeBytes: 12,
+        width: 4,
+        height: 3,
+        uploadedAt: new Date(),
+      })
+      .returning();
+    const [approval] = await db.db
+      .insert(autographUserApprovals)
+      .values({
+        autographId: autograph!.id,
+        userId: other,
+        cleanedAssetId: asset!.id,
+      })
+      .returning();
+    const verdict = {
+      decision,
+      confidence: 1,
+      reasonCode: decision === 'rejected' ? 'ILLEGAL_OR_PROHIBITED' : null,
+    };
+    if (decision === 'provider-failure')
+      provider.moderate.mockRejectedValue(
+        Error('Synthetic unavailable provider'),
+      );
+    else provider.moderate.mockResolvedValue(verdict);
+    const readPrivate = vi.fn().mockResolvedValue(Buffer.from('cleaned mark'));
+    const app = buildApi(
+      db,
+      new SessionService(createPgSessionRepository(db.pool), 1209600),
+      {
+        appEnvironment: 'test',
+        sessionTtlSeconds: 1209600,
+        trustedWebOrigins: ['http://127.0.0.1:3000'],
+      },
+    );
+    const human = createPgAutographModerationRepository(db.pool);
+    const operation = 'moderation:' + asset!.id;
+    await expect(
+      human.previewTarget(moderator, autograph!.id),
+    ).resolves.toEqual({ key });
+    registerAiAutographs(
+      app,
+      db.pool,
+      { getPrivateObject: readPrivate } as unknown as PrivateOriginalStorage,
+      {
+        key: 'synthetic',
+        generationModel: null,
+        moderationModel: 'synthetic/vision',
+        moderatorId: moderator,
+      },
+    );
+    try {
+      await app.ready();
+      await vi.advanceTimersByTimeAsync(10_000);
+      await vi.waitFor(async () => {
+        expect(await repo.read(moderator, operation)).toMatchObject({
+          state: decision === 'provider-failure' ? 'failed' : 'completed',
+        });
+      });
+      const result = (await repo.read(moderator, operation))!.result;
+      expect(result).toEqual(
+        decision === 'provider-failure'
+          ? { error: 'AI_MANUAL_REVIEW_REQUIRED' }
+          : {
+              ...verdict,
+              autographId: autograph!.id,
+              cleanedAssetId: asset!.id,
+              policy: 'autograph-v2-simple-marks',
+            },
+      );
+      expect(readPrivate).toHaveBeenCalledWith(key, 2 * 1024 * 1024);
+      await vi.advanceTimersByTimeAsync(10_000);
+    } finally {
+      await app.close();
+      vi.useRealTimers();
+    }
+    expect(provider.moderate).toHaveBeenCalledTimes(1);
+    expect(network).not.toHaveBeenCalled();
+    expect(
+      (await human.list(moderator, 50)).items.map((item) => item.id),
+    ).toContain(autograph!.id);
+    expect(
+      (
+        await db.pool.query('SELECT status FROM autographs WHERE id=$1', [
+          autograph!.id,
+        ])
+      ).rows[0]!.status,
+    ).toBe('awaiting_moderation');
+    expect(
+      (
+        await db.pool.query(
+          'SELECT 1 FROM autograph_moderation_decisions WHERE autograph_id=$1',
+          [autograph!.id],
+        )
+      ).rowCount,
+    ).toBe(0);
+    const final = await human.decide(moderator, autograph!.id, {
+      decision: 'approved',
+    });
+    expect(final.status).toBe('ready');
+    expect(
+      (await human.list(moderator, 50)).items.map((item) => item.id),
+    ).not.toContain(autograph!.id);
+    const evidence = await db.pool.query(
+      'SELECT user_approval_id, cleaned_asset_id, decision FROM autograph_moderation_decisions WHERE autograph_id=$1',
+      [autograph!.id],
+    );
+    expect(evidence.rows).toEqual([
+      {
+        user_approval_id: approval!.id,
+        cleaned_asset_id: asset!.id,
+        decision: 'approved',
+      },
+    ]);
+    await expect(
+      db.pool.query(
+        'UPDATE ai_autograph_requests SET result=$1 WHERE user_id=$2 AND operation=$3',
+        [{}, moderator, operation],
+      ),
+    ).rejects.toThrow('immutable');
+  },
+);
