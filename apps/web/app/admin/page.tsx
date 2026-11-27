@@ -6,7 +6,7 @@ import styles from '../../components/workspace.module.css';
 
 export const dynamic = 'force-dynamic';
 const metadata: Metadata = {
-  title: 'Administration',
+  title: 'Record lookup',
   robots: { index: false, follow: false },
 };
 export async function generateMetadata() {
@@ -16,7 +16,7 @@ export default async function AdminPage() {
   const t = await getTranslator();
   return (
     <main className={styles.page}>
-      <h1>{t('Administration')}</h1>
+      <h1>{t('Record lookup')}</h1>
       <AdminLookup apiOrigin={loadWebConfig().API_PUBLIC_ORIGIN} />
     </main>
   );

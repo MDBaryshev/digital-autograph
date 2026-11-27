@@ -1,6 +1,7 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
   Administration: 'Администрирование',
+  Status: 'Статус',
   'Record lookup': 'Поиск записей',
   'Find a record by its internal ID.': 'Найди запись по её внутреннему ID.',
   'Record ID': 'ID записи',

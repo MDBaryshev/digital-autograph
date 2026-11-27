@@ -184,7 +184,9 @@ function AdminLookupScreen({ apiOrigin }: { apiOrigin: string }) {
                     <code>{item.id}</code>
                   </dd>
                   <dt>{t('Status')}</dt>
-                  <dd>{item.state ? t(item.state) : t('Not recorded')}</dd>
+                  <dd>
+                    {item.state ? <code>{item.state}</code> : t('Not recorded')}
+                  </dd>
                   <dt>{t('Created')}</dt>
                   <dd>
                     <time dateTime={item.createdAt}>

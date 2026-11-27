@@ -14,7 +14,7 @@ type RecordView = {
   createdAt: string;
 };
 
-export function createPgAdminLookupRepository(pool: Pool) {
+export function createPgAdminLookupRepository(pool: Pick<Pool, 'query'>) {
   return {
     async lookup(
       actorId: string,

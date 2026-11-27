@@ -1,5 +1,7 @@
 import { buildApi as unacceptedApi } from '../../apps/api/src/app';
 import { syntheticLegalDocuments } from './legal-fixtures';
+import { registerAdminLookup } from '../../apps/api/src/admin-lookup';
+import { createPgAdminLookupRepository } from '../../packages/db/src/index';
 import { randomUUID, createHash } from 'node:crypto';
 import { beforeEach, afterAll, it, expect } from 'vitest';
 import { createYookassaProvider } from '../../packages/integrations/src/yookassa';
@@ -338,6 +340,63 @@ beforeEach(async () => {
   creates = 0;
 });
 afterAll(() => database.close());
+it('admin lookup reads Order and Payment identifiers without exposing or changing financial evidence', async () => {
+  const f = await started();
+  const admin = await person();
+  await database.pool.query(
+    "INSERT INTO user_roles(user_id,role) VALUES($1,'admin')",
+    [admin.id],
+  );
+  const paymentId = (
+    await database.pool.query('SELECT id FROM payments WHERE order_id=$1', [
+      f.orderId,
+    ])
+  ).rows[0]!.id;
+  const app = api();
+  registerAdminLookup(app, createPgAdminLookupRepository(database.pool));
+  const evidence = async () =>
+    (
+      await database.pool.query(
+        'SELECT row_to_json(o) AS value FROM payment_orders o WHERE id=$1 UNION ALL SELECT row_to_json(p) FROM payments p WHERE p.order_id=$1 UNION ALL SELECT row_to_json(c) FROM checkout_confirmations c WHERE c.order_id=$1',
+        [f.orderId],
+      )
+    ).rows;
+  const before = await evidence();
+  const calls = creates;
+  try {
+    for (const [id, kind] of [
+      [f.orderId, 'order'],
+      [paymentId, 'payment'],
+    ]) {
+      const response = await app.inject({
+        url: '/admin/lookup?' + new URLSearchParams({ id }),
+        headers: { cookie: `da_session=${admin.token}` },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.json().items).toHaveLength(1);
+      expect(response.json().items[0]).toMatchObject({ id, kind });
+      expect(Object.keys(response.json().items[0]).sort()).toEqual([
+        'createdAt',
+        'id',
+        'kind',
+        'state',
+      ]);
+      for (const privateField of [
+        'provider_payment_id',
+        'confirmationUrl',
+        'amountMinor',
+        'shopId',
+        'request_fingerprint',
+        'userId',
+      ])
+        expect(response.body).not.toContain(privateField);
+    }
+    expect(await evidence()).toEqual(before);
+    expect(creates).toBe(calls);
+  } finally {
+    await app.close();
+  }
+});
 it('payment shutdown rejects concurrent quote/reservation/order admission without DB or provider effects', async () => {
   const f = await setup();
   const app = api(service(), {
