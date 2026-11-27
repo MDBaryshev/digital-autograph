@@ -84,7 +84,7 @@ test('Yandex browser code flow returns to Wall, persists session, repeats safely
       trustedWebOrigins: [webOrigin],
     },
   ];
-  args[18] = {
+  args[16] = {
     login,
     config: {
       appEnvironment: 'test',

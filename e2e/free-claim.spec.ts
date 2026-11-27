@@ -70,8 +70,11 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   ).toBeVisible();
   await responsive(
     page,
-    page.getByRole('link', { name: 'Continue with Google' }),
+    page.getByRole('heading', { name: 'Sign in to continue' }),
   );
+  await expect(
+    page.getByRole('link', { name: /Continue with (Google|Telegram)/ }),
+  ).toHaveCount(0);
   await page.goto(
     `${apiUrl}/auth/test/start?returnTo=${encodeURIComponent(studioPath)}`,
   );

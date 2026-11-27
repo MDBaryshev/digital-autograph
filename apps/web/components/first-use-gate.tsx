@@ -1,4 +1,5 @@
 'use client';
+import { SignInOptions } from './sign-in-options';
 import { useLocale } from './locale-provider';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -145,7 +146,7 @@ export function FirstUseGate({
       </h2>
       <p>
         {t(
-          'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход через Google или Telegram не означает принятия условий.',
+          'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход не означает принятия условий.',
         )}
       </p>
       <p>
@@ -157,16 +158,7 @@ export function FirstUseGate({
       {anonymous ? (
         <div className={styles.actions}>
           <p>{t('Войдите, чтобы подтвердить условия.')}</p>
-          <a
-            href={`${apiOrigin}/auth/google/start?returnTo=${encodeURIComponent(loginReturnTo)}`}
-          >
-            {t('Войти через Google')}
-          </a>
-          <a
-            href={`${apiOrigin}/auth/telegram/start?returnTo=${encodeURIComponent(loginReturnTo)}`}
-          >
-            {t('Войти через Telegram')}
-          </a>
+          <SignInOptions apiOrigin={apiOrigin} returnTo={loginReturnTo} />
         </div>
       ) : !state ? (
         <>

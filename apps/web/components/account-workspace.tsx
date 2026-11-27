@@ -1,4 +1,5 @@
 'use client';
+import { TelegramConnection } from './telegram-connection';
 import { ProfileAvatarEditor } from './profile-avatar-editor';
 import { OwnerRejectionDetails } from './owner-rejection-details';
 import { WallLifecycleControls } from './wall-lifecycle-controls';
@@ -450,6 +451,7 @@ export function AccountWorkspace({
       )}
       {section === 'settings' && (
         <>
+          <TelegramConnection apiOrigin={apiOrigin} />
           <section className={styles.card}>
             <h2>{t('Public profile')}</h2>
             {!data.canEditProfile && (

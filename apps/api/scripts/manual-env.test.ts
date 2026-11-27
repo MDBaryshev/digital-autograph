@@ -10,9 +10,8 @@ const original = {
   SESSION_TTL_SECONDS: '1209600',
   WEB_ORIGIN: 'https://old.invalid',
   TRUSTED_WEB_ORIGINS: 'https://old.invalid',
-  GOOGLE_CLIENT_ID: 'synthetic-client',
-  GOOGLE_CLIENT_SECRET: 'synthetic-google',
-  GOOGLE_REDIRECT_URI: 'https://old-api.invalid/auth/google/callback',
+
+  API_PUBLIC_ORIGIN: 'https://old-api.invalid',
   TELEGRAM_CLIENT_ID: 'synthetic-client',
   TELEGRAM_CLIENT_SECRET: 'synthetic-telegram',
   TELEGRAM_REDIRECT_URI: 'https://old-api.invalid/auth/telegram/callback',

@@ -42,12 +42,9 @@ describe('typed configuration', () => {
         SESSION_TTL_SECONDS: '1209600',
         TRUSTED_WEB_ORIGINS: 'http://127.0.0.1:3000',
         WEB_ORIGIN: 'http://127.0.0.1:3000',
-        GOOGLE_CLIENT_ID: 'test-client',
-        GOOGLE_CLIENT_SECRET: 'test-secret',
-        GOOGLE_REDIRECT_URI: 'http://127.0.0.1:4000/auth/google/callback',
-        TELEGRAM_CLIENT_ID: 'test-telegram-client',
-        TELEGRAM_CLIENT_SECRET: 'test-telegram-secret',
-        TELEGRAM_REDIRECT_URI: 'http://127.0.0.1:4000/auth/telegram/callback',
+
+        API_PUBLIC_ORIGIN: 'http://127.0.0.1:4000',
+
         S3_REGION: 'us-east-1',
         S3_BUCKET: 'autographs-test',
       }),
@@ -101,12 +98,9 @@ describe('typed configuration', () => {
       SESSION_TTL_SECONDS: '1209600',
       TRUSTED_WEB_ORIGINS: 'https://app.example.test',
       WEB_ORIGIN: 'https://app.example.test',
-      GOOGLE_CLIENT_ID: 'test-client',
-      GOOGLE_CLIENT_SECRET: 'test-secret',
-      GOOGLE_REDIRECT_URI: 'https://api.example.test/auth/google/callback',
-      TELEGRAM_CLIENT_ID: 'test-telegram-client',
-      TELEGRAM_CLIENT_SECRET: 'test-telegram-secret',
-      TELEGRAM_REDIRECT_URI: 'https://api.example.test/auth/telegram/callback',
+
+      API_PUBLIC_ORIGIN: 'https://api.example.test',
+
       S3_REGION: 'us-east-1',
       S3_BUCKET: 'autographs-test',
     };
@@ -130,7 +124,7 @@ describe('typed configuration', () => {
     ).toThrow(/TRUSTED_WEB_ORIGINS/);
   });
 
-  it('requires a trusted web destination and exact HTTPS Google callback in production', () => {
+  it('requires a trusted web destination and exact HTTPS API origin in production', () => {
     const base = {
       APP_ENV: 'production',
       DATABASE_URL: 'postgresql://user:pass@localhost:5432/app',
@@ -139,12 +133,9 @@ describe('typed configuration', () => {
       SESSION_TTL_SECONDS: '1209600',
       TRUSTED_WEB_ORIGINS: 'https://app.example.test',
       WEB_ORIGIN: 'https://app.example.test',
-      GOOGLE_CLIENT_ID: 'test-client',
-      GOOGLE_CLIENT_SECRET: 'test-secret',
-      GOOGLE_REDIRECT_URI: 'https://api.example.test/auth/google/callback',
-      TELEGRAM_CLIENT_ID: 'test-telegram-client',
-      TELEGRAM_CLIENT_SECRET: 'test-telegram-secret',
-      TELEGRAM_REDIRECT_URI: 'https://api.example.test/auth/telegram/callback',
+
+      API_PUBLIC_ORIGIN: 'https://api.example.test',
+
       S3_REGION: 'us-east-1',
       S3_BUCKET: 'autographs-test',
     };
@@ -154,28 +145,14 @@ describe('typed configuration', () => {
     expect(() =>
       loadApiConfig({
         ...base,
-        GOOGLE_REDIRECT_URI: 'http://api.example.test/auth/google/callback',
+        API_PUBLIC_ORIGIN: 'http://api.example.test',
       }),
-    ).toThrow(/GOOGLE_REDIRECT_URI/);
+    ).toThrow(/API_PUBLIC_ORIGIN/);
     expect(() =>
       loadApiConfig({
         ...base,
-        GOOGLE_REDIRECT_URI:
-          'https://api.example.test/auth/google/callback?x=1',
+        API_PUBLIC_ORIGIN: 'https://api.example.test/?x=1',
       }),
-    ).toThrow(/GOOGLE_REDIRECT_URI/);
-    expect(() =>
-      loadApiConfig({
-        ...base,
-        TELEGRAM_REDIRECT_URI: 'http://api.example.test/auth/telegram/callback',
-      }),
-    ).toThrow(/TELEGRAM_REDIRECT_URI/);
-    expect(() =>
-      loadApiConfig({
-        ...base,
-        TELEGRAM_REDIRECT_URI:
-          'https://api.example.test/auth/telegram/callback?x=1',
-      }),
-    ).toThrow(/TELEGRAM_REDIRECT_URI/);
+    ).toThrow(/API_PUBLIC_ORIGIN/);
   });
 });

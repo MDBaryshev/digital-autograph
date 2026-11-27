@@ -38,8 +38,6 @@ const app = buildApi(
   undefined,
   undefined,
   undefined,
-  undefined,
-  undefined,
   new TakeoverQuoteService(createPgPricingRepository(database.pool)),
   new TakeoverReservationService(
     createPgTakeoverReservationRepository(database.pool),

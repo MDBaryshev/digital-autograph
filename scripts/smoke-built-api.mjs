@@ -21,8 +21,22 @@ async function availablePort() {
 }
 
 const port = await availablePort();
+if (process.env.APP_ENV !== 'test')
+  throw new Error('Built auth smoke requires the isolated test environment');
 const api = spawn(process.execPath, ['apps/api/dist/main.js'], {
-  env: { ...process.env, API_HOST: '127.0.0.1', API_PORT: String(port) },
+  env: {
+    ...process.env,
+    API_HOST: '127.0.0.1',
+    API_PORT: String(port),
+    API_PUBLIC_ORIGIN: `http://127.0.0.1:${port}`,
+    YANDEX_AUTH_ENABLED: 'true',
+    YANDEX_AUTH_APPROVED: 'true',
+    YANDEX_CLIENT_ID: 'synthetic-build-client',
+    YANDEX_CLIENT_SECRET: 'synthetic-build-secret',
+    YANDEX_REDIRECT_URI: `http://127.0.0.1:${port}/auth/yandex/callback`,
+    EMAIL_AUTH_ENABLED: 'false',
+    TELEGRAM_LINK_ENABLED: 'false',
+  },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
 api.stdout.resume();
@@ -52,7 +66,7 @@ try {
   if (!live) throw new Error('Built API did not become live');
 
   const start = await globalThis.fetch(
-    `http://127.0.0.1:${port}/auth/google/start`,
+    `http://127.0.0.1:${port}/auth/yandex/start`,
     {
       redirect: 'manual',
       signal: globalThis.AbortSignal.timeout(3000),
@@ -62,14 +76,27 @@ try {
   const cookie = start.headers.get('set-cookie') ?? '';
   if (
     start.status !== 302 ||
-    location.hostname !== 'accounts.google.com' ||
+    location.hostname !== 'oauth.yandex.ru' ||
     !location.searchParams.get('state') ||
-    !location.searchParams.get('nonce') ||
+    !location.searchParams.get('code_challenge') ||
+    location.searchParams.get('code_challenge_method') !== 'S256' ||
     !cookie.includes('HttpOnly')
   ) {
-    throw new Error('Built API did not start Google login correctly');
+    throw new Error('Built API did not start Yandex login correctly');
   }
-  process.stdout.write('Built API live and Google start smoke passed\n');
+  for (const provider of ['google', 'telegram']) {
+    for (const action of ['start', 'callback']) {
+      const retired = await globalThis.fetch(
+        `http://127.0.0.1:${port}/auth/${provider}/${action}`,
+        { redirect: 'manual', signal: globalThis.AbortSignal.timeout(3000) },
+      );
+      if (retired.status !== 404 || retired.headers.get('set-cookie'))
+        throw new Error('Built API exposes a retired login route');
+    }
+  }
+  process.stdout.write(
+    'Built API live, Yandex PKCE start and retired login routes smoke passed\n',
+  );
 } finally {
   api.kill('SIGTERM');
   await new Promise((resolve) => {

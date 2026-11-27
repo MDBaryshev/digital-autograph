@@ -64,8 +64,6 @@ const app = buildApi(
     trustedWebOrigins: ['http://127.0.0.1:3000'],
   },
   undefined,
-  undefined,
-  undefined,
   service,
   moderation,
 );

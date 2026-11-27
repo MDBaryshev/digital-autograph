@@ -1,4 +1,5 @@
 'use client';
+import { SignInOptions } from './sign-in-options';
 import { useLocale } from './locale-provider';
 
 import { useEffect, useRef, useState } from 'react';
@@ -250,11 +251,7 @@ export function PaidCheckout({
       {anonymous ? (
         <>
           <p>{t('Войдите, чтобы проверить собственное бронирование.')}</p>
-          <a
-            href={`${apiOrigin}/auth/google/start?${new URLSearchParams({ returnTo })}`}
-          >
-            {t('Войти через Google')}
-          </a>
+          <SignInOptions apiOrigin={apiOrigin} returnTo={returnTo} />
         </>
       ) : null}
       {error && <p role="alert">{t(error)}</p>}

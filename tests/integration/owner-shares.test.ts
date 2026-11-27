@@ -30,7 +30,7 @@ const args: Parameters<typeof buildApi> = [
     trustedWebOrigins: [origin],
   },
 ];
-args[15] = {
+args[13] = {
   shares,
   service: new NotificationService(
     createPgNotificationRepository(database.pool),

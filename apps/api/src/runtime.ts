@@ -27,12 +27,14 @@ import {
 import { createPgPaymentRepository } from '@digital-autograph/db';
 import { createYookassaProvider } from '@digital-autograph/integrations';
 import {
+  EmailAuthService,
   IdentityService,
   OAuthAttemptService,
   SessionService,
 } from '@digital-autograph/auth';
 import {
   createDatabase,
+  createPgEmailAuthRepository,
   createPgOAuthAttemptRepository,
   createPgProviderIdentityRepository,
   createPgSessionRepository,
@@ -61,16 +63,17 @@ import {
 import {
   createYandexOAuthClient,
   createVkIdOAuthClient,
-  createGoogleOidcClient,
-  createTelegramOidcClient,
+  createAuthEmailSender,
   createPrivateS3Storage,
 } from '@digital-autograph/integrations';
 import { buildApi } from './app';
 import {
-  GoogleLoginService,
-  googleLoginAttemptTtlSeconds,
-} from './auth/google-login';
-import { TelegramLoginService } from './auth/telegram-login';
+  TelegramLinkService,
+  registerTelegramLinkRoutes,
+} from './auth/telegram-link';
+import { createPgTelegramLinkRepository } from '@digital-autograph/db';
+import { createTelegramOidcClient } from '@digital-autograph/integrations';
+
 import { YandexLoginService } from './auth/yandex-login';
 import { VkIdLoginService } from './auth/vk-id-login';
 import { NotificationService } from '@digital-autograph/notifications';
@@ -85,6 +88,8 @@ export async function startApi(
 ): Promise<void> {
   const {
     config,
+    emailConfig,
+    telegramLinkConfig,
     paymentConfig,
     yandexConfig,
     vkIdConfig,
@@ -116,7 +121,7 @@ export async function startApi(
   );
   const attempts = new OAuthAttemptService(
     createPgOAuthAttemptRepository(database.pool),
-    googleLoginAttemptTtlSeconds,
+    600,
   );
   const identities = new IdentityService(
     createPgProviderIdentityRepository(database.pool),
@@ -131,30 +136,6 @@ export async function startApi(
     const image = await importProviderAvatar(provider, picture);
     if (image) await appearance.saveProviderAvatar(userId, image);
   };
-  const googleLogin = new GoogleLoginService(
-    attempts,
-    createGoogleOidcClient({
-      clientId: config.GOOGLE_CLIENT_ID,
-      clientSecret: config.GOOGLE_CLIENT_SECRET,
-      redirectUri: config.GOOGLE_REDIRECT_URI,
-      includeProfile: config.CREATOR_PROFILE_PUBLICATION_APPROVED,
-    }),
-    identities,
-    sessions,
-    (userId, picture) => storeAvatar('google', userId, picture),
-  );
-  const telegramLogin = new TelegramLoginService(
-    attempts,
-    createTelegramOidcClient({
-      clientId: config.TELEGRAM_CLIENT_ID,
-      clientSecret: config.TELEGRAM_CLIENT_SECRET,
-      redirectUri: config.TELEGRAM_REDIRECT_URI,
-      includeProfile: config.CREATOR_PROFILE_PUBLICATION_APPROVED,
-    }),
-    identities,
-    sessions,
-    (userId, picture) => storeAvatar('telegram', userId, picture),
-  );
   const payments =
     paymentConfig || syntheticPayment
       ? new PaymentService(
@@ -181,14 +162,6 @@ export async function startApi(
       sessionTtlSeconds: config.SESSION_TTL_SECONDS,
       trustedWebOrigins: config.TRUSTED_WEB_ORIGINS,
       firstUseEnforced: config.FIRST_USE_ENFORCEMENT_ENABLED,
-    },
-    {
-      login: googleLogin,
-      config: { appEnvironment: config.APP_ENV, webOrigin: config.WEB_ORIGIN },
-    },
-    {
-      login: telegramLogin,
-      config: { appEnvironment: config.APP_ENV, webOrigin: config.WEB_ORIGIN },
     },
     new WallService(createPgWallRepository(database.pool)),
     new AutographService(
@@ -283,7 +256,25 @@ export async function startApi(
           },
         }
       : undefined,
+    undefined,
+    emailConfig
+      ? new EmailAuthService(
+          createPgEmailAuthRepository(database.pool),
+          createAuthEmailSender(emailConfig),
+          config.SESSION_TTL_SECONDS,
+        )
+      : undefined,
   );
+  if (telegramLinkConfig)
+    registerTelegramLinkRoutes(
+      app,
+      new TelegramLinkService(
+        attempts,
+        createTelegramOidcClient(telegramLinkConfig),
+        createPgTelegramLinkRepository(database.pool),
+      ),
+      { appEnvironment: config.APP_ENV, webOrigin: config.WEB_ORIGIN },
+    );
   registerAccountWorkspace(
     app,
     createPgAccountWorkspaceRepository(database.pool),

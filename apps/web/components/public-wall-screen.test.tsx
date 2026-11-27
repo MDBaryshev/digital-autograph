@@ -144,9 +144,11 @@ describe('public Wall and Free Claim UX', () => {
 
   it('renders anonymously with occupied media, an unavailable occupied state, and safe sign-in return paths', async () => {
     const fetchMock = vi.fn(async (input: string) =>
-      input.endsWith('/placements')
-        ? json({ wallId, placements: [] })
-        : json({ error: { code: 'UNAUTHENTICATED' } }, 401),
+      input.endsWith('/auth/providers')
+        ? json({ email: true })
+        : input.endsWith('/placements')
+          ? json({ wallId, placements: [] })
+          : json({ error: { code: 'UNAUTHENTICATED' } }, 401),
     );
     vi.stubGlobal('fetch', fetchMock);
     const initial = occupied();
@@ -181,15 +183,13 @@ describe('public Wall and Free Claim UX', () => {
     });
     fireEvent.click(buttons[0]!);
     expect(
-      screen
-        .getByRole('link', { name: 'Continue with Google' })
-        .getAttribute('href'),
-    ).toBe(`${origin}/auth/google/start?returnTo=%2Fwalls%2F${wallId}`);
+      (
+        await screen.findByRole('link', { name: 'Continue with email' })
+      ).getAttribute('href'),
+    ).toBe(`/auth/email?returnTo=%2Fwalls%2F${wallId}`);
     expect(
-      screen
-        .getByRole('link', { name: 'Continue with Telegram' })
-        .getAttribute('href'),
-    ).toBe(`${origin}/auth/telegram/start?returnTo=%2Fwalls%2F${wallId}`);
+      screen.queryByRole('link', { name: /Continue with (Google|Telegram)/i }),
+    ).toBeNull();
   });
 
   it.each(['scheduled', 'paused', 'ended'] as const)(

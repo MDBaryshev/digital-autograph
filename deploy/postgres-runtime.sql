@@ -21,6 +21,10 @@ GRANT INSERT ON users,social_identities,sessions,oauth_login_attempts,walls,slot
  platform_pricing_default,takeover_quotes,takeover_reservations,payment_orders,payments,payment_event_receipts,
  creator_earnings,notification_events,notification_subscriptions,share_links,share_interactions TO da_api;
 GRANT SELECT,INSERT,UPDATE ON account_appearance TO da_api;
+GRANT SELECT,INSERT ON email_credentials,email_auth_challenges,auth_rate_limits TO da_api;
+GRANT UPDATE(password_hash,updated_at) ON email_credentials TO da_api;
+GRANT UPDATE(consumed_at) ON email_auth_challenges TO da_api;
+GRANT UPDATE(used,expires_at) ON auth_rate_limits TO da_api;
 GRANT SELECT,INSERT,UPDATE ON wall_designs TO da_api;
 GRANT SELECT,INSERT ON wall_design_templates TO da_api;
 GRANT SELECT,INSERT ON community_cube_placements TO da_api;
@@ -36,6 +40,9 @@ GRANT UPDATE ON walls,autographs,autograph_assets,takeover_reservations,payment_
 GRANT UPDATE(updated_at) ON users,creators TO da_api;
 GRANT UPDATE(revoked_at) ON sessions,share_links TO da_api;
 GRANT UPDATE(consumed_at) ON oauth_login_attempts TO da_api;
+-- Telegram is a private optional connection; it is never a session credential.
+GRANT DELETE ON social_identities TO da_api;
+GRANT DELETE ON oauth_login_attempts TO da_api;
 GRANT UPDATE(position) ON slots TO da_api;
 GRANT UPDATE(ended_at,end_reason) ON placements TO da_api;
 GRANT UPDATE(slot) ON autograph_storage_leases TO da_api;
@@ -63,6 +70,9 @@ GRANT UPDATE(processed_at) ON notification_events TO da_worker;
 GRANT UPDATE(web) ON notification_preferences TO da_worker;
 GRANT UPDATE(consumed_at) ON oauth_login_attempts TO da_worker;
 GRANT DELETE ON autograph_assets,autograph_storage_leases,oauth_login_attempts TO da_worker;
+GRANT SELECT(id,expires_at) ON email_auth_challenges TO da_worker;
+GRANT SELECT(key_hash,expires_at) ON auth_rate_limits TO da_worker;
+GRANT DELETE ON email_auth_challenges,auth_rate_limits TO da_worker;
 DO $$ DECLARE item record; BEGIN
  FOR item IN SELECT t.typname FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace WHERE n.nspname='public' AND t.typtype='e' LOOP
   EXECUTE format('GRANT USAGE ON TYPE public.%I TO da_api,da_worker',item.typname);

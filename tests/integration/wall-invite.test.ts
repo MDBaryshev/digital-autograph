@@ -28,8 +28,6 @@ const app = buildApi(
     sessionTtlSeconds: 1209600,
     trustedWebOrigins: ['http://127.0.0.1:3000'],
   },
-  undefined,
-  undefined,
   service,
 );
 const owner = userFixture(1).id!,

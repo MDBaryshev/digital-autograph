@@ -50,8 +50,6 @@ function fixture(controls?: IncidentControls) {
     undefined,
     undefined,
     undefined,
-    undefined,
-    undefined,
     { claimFreeSlot: calls[0] } as unknown as FreeClaimService,
     undefined,
     { createQuote: calls[1] } as unknown as TakeoverQuoteService,

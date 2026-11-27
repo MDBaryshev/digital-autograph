@@ -111,3 +111,11 @@ export class SessionService {
     await this.repository.revokeAllForUser(userId);
   }
 }
+
+export {
+  EmailAuthService,
+  type EmailAuthRepository,
+  type AuthEmailSender,
+  type EmailPurpose,
+} from './email';
+export { validNewPassword, PasswordBusyError } from './password';

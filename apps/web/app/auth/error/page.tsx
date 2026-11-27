@@ -22,10 +22,6 @@ export default async function AuthErrorPage({
 
   const { code } = await searchParams;
   const messages: Record<string, string> = {
-    GOOGLE_AUTH_CANCELLED: 'Google sign-in was cancelled.',
-    GOOGLE_AUTH_FAILED: 'Google sign-in could not be completed.',
-    TELEGRAM_AUTH_CANCELLED: 'Telegram sign-in was cancelled.',
-    TELEGRAM_AUTH_FAILED: 'Telegram sign-in could not be completed.',
     YANDEX_AUTH_CANCELLED: 'Вход через Яндекс ID отменён.',
     YANDEX_AUTH_FAILED: 'Не удалось завершить вход через Яндекс ID.',
     VK_AUTH_CANCELLED: 'Вход через VK ID отменён.',

@@ -31,6 +31,25 @@ export function createPgOAuthAttemptCleanup(pool: Pool) {
            AND attempt.expires_at <= statement_timestamp()`,
         [limit],
       );
+      const emailCleanup = await client.query<{ acquired: boolean }>(
+        'SELECT pg_try_advisory_xact_lock(176, 3) AS acquired',
+      );
+      if (emailCleanup.rows[0]?.acquired) {
+        await client.query(
+          `DELETE FROM email_auth_challenges WHERE id IN (
+             SELECT id FROM email_auth_challenges WHERE expires_at <= statement_timestamp()
+             ORDER BY expires_at LIMIT $1
+           ) AND expires_at <= statement_timestamp()`,
+          [limit],
+        );
+        await client.query(
+          `DELETE FROM auth_rate_limits WHERE key_hash IN (
+             SELECT key_hash FROM auth_rate_limits WHERE expires_at <= statement_timestamp()
+             ORDER BY expires_at LIMIT $1
+           ) AND expires_at <= statement_timestamp()`,
+          [limit],
+        );
+      }
       await client.query('COMMIT');
       return result.rowCount ?? 0;
     } catch (error) {

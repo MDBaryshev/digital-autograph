@@ -45,8 +45,6 @@ const app = buildApi(
   undefined,
   undefined,
   undefined,
-  undefined,
-  undefined,
   {
     service: new NotificationService(repository),
     shares,

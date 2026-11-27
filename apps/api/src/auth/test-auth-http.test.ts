@@ -39,8 +39,6 @@ function createApi(testAuth?: {
     undefined,
     undefined,
     undefined,
-    undefined,
-    undefined,
     testAuth,
   );
 }
