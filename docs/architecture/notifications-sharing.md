@@ -138,6 +138,15 @@ uses native Web Share when available; cancellation ends the action, unsupported
 or rejected sharing falls back to copying a visible URL. Clipboard failure leaves
 the URL available for manual copying.
 
+The creation/sharing controls are scoped to the exact API origin and Wall ID.
+Changing either resets the selected slot, link and notices and cancels the old
+operation; unmount does the same. A synchronous operation guard also prevents
+two submissions in one render batch. Existing request deadlines cover headers
+and bodies. Late results cannot update replacement controls or start a clipboard
+fallback after leaving the original context. Cancellation does not undo an
+already committed server write or a native browser action already started by
+the user; no POST, PUT or DELETE is replayed automatically.
+
 `share_clicked` and `referral_arrived` are narrowly scoped, deduplicated telemetry
 events. Incoming attribution records the public share ID and a session-scoped
 random UUID; it does not collect IP, referrer URL, provider identity or user-agent.
