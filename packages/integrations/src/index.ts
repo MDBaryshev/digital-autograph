@@ -27,10 +27,7 @@ export {
 
 export { createOpenRouter, type AiVerdict } from './openrouter';
 
-export {
-  autographModerationPolicy,
-  autographModerationMinConfidence,
-} from './autograph-moderation';
+export { autographModerationPolicy } from './autograph-moderation';
 
 export {
   normalizeAppearanceImage,

@@ -11,6 +11,11 @@ controls leave backend roles, decisions and policy unchanged.
 
 ## Purpose and authority
 
+AI classifications are advisory evidence only. The AI cycle cannot approve or
+reject an Autograph, regardless of its verdict or confidence. New publication
+eligibility requires the ordinary explicit human moderation decision. See
+[OpenRouter operations](../operations/openrouter-autographs.md).
+
 A User first approves one exact private cleaned Asset. A platform moderator or admin then reviews that derivative for content suitability. Persistent `user_roles` is the only source for moderator authorization; authenticated ordinary Users, finance staff, and Creator owners have no moderation privilege from those facts alone. The moderation page is an operational tool. All three APIs enforce roles server-side.
 
 `ready` means owner-approved exact cleaned Asset plus an approved human moderation decision. It means the Autograph can be considered for a future Placement workflow. It does not mean public, placed, identity verified, a genuine handwriting sample, legally signed, or resellable. `moderation_rejected` is final in this MVP; a User who wants another review creates a new Autograph. No appeal or re-review is implemented.

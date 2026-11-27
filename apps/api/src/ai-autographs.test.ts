@@ -22,7 +22,6 @@ vi.mock('@digital-autograph/db', async (original) => ({
 vi.mock('@digital-autograph/integrations', () => ({
   createOpenRouter: () => mocks.provider,
   autographModerationPolicy: 'autograph-v2-simple-marks',
-  autographModerationMinConfidence: 0.95,
 }));
 const actor = 'f1111111-1111-4111-8111-111111111111';
 const storage = {
@@ -34,44 +33,56 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.useRealTimers();
 });
-it('records a confident verdict before using the existing decision path', async () => {
-  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-  mocks.repo.expireImages.mockResolvedValue(undefined);
-  mocks.moderation.list.mockResolvedValue({ items: [] });
-  mocks.repo.candidates.mockResolvedValue([
-    { id: 'autograph', cleaned_asset_id: 'asset' },
-  ]);
-  mocks.repo.claim.mockResolvedValue({ fresh: true });
-  mocks.repo.finish.mockResolvedValue(undefined);
-  mocks.moderation.previewTarget.mockResolvedValue({ key: 'private-key' });
-  mocks.provider.moderate.mockResolvedValue({
-    decision: 'approved',
-    reasonCode: null,
-    confidence: 0.99,
-  });
-  const app = Fastify();
-  registerAiAutographs(app, {} as Database['pool'], storage, {
-    key: 'synthetic',
-    generationModel: null,
-    moderationModel: 'synthetic/vision',
-    moderatorId: actor,
-  });
-  await app.ready();
-  try {
-    await vi.advanceTimersByTimeAsync(10000);
-    expect(mocks.moderation.decide).toHaveBeenCalledWith(actor, 'autograph', {
-      decision: 'approved',
+it.each([
+  { decision: 'approved', reasonCode: null, confidence: 1 },
+  {
+    decision: 'rejected',
+    reasonCode: 'ILLEGAL_OR_PROHIBITED',
+    confidence: 1,
+  },
+])(
+  'records confident AI evidence without making a final decision: %j',
+  async (verdict) => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    mocks.repo.expireImages.mockResolvedValue(undefined);
+    mocks.moderation.list.mockResolvedValue({ items: [] });
+    mocks.repo.candidates.mockResolvedValue([
+      { id: 'autograph', cleaned_asset_id: 'asset' },
+    ]);
+    mocks.repo.claim.mockResolvedValue({ fresh: true });
+    mocks.repo.finish.mockResolvedValue(undefined);
+    mocks.moderation.previewTarget.mockResolvedValue({ key: 'private-key' });
+    mocks.provider.moderate.mockResolvedValue(verdict);
+    const app = Fastify();
+    registerAiAutographs(app, {} as Database['pool'], storage, {
+      key: 'synthetic',
+      generationModel: null,
+      moderationModel: 'synthetic/vision',
+      moderatorId: actor,
     });
-    expect(mocks.repo.finish.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.moderation.decide.mock.invocationCallOrder[0]!,
-    );
-    mocks.repo.claim.mockResolvedValue({ fresh: false });
-    await vi.advanceTimersByTimeAsync(10000);
-    expect(mocks.provider.moderate).toHaveBeenCalledTimes(1);
-  } finally {
-    await app.close();
-  }
-});
+    await app.ready();
+    try {
+      await vi.advanceTimersByTimeAsync(10000);
+      expect(mocks.repo.finish).toHaveBeenCalledWith(
+        actor,
+        'moderation:asset',
+        {
+          ...verdict,
+          autographId: 'autograph',
+          cleanedAssetId: 'asset',
+          policy: 'autograph-v2-simple-marks',
+        },
+      );
+      expect(mocks.moderation.decide).not.toHaveBeenCalled();
+      mocks.repo.claim.mockResolvedValue({ fresh: false });
+      await vi.advanceTimersByTimeAsync(10000);
+      expect(mocks.provider.moderate).toHaveBeenCalledTimes(1);
+      expect(mocks.moderation.decide).not.toHaveBeenCalled();
+    } finally {
+      await app.close();
+    }
+  },
+);
 it('returns 202 before provider completion and binds result reads to the validated session', async () => {
   const app = Fastify();
   app.addHook('preHandler', async (req) => {

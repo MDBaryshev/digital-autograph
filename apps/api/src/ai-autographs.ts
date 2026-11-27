@@ -10,7 +10,6 @@ import {
 import {
   createOpenRouter,
   autographModerationPolicy,
-  autographModerationMinConfidence,
 } from '@digital-autograph/integrations';
 import type { loadOpenRouterConfig } from '@digital-autograph/config';
 import type { PrivateOriginalStorage } from '@digital-autograph/autographs';
@@ -147,26 +146,15 @@ export function registerAiAutographs(
       );
       const bytes = await storage.getPrivateObject(target.key, 2 * 1024 * 1024);
       const verdict = await provider.moderate(config.moderationModel, bytes);
-      // Model, asset identity and parsed verdict are durably recorded before a decision.
+      // Provider output is advisory evidence, never a publication decision.
       await repo.finish(config.moderatorId, operation, {
         ...verdict,
         autographId: item.id,
         cleanedAssetId: item.cleaned_asset_id,
         policy: autographModerationPolicy,
       });
-      if (
-        closing ||
-        verdict.decision === 'manual' ||
-        verdict.confidence < autographModerationMinConfidence
-      )
-        return;
-      await moderation.decide(
-        config.moderatorId,
-        item.id,
-        verdict.decision === 'approved'
-          ? { decision: 'approved' }
-          : { decision: 'rejected', reasonCode: verdict.reasonCode! },
-      );
+      // Every result remains in the ordinary human moderation queue. A model's
+      // confidence is not measured accuracy and cannot authorize ready/rejected.
     } catch {
       // Unknown outcome is never an approval and is never automatically billed again.
       await repo

@@ -2,7 +2,6 @@ import {
   moderationRejectionReasons,
   type ModerationRejectionReason,
 } from '@digital-autograph/domain';
-export const autographModerationMinConfidence = 0.95;
 export const autographModerationPolicy = 'autograph-v2-simple-marks';
 export type AiVerdict = {
   decision: 'approved' | 'rejected' | 'manual';

@@ -16,10 +16,11 @@ import {
   autographModerationRequest,
   parseModerationResponse,
   autographModerationPolicy,
-  autographModerationMinConfidence,
 } from '../packages/integrations/src/autograph-moderation.ts';
 
 const { fetch, AbortController } = globalThis;
+// Historical offline comparison only; no score authorizes a runtime decision.
+const evaluationConfidenceThreshold = 0.95;
 
 export const models = {
   images: ['openai/gpt-image-2', 'google/gemini-nano-banana-2.1'],
@@ -256,25 +257,25 @@ export function summarizeModeration(records) {
           autoDecisions: rows.filter(
             (r) =>
               ['approved', 'rejected'].includes(r.decision) &&
-              r.confidence >= autographModerationMinConfidence,
+              r.confidence >= evaluationConfidenceThreshold,
           ).length,
           autoFalseApprovals: rows.filter(
             (r) =>
               r.expected === 'rejected' &&
               r.decision === 'approved' &&
-              r.confidence >= autographModerationMinConfidence,
+              r.confidence >= evaluationConfidenceThreshold,
           ).length,
           autoFalseRejections: rows.filter(
             (r) =>
               r.expected === 'approved' &&
               r.decision === 'rejected' &&
-              r.confidence >= autographModerationMinConfidence,
+              r.confidence >= evaluationConfidenceThreshold,
           ).length,
           autoOnAmbiguous: rows.filter(
             (r) =>
               r.expected === 'manual' &&
               ['approved', 'rejected'].includes(r.decision) &&
-              r.confidence >= autographModerationMinConfidence,
+              r.confidence >= evaluationConfidenceThreshold,
           ).length,
         },
       ];
