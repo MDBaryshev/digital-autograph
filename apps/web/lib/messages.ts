@@ -696,7 +696,10 @@ export const messages: Record<string, string> = {
   'Public card': 'Публичная карточка',
   'Your slot': 'Твоё место',
   'Final Wall': 'Итоговая стена',
+  'Share cards show the Wall author and slot or final Wall. Participant usernames are currently unavailable.':
+    'Карточка показывает автора стены и место либо итоговую стену. Имя участника пока не отображается.',
   'Public username (optional)': 'Публичное имя (необязательно)',
+  'Stored username (private history)': 'Сохранённое имя (приватная история)',
   'Publish this username on a public card':
     'Показать это имя на публичной карточке',
   'Create share card': 'Создать карточку',

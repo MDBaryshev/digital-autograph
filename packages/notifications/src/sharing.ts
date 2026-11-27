@@ -24,6 +24,8 @@ export interface ShareRepository {
   list(userId: string, limit: number, cursor?: string): Promise<OwnedSharePage>;
   create(
     userId: string,
+    // Legacy optional field is retained at this port only to reject it explicitly.
+    // Public custom text requires a separate content-review flow.
     input: { wallId: string; slotId?: string; publicAlias?: string },
   ): Promise<PublicShare>;
   public(id: string): Promise<PublicShare | null>;

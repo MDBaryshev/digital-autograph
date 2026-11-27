@@ -518,7 +518,7 @@ it('owner-only inbox/read/preferences and origin guard; bot webhook secret and p
   });
   expect((await repository.preferences(f.userId)).telegramLinked).toBe(true);
 });
-it('shares require own placement, reveal only explicit alias; archival/revocation stops public output', async () => {
+it('shares require own placement and fixed text; archival/revocation stops public output', async () => {
   const f = await fixture();
   await placement(f);
   await expect(
@@ -527,7 +527,6 @@ it('shares require own placement, reveal only explicit alias; archival/revocatio
   const card = await shares.create(f.userId, {
     wallId: f.wallId,
     slotId: f.slotId,
-    publicAlias: 'Public Fan',
   });
   expect(Object.keys(card).sort()).toEqual(
     [
@@ -540,7 +539,7 @@ it('shares require own placement, reveal only explicit alias; archival/revocatio
       'wallId',
     ].sort(),
   );
-  expect(card.publicAlias).toBe('Public Fan');
+  expect(card.publicAlias).toBeNull();
   expect(JSON.stringify(card)).not.toContain(f.userId);
   const png = await renderShareCard(card);
   expect(await sharp(png).metadata()).toMatchObject({
@@ -577,9 +576,11 @@ it('final-wall sharing requires ended Wall and owner or participant, no arbitrar
   await expect(shares.create(f.otherId, { wallId: f.wallId })).rejects.toThrow(
     'NOT_FOUND',
   );
-  expect(
-    await shares.create(f.userId, { wallId: f.wallId, publicAlias: 'omitted' }),
-  ).toMatchObject({ event: 'final_wall', publicAlias: null, slotNumber: null });
+  expect(await shares.create(f.userId, { wallId: f.wallId })).toMatchObject({
+    event: 'final_wall',
+    publicAlias: null,
+    slotNumber: null,
+  });
 });
 it('worker sends fixed deep link without private data, finishes one successful attempt', async () => {
   const f = await fixture();

@@ -18,7 +18,9 @@ async function publicShare(
     public_alias: string | null;
     event: PublicShare['event'];
   }>(
-    `SELECT sh.id,sh.wall_id,sh.slot_id,s.position,cp.display_name,sh.public_alias,sh.event
+    // Aliases have no content-review evidence. Preserve legacy owner history,
+    // but never project its freeform text into public JSON, cards or metadata.
+    `SELECT sh.id,sh.wall_id,sh.slot_id,s.position,cp.display_name,NULL::text AS public_alias,sh.event
     FROM share_links sh JOIN walls w ON w.id=sh.wall_id JOIN creator_profiles cp ON cp.creator_id=w.creator_id
     LEFT JOIN slots s ON s.id=sh.slot_id
     WHERE sh.id=$1 AND sh.revoked_at IS NULL AND w.status IN ('scheduled','live','paused','ended')
@@ -87,6 +89,8 @@ export function createPgShareRepository(pool: Pool): ShareRepository {
       };
     },
     async create(userId, input) {
+      if (input.publicAlias !== undefined)
+        throw new NotificationError('INVALID_REQUEST');
       const db = await pool.connect();
       try {
         await db.query('BEGIN');
@@ -139,7 +143,7 @@ export function createPgShareRepository(pool: Pool): ShareRepository {
             input.wallId,
             input.slotId ?? null,
             placementId,
-            input.slotId ? (input.publicAlias ?? null) : null,
+            null,
             event,
           ],
         );

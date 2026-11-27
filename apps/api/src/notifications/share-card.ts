@@ -29,7 +29,6 @@ export async function renderShareCard(share: PublicShare): Promise<Buffer> {
       <text x="110" y="222" font-size="48" font-weight="bold">${escape(title)}</text>
       <text x="110" y="306" font-size="30">${escape([...share.creator].slice(0, 32).join(''))}</text>
       <text x="110" y="374" font-size="30">${share.slotNumber === null ? 'The Wall is complete' : `Slot ${share.slotNumber}`}</text>
-      <text x="110" y="433" font-size="24">${escape(share.publicAlias ?? '')}</text>
       <text x="110" y="506" font-size="28" font-weight="bold">View the Wall →</text>
     </g></svg>`;
   return sharp(Buffer.from(svg)).png().toBuffer();

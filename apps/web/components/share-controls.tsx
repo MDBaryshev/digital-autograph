@@ -16,8 +16,6 @@ export function ShareControls({
   const { t } = useLocale();
 
   const [slotId, setSlotId] = useState('');
-  const [alias, setAlias] = useState('');
-  const [consent, setConsent] = useState(false);
   const [shareId, setShareId] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -62,7 +60,6 @@ export function ShareControls({
               {
                 wallId,
                 ...(slotId ? { slotId } : {}),
-                ...(alias ? { publicAlias: alias, publishAlias: consent } : {}),
               },
             );
             setShareId(result.id);
@@ -84,25 +81,12 @@ export function ShareControls({
               ))}
             </select>
           </label>
-          <label>
-            {t('Public username (optional)')}
-            <input
-              maxLength={40}
-              value={alias}
-              onChange={(e) => setAlias(e.target.value)}
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-            />{' '}
-            {t('Publish this username on a public card')}
-          </label>
-          <button type="submit" disabled={!!alias && !consent}>
-            {t('Create share card')}
-          </button>
+          <p>
+            {t(
+              'Share cards show the Wall author and slot or final Wall. Participant usernames are currently unavailable.',
+            )}
+          </p>
+          <button type="submit">{t('Create share card')}</button>
         </fieldset>
       </form>
       {shareId && (

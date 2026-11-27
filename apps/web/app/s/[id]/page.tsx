@@ -34,9 +34,7 @@ export async function generateMetadata({
   const { id } = await params;
   const share = await load(id);
   const title = `${share.creator} · ${share.slotNumber === null ? t('Final Wall') : t(`Slot ${share.slotNumber}`)}`;
-  const description = share.publicAlias
-    ? t('{name} left a mark. View the Wall.', { name: share.publicAlias })
-    : t('View this digital autograph Wall.');
+  const description = t('View this digital autograph Wall.');
   const image = {
     url: `${loadWebConfig().API_PUBLIC_ORIGIN}/public/shares/${id}/card`,
     width: 1200,
@@ -74,7 +72,6 @@ export default async function Page({
           ? t('Final Wall')
           : t(`Slot ${share.slotNumber}`)}
       </p>
-      {share.publicAlias && <p>{share.publicAlias}</p>}
       <img
         src={`${apiOrigin}/public/shares/${share.id}/card`}
         width="1200"

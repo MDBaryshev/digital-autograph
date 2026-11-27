@@ -193,7 +193,7 @@ function ShareLinks({ apiOrigin }: { apiOrigin: string }) {
             </p>
             {item.publicAlias && (
               <p>
-                {t('Public username (optional)')}: {item.publicAlias}
+                {t('Stored username (private history)')}: {item.publicAlias}
               </p>
             )}
             <p>

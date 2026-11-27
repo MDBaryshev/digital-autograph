@@ -97,6 +97,57 @@ afterAll(async () => {
   await database.close();
 });
 
+it('withholds stored unreviewed aliases publicly while preserving private owner evidence', async () => {
+  const f = await fixture();
+  const id = await seedShare(f.userId, f.wallId);
+  const before = (
+    await database.pool.query('SELECT * FROM share_links WHERE id=$1', [id])
+  ).rows[0];
+  const result = await app.inject({ url: `/public/shares/${id}` });
+  expect(result.statusCode).toBe(200);
+  expect(result.headers['cache-control']).toBe('no-store');
+  expect(result.json().publicAlias).toBeNull();
+  expect(result.body).not.toContain('Owner alias');
+  expect((await shares.list(f.userId, 20)).items[0]!.publicAlias).toBe(
+    'Owner alias',
+  );
+  expect(
+    (await database.pool.query('SELECT * FROM share_links WHERE id=$1', [id]))
+      .rows[0],
+  ).toEqual(before);
+});
+
+it('rejects alias publication through both the HTTP contract and repository boundary', async () => {
+  const f = await fixture();
+  const before = (
+    await database.pool.query('SELECT count(*)::int n FROM share_links')
+  ).rows[0].n;
+  for (const fields of [
+    { publicAlias: 'Synthetic_channel', publishAlias: true },
+    { publishAlias: true },
+    { publicAlias: '' },
+  ]) {
+    const result = await app.inject({
+      method: 'POST',
+      url: '/me/shares',
+      headers: f.ownerHeaders,
+      payload: { wallId: f.wallId, ...fields },
+    });
+    expect(result.statusCode).toBe(400);
+    expect(result.json()).toEqual({ error: { code: 'INVALID_REQUEST' } });
+  }
+  await expect(
+    shares.create(f.userId, {
+      wallId: f.wallId,
+      publicAlias: 'Synthetic_channel',
+    }),
+  ).rejects.toThrow('INVALID_REQUEST');
+  expect(
+    (await database.pool.query('SELECT count(*)::int n FROM share_links'))
+      .rows[0].n,
+  ).toBe(before);
+});
+
 it('requires a session and returns only the authenticated owner minimal DTO', async () => {
   const f = await fixture();
   const slot = (
