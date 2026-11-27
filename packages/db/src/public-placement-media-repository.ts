@@ -29,6 +29,7 @@ export function createPgPublicPlacementMediaRepository(
           `SELECT p.user_id, p.autograph_id FROM placements p
            JOIN slots s ON s.id = p.slot_id
            JOIN walls w ON w.id = s.wall_id
+           JOIN users u ON u.id = p.user_id AND u.status = 'active'
            WHERE p.id = $1::uuid AND p.ended_at IS NULL
              AND w.status IN ('scheduled', 'live', 'paused', 'ended')
            FOR SHARE OF p, w`,

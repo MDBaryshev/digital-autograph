@@ -22,7 +22,7 @@ export function registerPublicPlacementMediaRoutes(
           .header('Content-Type', 'image/png')
           .header('Content-Disposition', 'inline')
           .header('X-Content-Type-Options', 'nosniff')
-          .header('Cache-Control', 'public, max-age=60')
+          .header('Cache-Control', 'no-store')
           .send(bytes);
       } catch (error) {
         if (!(error instanceof PublicPlacementMediaError)) throw error;

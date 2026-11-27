@@ -188,6 +188,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
                 CASE WHEN p.id IS NOT NULL
                   AND p.autograph_id IS NOT NULL
                   AND p.user_id = a.user_id
+                  AND signer.status = 'active'
                   AND a.status = 'ready'
                   AND ua.user_id = a.user_id
                   AND ua.cleaned_asset_id = ca.id
@@ -206,6 +207,7 @@ export function createPgWallRepository(pool: Pool): WallRepository {
          LEFT JOIN slots s ON s.wall_id = w.id
          LEFT JOIN placements p ON p.slot_id = s.id AND p.ended_at IS NULL
          LEFT JOIN autographs a ON a.id = p.autograph_id
+         LEFT JOIN users signer ON signer.id = a.user_id
          LEFT JOIN autograph_user_approvals ua ON ua.autograph_id = a.id
          LEFT JOIN autograph_assets ca ON ca.autograph_id = a.id
            AND ca.role = 'cleaned' AND ca.status = 'uploaded'
