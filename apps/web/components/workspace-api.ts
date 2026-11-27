@@ -19,6 +19,7 @@ export type Workspace = {
     createdAt: string;
   }[];
   canModerate: boolean;
+  canAdmin?: boolean;
   canEditProfile: boolean;
 };
 export async function workspaceRequest<T>(

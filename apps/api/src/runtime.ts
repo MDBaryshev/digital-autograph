@@ -3,6 +3,7 @@ import { importProviderAvatar } from '@digital-autograph/integrations';
 import { registerAppearance } from './appearance';
 import { registerAiAutographs } from './ai-autographs';
 import { registerAccountWorkspace } from './account-workspace';
+import { registerAdminLookup } from './admin-lookup';
 import { loadApiStartupConfig } from './startup-config';
 import type { LegalHttp } from './legal-http';
 import {
@@ -12,6 +13,7 @@ import {
 import {
   createPgAgeDeclarationRepository,
   createPgAccountWorkspaceRepository,
+  createPgAdminLookupRepository,
   createPgLegalRepository,
 } from '@digital-autograph/db';
 import {
@@ -283,6 +285,7 @@ export async function startApi(
     createPgAccountWorkspaceRepository(database.pool),
     config.CREATOR_PROFILE_PUBLICATION_APPROVED,
   );
+  registerAdminLookup(app, createPgAdminLookupRepository(database.pool));
   registerAppearance(
     app,
     appearance,

@@ -107,3 +107,8 @@ export {
   type WallAppearance,
   type PrivateAppearance,
 } from './appearance-repository';
+export {
+  createPgAdminLookupRepository,
+  AdminLookupForbidden,
+  type AdminLookupRepository,
+} from './admin-lookup-repository';
