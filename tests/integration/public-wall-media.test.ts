@@ -243,6 +243,108 @@ describe('public Placement media and ready selection with PostgreSQL and MinIO',
     storage.close();
   });
 
+  it('withholds a disabled signer’s PNG and media path without freeing their Slot or rewriting evidence', async () => {
+    const author = await person();
+    const signer = await person();
+    const wall = await wallFixture(author.id);
+    const autograph = await autographFixture(signer.id);
+    const placementId = await placementFixture(
+      wall.slotId,
+      signer.id,
+      autograph.id,
+    );
+    expect((await media(placementId)).statusCode).toBe(200);
+    const before = (
+      await database.pool.query(
+        'SELECT * FROM autograph_moderation_decisions WHERE autograph_id=$1',
+        [autograph.id],
+      )
+    ).rows;
+    await database.pool.query(
+      "UPDATE users SET status='disabled' WHERE id=$1",
+      [signer.id],
+    );
+    const response = await media(placementId);
+    expect(response.statusCode).toBe(404);
+    expect(response.headers['cache-control']).toBe('no-store');
+    const slot = (await app.inject(`/walls/${wall.wallId}`)).json().slots[0];
+    expect(slot).toMatchObject({
+      occupied: true,
+      currentPlacement: { id: placementId, mediaPath: null },
+    });
+    expect(
+      (
+        await database.pool.query(
+          'SELECT ended_at FROM placements WHERE id=$1',
+          [placementId],
+        )
+      ).rows,
+    ).toEqual([{ ended_at: null }]);
+    expect(
+      (
+        await database.pool.query(
+          'SELECT * FROM autograph_moderation_decisions WHERE autograph_id=$1',
+          [autograph.id],
+        )
+      ).rows,
+    ).toEqual(before);
+  });
+
+  it.each(['suspend', 'archive'] as const)(
+    'does not return bytes if %s commits while the private object is being read',
+    async (change) => {
+      const author = await person();
+      const signer = await person();
+      const wall = await wallFixture(author.id);
+      const autograph = await autographFixture(signer.id);
+      const placementId = await placementFixture(
+        wall.slotId,
+        signer.id,
+        autograph.id,
+      );
+      let start!: () => void;
+      let resume!: () => void;
+      const started = new Promise<void>((resolve) => {
+        start = resolve;
+      });
+      const gate = new Promise<void>((resolve) => {
+        resume = resolve;
+      });
+      const original = storage.getPrivateObject.bind(storage);
+      const read = vi
+        .spyOn(storage, 'getPrivateObject')
+        .mockImplementationOnce(async (key, maxBytes) => {
+          const bytes = await original(key, maxBytes);
+          start();
+          await gate;
+          return bytes;
+        });
+      const response = Promise.resolve(media(placementId));
+      try {
+        await started;
+        if (change === 'suspend')
+          await database.pool.query(
+            "UPDATE users SET status='disabled' WHERE id=$1",
+            [signer.id],
+          );
+        if (change === 'archive')
+          await database.pool.query(
+            "UPDATE walls SET status='archived' WHERE id=$1",
+            [wall.wallId],
+          );
+        resume();
+        const result = await response;
+        expect(result.statusCode).toBe(404);
+        expect(result.headers['cache-control']).toBe('no-store');
+        expect(result.rawPayload).not.toEqual(autograph.cleaned);
+      } finally {
+        resume();
+        await response;
+        read.mockRestore();
+      }
+    },
+  );
+
   it('serves only the cleaned PNG through the API while MinIO stays private', async () => {
     const owner = await person();
     const wall = await wallFixture(owner.id);
@@ -257,7 +359,7 @@ describe('public Placement media and ready selection with PostgreSQL and MinIO',
     expect(response.headers['content-type']).toContain('image/png');
     expect(response.headers['content-disposition']).toBe('inline');
     expect(response.headers['x-content-type-options']).toBe('nosniff');
-    expect(response.headers['cache-control']).toBe('public, max-age=60');
+    expect(response.headers['cache-control']).toBe('no-store');
     expect(response.headers['x-frame-options']).toBe('DENY');
     expect(response.headers['referrer-policy']).toBe('no-referrer');
     expect(response.rawPayload).toEqual(autograph.cleaned);

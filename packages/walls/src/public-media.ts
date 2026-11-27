@@ -58,6 +58,16 @@ export class PublicPlacementMediaService {
     ) {
       throw new PublicPlacementMediaError('invalid_object');
     }
+    // Storage I/O does not hold the publication transaction open. Check the
+    // current permission and exact derivative again before exposing its bytes.
+    const active = await this.repository.resolveActive(placementId);
+    if (active.kind !== 'available')
+      throw new PublicPlacementMediaError(active.kind);
+    if (
+      active.storageKey !== resolution.storageKey ||
+      active.verifiedSizeBytes !== resolution.verifiedSizeBytes
+    )
+      throw new PublicPlacementMediaError('inconsistent');
     return bytes;
   }
 }
