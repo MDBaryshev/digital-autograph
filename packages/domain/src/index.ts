@@ -98,3 +98,4 @@ export * from './legal';
 export type { AgeDeclarationRepository } from './first-use';
 
 export * from './checkout';
+export { adminRecordKinds, type AdminRecordKind } from './admin-record';

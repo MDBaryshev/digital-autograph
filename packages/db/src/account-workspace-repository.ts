@@ -45,6 +45,7 @@ export function createPgAccountWorkspaceRepository(pool: Pool) {
         autographs: autographs.rows,
         walls: walls.rows,
         canModerate: (roles.rowCount ?? 0) > 0,
+        canAdmin: roles.rows.some((row) => row.role === 'admin'),
       };
     },
     async saveProfile(

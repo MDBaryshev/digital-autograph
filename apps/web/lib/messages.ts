@@ -1,5 +1,25 @@
 // Interface translations only. Published legal document bodies remain unchanged.
 export const messages: Record<string, string> = {
+  Administration: 'Администрирование',
+  'Record lookup': 'Поиск записей',
+  'Find a record by its internal ID.': 'Найди запись по её внутреннему ID.',
+  'Record ID': 'ID записи',
+  'Search records': 'Найти запись',
+  'Searching…': 'Ищем…',
+  'Search results': 'Результаты поиска',
+  'Checking administrator access…': 'Проверяем доступ администратора…',
+  'Administrator access is required.': 'Нужен доступ администратора.',
+  'Administrator access could not be checked.':
+    'Не удалось проверить доступ администратора.',
+  'Enter a valid internal record ID.': 'Введи корректный внутренний ID записи.',
+  'The record could not be loaded. Try the search again.':
+    'Не удалось загрузить запись. Повтори поиск.',
+  'No record found for this ID.': 'Запись с этим ID не найдена.',
+  'Not recorded': 'Не указан',
+  User: 'Пользователь',
+  Order: 'Заказ',
+  Payment: 'Платёж',
+  Created: 'Создано',
   Gold: 'Золото',
   Silver: 'Серебро',
   Bronze: 'Бронза',

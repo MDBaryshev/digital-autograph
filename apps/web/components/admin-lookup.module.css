@@ -1,0 +1,27 @@
+.results {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+.results dl {
+  display: grid;
+  grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+  gap: 0.6rem 1rem;
+}
+.results dt {
+  color: var(--color-muted);
+}
+.results dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .results dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .results dt:not(:first-child) {
+    margin-top: 0.6rem;
+  }
+}
