@@ -431,7 +431,18 @@ it('applies all migrations to a clean database and repeats idempotently', async 
           "SELECT count(*)::int AS count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'",
         )
       ).rows[0].count,
-    ).toBe(44);
+    ).toBe(47);
+    expect(
+      (
+        await db.pool.query(
+          "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('email_credentials','email_auth_challenges','auth_rate_limits') ORDER BY table_name",
+        )
+      ).rows.map((row) => row.table_name),
+    ).toEqual([
+      'auth_rate_limits',
+      'email_auth_challenges',
+      'email_credentials',
+    ]);
     expect(
       (
         await db.pool.query(
