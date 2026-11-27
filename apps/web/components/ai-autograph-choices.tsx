@@ -2,6 +2,40 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from './locale-provider';
 
+const timeoutMessage =
+  'Generation response timed out. Retry with the same nickname or draw your own autograph.';
+
+// Race both headers and body reads: abort alone need not settle a stalled reader.
+async function boundedRead<T>(
+  parent: AbortSignal,
+  read: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  const child = new AbortController();
+  let cancel!: () => void;
+  let timer: ReturnType<typeof setTimeout>;
+  const interrupted = new Promise<never>((_, reject) => {
+    cancel = () => {
+      child.abort(parent.reason);
+      reject(parent.reason);
+    };
+    parent.addEventListener('abort', cancel, { once: true });
+    timer = setTimeout(() => {
+      const error = Error(timeoutMessage);
+      child.abort(error);
+      reject(error);
+    }, 10_000);
+    if (parent.aborted) cancel();
+  });
+  try {
+    if (parent.aborted) throw parent.reason;
+    return await Promise.race([read(child.signal), interrupted]);
+  } finally {
+    clearTimeout(timer!);
+    parent.removeEventListener('abort', cancel);
+    child.abort();
+  }
+}
+
 export function AiAutographChoices({
   apiOrigin,
   disabled,
@@ -18,33 +52,66 @@ export function AiAutographChoices({
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
   const controller = useRef<AbortController | null>(null);
-  const request = useRef<{ nickname: string; id: string } | null>(null);
-  useEffect(() => () => controller.current?.abort(), []);
+  const request = useRef<{
+    nickname: string;
+    origin: string;
+    id: string;
+  } | null>(null);
+  useEffect(() => {
+    setBusy(false);
+    setError('');
+    setImages([]);
+    setSelected(null);
+    return () => {
+      controller.current?.abort();
+      controller.current = null;
+    };
+  }, [apiOrigin, disabled]);
   const generate = async () => {
     if (controller.current || disabled) return;
     const c = new AbortController();
     controller.current = c;
     setBusy(true);
     setError('');
+    setImages([]);
+    setSelected(null);
     const name = nickname.trim();
-    if (request.current?.nickname !== name)
-      request.current = { nickname: name, id: crypto.randomUUID() };
+    if (
+      request.current?.nickname !== name ||
+      request.current?.origin !== apiOrigin
+    )
+      request.current = {
+        nickname: name,
+        origin: apiOrigin,
+        id: crypto.randomUUID(),
+      };
     const id = request.current!.id;
+    const overallTimeout = Error(timeoutMessage);
+    const overallTimer = setTimeout(() => c.abort(overallTimeout), 210_000);
     try {
-      const response = await fetch(apiOrigin + '/ai/autographs/suggestions', {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-        signal: c.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: name, requestId: id }),
-      });
-      // Pending/failed admission is deliberately non-retryable at the provider.
-      // Resume owner-scoped polling of that UUID after an interrupted response.
-      const resumeExisting =
-        response.status === 409 &&
-        (await response.json().catch(() => null))?.error?.code ===
-          'AI_REQUEST_UNAVAILABLE';
+      const { response, resumeExisting } = await boundedRead(
+        c.signal,
+        async (signal) => {
+          const response = await fetch(
+            apiOrigin + '/ai/autographs/suggestions',
+            {
+              method: 'POST',
+              credentials: 'include',
+              cache: 'no-store',
+              signal,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ nickname: name, requestId: id }),
+            },
+          );
+          // Pending/failed admission is deliberately non-retryable at the provider.
+          // Resume owner-scoped polling of that UUID after an interrupted response.
+          const resumeExisting =
+            response.status === 409 &&
+            (await response.json().catch(() => null))?.error?.code ===
+              'AI_REQUEST_UNAVAILABLE';
+          return { response, resumeExisting };
+        },
+      );
       if (!response.ok && !resumeExisting)
         throw Error(
           response.status === 401
@@ -68,13 +135,18 @@ export function AiAutographChoices({
           c.signal.addEventListener('abort', abort, { once: true });
           if (c.signal.aborted) abort();
         });
-        const result = await fetch(
-          apiOrigin + '/ai/autographs/suggestions/' + id,
-          { credentials: 'include', cache: 'no-store', signal: c.signal },
-        );
-        if (!result.ok)
-          throw Error('Could not load variants. Retry with the same nickname.');
-        const data = await result.json();
+        const data = await boundedRead(c.signal, async (signal) => {
+          const result = await fetch(
+            apiOrigin + '/ai/autographs/suggestions/' + id,
+            { credentials: 'include', cache: 'no-store', signal },
+          );
+          if (!result.ok)
+            throw Error(
+              'Could not load variants. Retry with the same nickname.',
+            );
+          return result.json();
+        });
+        if (c.signal.aborted || controller.current !== c) return;
         if (data.state === 'failed')
           throw Error(
             'Generation failed. Draw your autograph or change your nickname for a new attempt.',
@@ -99,11 +171,23 @@ export function AiAutographChoices({
         'Generation has not finished. Retry with the same nickname to avoid another API charge.',
       );
     } catch (e) {
-      if (!c.signal.aborted)
-        setError(e instanceof Error ? e.message : 'Generation is unavailable.');
+      if (
+        controller.current === c &&
+        (!c.signal.aborted || c.signal.reason === overallTimeout)
+      )
+        setError(
+          c.signal.reason === overallTimeout
+            ? timeoutMessage
+            : e instanceof Error
+              ? e.message
+              : 'Generation is unavailable.',
+        );
     } finally {
-      if (!c.signal.aborted) setBusy(false);
-      controller.current = null;
+      clearTimeout(overallTimer);
+      if (controller.current === c) {
+        setBusy(false);
+        controller.current = null;
+      }
     }
   };
   return (

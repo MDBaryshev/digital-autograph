@@ -974,6 +974,8 @@ export const messages: Record<string, string> = {
   'Your nickname': 'Твой ник',
   'Generating three variants…': 'Генерируем три варианта…',
   'Suggest 3 variants': 'Предложить 3 варианта',
+  'Generation response timed out. Retry with the same nickname or draw your own autograph.':
+    'Ответ генерации не пришёл вовремя. Повторите с тем же ником или нарисуйте автограф самостоятельно.',
   'This can take up to three minutes. Choose a variant before uploading.':
     'Это может занять до трёх минут. Ты сможешь выбрать один вариант перед загрузкой.',
   'Autograph variant {number}': 'Вариант автографа {number}',
