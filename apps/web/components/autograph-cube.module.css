@@ -207,6 +207,8 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
   gap: 0.35em;
 }
 .crown {
+  --crown-unit: calc(var(--cube-size) * 0.0094);
+
   position: absolute;
   left: 50%;
   top: 0;
@@ -220,13 +222,22 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
   position: absolute;
   left: 50%;
   top: 0;
+  width: calc(var(--crown-unit) * var(--crown-wall-width));
   height: 100%;
+  transform: translateX(-50%) rotateY(var(--crown-angle))
+    translateZ(calc(var(--crown-unit) * var(--crown-radius)));
   transform-style: preserve-3d;
 }
 .crownOutside,
 .crownInside {
   position: absolute;
   inset: 0 -0.08px;
+  clip-path: polygon(
+    0 var(--crown-left-top),
+    100% var(--crown-right-top),
+    100% 100%,
+    0 100%
+  );
   backface-visibility: hidden;
   background:
     linear-gradient(var(--crown-shade), var(--crown-shade)),
@@ -249,7 +260,13 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
   border-top: 1px solid #ffffff20;
 }
 .crownInside {
-  inset-inline: var(--crown-inner-inset);
+  inset-inline: calc(var(--crown-unit) * var(--crown-inner-inset));
+  clip-path: polygon(
+    0 var(--crown-right-top),
+    100% var(--crown-left-top),
+    100% 100%,
+    0 100%
+  );
   transform: translateZ(calc(var(--crown-unit) * -3.5)) rotateY(180deg);
   background:
     linear-gradient(0deg, #00000045, #00000015 65%, #ffffff30),
@@ -258,7 +275,10 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
 .crownEdge {
   position: absolute;
   left: 0;
+  top: calc(var(--crown-unit) * var(--crown-edge-top));
+  width: calc(var(--crown-unit) * var(--crown-edge-width));
   height: calc(var(--crown-unit) * 3.5);
+  transform: rotateZ(var(--crown-edge-angle)) rotateX(-90deg);
   transform-origin: 0 0;
   background: color-mix(in srgb, var(--face-paper) 82%, #fffaf2);
 }
@@ -288,7 +308,11 @@ button:focus-visible > .preview :is(.face:not(.front), .shadow) {
 }
 .crownArchLink {
   position: absolute;
+  left: calc(var(--crown-unit) * var(--crown-arch-x));
+  top: calc(var(--crown-unit) * var(--crown-arch-y));
+  width: calc(var(--crown-unit) * var(--crown-arch-width));
   height: calc(var(--crown-unit) * 3.2);
+  transform: rotateZ(var(--crown-arch-angle));
   transform-origin: 0 50%;
   transform-style: preserve-3d;
   background: linear-gradient(#fff0b9, #d5a64f 38%, #86602b);
