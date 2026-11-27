@@ -5,6 +5,11 @@
   "artifact_type": "proposed-clauses-not-canonical-editions",
   "date": "2026-11-27",
   "base_commit": "41ce212a133b5b075dbf1d65a572c9096d478d35",
+  "code_review_base": {
+    "pull_request": "https://github.com/MDBaryshev/digital-autograph/pull/28",
+    "commit": "839081836b56acf194b8b186a151f4b43ddc78e3",
+    "note": "Security build prerequisite only; legal source hashes remain based on base_commit. No publication acceptance is implied."
+  },
   "publication_registry_changed": false,
   "canonical_sources_changed": false,
   "hash_semantics": "sha256 is exact Git blob bytes at base_commit; working_tree_sha256 records local checkout bytes separately because of line-ending conversion",
@@ -68,6 +73,12 @@
     ]
   },
   "external_sources": [
+    {
+      "url": "https://epp.genproc.gov.ru/ru/proc_33/activity/legal-education/explain/e322581/",
+      "kind": "official-prosecutor-explanation-historical-only",
+      "observed": "read",
+      "published": "2021-08-19"
+    },
     {
       "url": "https://epp.genproc.gov.ru/ru/proc_59/activity/legal-education/explain/e8523684/",
       "kind": "official-prosecutor-explanation",
