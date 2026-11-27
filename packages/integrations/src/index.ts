@@ -1,11 +1,6 @@
 export { createPrivateS3Storage, type PrivateS3Config } from './private-s3';
 
 export {
-  createGoogleOidcClient,
-  type GoogleOidcClient,
-  type GoogleOidcConfig,
-} from './google';
-export {
   createTelegramOidcClient,
   type TelegramOidcClient,
   type TelegramOidcConfig,
@@ -41,3 +36,5 @@ export {
   normalizeAppearanceImage,
   importProviderAvatar,
 } from './appearance-images';
+
+export { createAuthEmailSender } from './auth-email';

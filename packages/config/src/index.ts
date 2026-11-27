@@ -72,40 +72,7 @@ const apiSchema = databaseSchema
       .transform((value) => value.split(',').map((origin) => origin.trim()))
       .pipe(z.array(exactOrigin).min(1)),
     WEB_ORIGIN: exactOrigin,
-    GOOGLE_CLIENT_ID: z.string().min(1),
-    GOOGLE_CLIENT_SECRET: z.string().min(1),
-    GOOGLE_REDIRECT_URI: z.url().refine((value) => {
-      try {
-        const url = new URL(value);
-        return (
-          ['http:', 'https:'].includes(url.protocol) &&
-          url.pathname === '/auth/google/callback' &&
-          !url.search &&
-          !url.hash &&
-          !url.username &&
-          !url.password
-        );
-      } catch {
-        return false;
-      }
-    }, 'must be an absolute HTTP(S) /auth/google/callback URL'),
-    TELEGRAM_CLIENT_ID: z.string().min(1),
-    TELEGRAM_CLIENT_SECRET: z.string().min(1),
-    TELEGRAM_REDIRECT_URI: z.url().refine((value) => {
-      try {
-        const url = new URL(value);
-        return (
-          ['http:', 'https:'].includes(url.protocol) &&
-          url.pathname === '/auth/telegram/callback' &&
-          !url.search &&
-          !url.hash &&
-          !url.username &&
-          !url.password
-        );
-      } catch {
-        return false;
-      }
-    }, 'must be an absolute HTTP(S) /auth/telegram/callback URL'),
+    API_PUBLIC_ORIGIN: exactOrigin,
     S3_ENDPOINT: z.url().optional(),
     S3_REGION: z.string().min(1),
     S3_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/),
@@ -175,33 +142,6 @@ const apiSchema = databaseSchema
         message: 'must be included in TRUSTED_WEB_ORIGINS',
       });
     }
-    const redirect = new URL(config.GOOGLE_REDIRECT_URI);
-    const telegramRedirect = new URL(config.TELEGRAM_REDIRECT_URI);
-    const webHost = new URL(config.WEB_ORIGIN).hostname;
-    if (
-      ['local', 'test', 'development'].includes(config.APP_ENV) &&
-      redirect.protocol === 'http:' &&
-      (!['localhost', '127.0.0.1'].includes(redirect.hostname) ||
-        !['localhost', '127.0.0.1'].includes(webHost))
-    ) {
-      context.addIssue({
-        code: 'custom',
-        path: ['GOOGLE_REDIRECT_URI'],
-        message: 'HTTP callback must use localhost or 127.0.0.1',
-      });
-    }
-    if (
-      ['local', 'test', 'development'].includes(config.APP_ENV) &&
-      telegramRedirect.protocol === 'http:' &&
-      (!['localhost', '127.0.0.1'].includes(telegramRedirect.hostname) ||
-        !['localhost', '127.0.0.1'].includes(webHost))
-    ) {
-      context.addIssue({
-        code: 'custom',
-        path: ['TELEGRAM_REDIRECT_URI'],
-        message: 'HTTP callback must use localhost or 127.0.0.1',
-      });
-    }
     if (!['production', 'staging'].includes(config.APP_ENV)) return;
     if (
       config.TRUSTED_WEB_ORIGINS.some(
@@ -216,20 +156,12 @@ const apiSchema = databaseSchema
     }
     if (
       !config.WEB_ORIGIN.startsWith('https://') ||
-      !config.GOOGLE_REDIRECT_URI.startsWith('https://')
+      !config.API_PUBLIC_ORIGIN.startsWith('https://')
     ) {
       context.addIssue({
         code: 'custom',
-        path: ['GOOGLE_REDIRECT_URI'],
-        message:
-          'web origin and Google callback must use HTTPS in staging and production',
-      });
-    }
-    if (!config.TELEGRAM_REDIRECT_URI.startsWith('https://')) {
-      context.addIssue({
-        code: 'custom',
-        path: ['TELEGRAM_REDIRECT_URI'],
-        message: 'Telegram callback must use HTTPS in staging and production',
+        path: ['API_PUBLIC_ORIGIN'],
+        message: 'web and API origins must use HTTPS in staging and production',
       });
     }
   });
@@ -495,7 +427,7 @@ export function loadYandexAuthConfig(environment = process.env) {
       .object({
         APP_ENV: appEnvironment,
         WEB_ORIGIN: exactOrigin,
-        GOOGLE_REDIRECT_URI: z.url(),
+        API_PUBLIC_ORIGIN: exactOrigin,
         YANDEX_CLIENT_ID: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
         YANDEX_CLIENT_SECRET: z.string().min(1).max(4096),
         YANDEX_REDIRECT_URI: z.url(),
@@ -511,7 +443,7 @@ export function loadYandexAuthConfig(environment = process.env) {
       callback.hash ||
       callback.username ||
       callback.password ||
-      callback.origin !== new URL(config.GOOGLE_REDIRECT_URI).origin ||
+      callback.origin !== config.API_PUBLIC_ORIGIN ||
       (callback.protocol !== 'https:' &&
         !(
           local &&
@@ -554,7 +486,7 @@ export function loadVkIdAuthConfig(environment = process.env) {
       .object({
         APP_ENV: appEnvironment,
         WEB_ORIGIN: exactOrigin,
-        GOOGLE_REDIRECT_URI: z.url(),
+        API_PUBLIC_ORIGIN: exactOrigin,
         VK_CLIENT_ID: z.string().regex(/^[1-9][0-9]{0,19}$/),
         VK_SERVICE_TOKEN: z.string().min(1).max(4096),
         VK_REDIRECT_URI: z.url(),
@@ -570,7 +502,7 @@ export function loadVkIdAuthConfig(environment = process.env) {
       callback.hash ||
       callback.username ||
       callback.password ||
-      callback.origin !== new URL(config.GOOGLE_REDIRECT_URI).origin ||
+      callback.origin !== config.API_PUBLIC_ORIGIN ||
       (callback.protocol !== 'https:' &&
         !(
           local &&
@@ -598,3 +530,6 @@ export function loadVkIdAuthConfig(environment = process.env) {
 }
 
 export { loadOpenRouterConfig } from './openrouter';
+
+export { loadEmailAuthConfig } from './email-auth';
+export { loadTelegramLinkConfig } from './telegram-link';

@@ -1,8 +1,6 @@
 'use client';
+import { SignInOptions } from './sign-in-options';
 import { useLocale } from './locale-provider';
-
-import { YandexSignIn } from './yandex-sign-in';
-import { VkIdSignIn } from './vk-id-sign-in';
 
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -307,19 +305,10 @@ function ModerationQueue({ apiOrigin }: { apiOrigin: string }) {
       </section>
     );
   if (access === 'signin') {
-    const returnTo = encodeURIComponent('/moderation');
     return (
       <section>
         <p>{t('Sign in with a platform moderator account.')}</p>
-        <a href={`${apiOrigin}/auth/google/start?returnTo=${returnTo}`}>
-          {t('Sign in with Google')}
-        </a>
-        {' · '}
-        <a href={`${apiOrigin}/auth/telegram/start?returnTo=${returnTo}`}>
-          {t('Sign in with Telegram')}
-        </a>
-        <YandexSignIn apiOrigin={apiOrigin} returnTo="/moderation" />
-        <VkIdSignIn apiOrigin={apiOrigin} returnTo="/moderation" />
+        <SignInOptions apiOrigin={apiOrigin} returnTo="/moderation" />
       </section>
     );
   }

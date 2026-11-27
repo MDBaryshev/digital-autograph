@@ -28,8 +28,8 @@ export async function acceptedSession(
 export function buildAcceptedApi(...args: Parameters<typeof buildApi>) {
   args[2] = { ...args[2], firstUseEnforced: true };
   const db = args[0] as Database;
-  const prior = args[17];
-  args[17] = {
+  const prior = args[15];
+  args[15] = {
     ...prior,
     repository: prior?.repository ?? createPgLegalRepository(db.pool),
     ageDeclarations: createPgAgeDeclarationRepository(db.pool),

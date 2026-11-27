@@ -1,8 +1,6 @@
 'use client';
+import { SignInOptions } from './sign-in-options';
 import { useLocale } from './locale-provider';
-
-import { YandexSignIn } from './yandex-sign-in';
-import { VkIdSignIn } from './vk-id-sign-in';
 
 import { useEffect, useState } from 'react';
 import {
@@ -206,20 +204,12 @@ function UserHistory({ apiOrigin }: { apiOrigin: string }) {
     return <p role="status">{t('Checking sign-in…')}</p>;
   }
   if (auth === 'anonymous') {
-    const returnTo = encodeURIComponent('/me/placements');
     return (
       <section className={styles.history}>
         <p>{t('Sign in to view your placement history.')}</p>
-        <p className={styles.actions}>
-          <a href={`${apiOrigin}/auth/google/start?returnTo=${returnTo}`}>
-            {t('Continue with Google')}
-          </a>
-          <a href={`${apiOrigin}/auth/telegram/start?returnTo=${returnTo}`}>
-            {t('Continue with Telegram')}
-          </a>
-          <YandexSignIn apiOrigin={apiOrigin} returnTo="/me/placements" />
-          <VkIdSignIn apiOrigin={apiOrigin} returnTo="/me/placements" />
-        </p>
+        <div className={styles.actions}>
+          <SignInOptions apiOrigin={apiOrigin} returnTo="/me/placements" />
+        </div>
       </section>
     );
   }

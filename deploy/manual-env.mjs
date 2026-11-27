@@ -20,7 +20,7 @@ export function renderEnvironment(app, old, m) {
       .filter(
         (line) =>
           line &&
-          !/^(DATABASE_URL|DISABLE_NEW_PAYMENTS|PG[A-Z_]+|POSTGRES_[A-Z_]+|YC_[A-Z_]+|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|WEB_ORIGIN|TRUSTED_WEB_ORIGINS|GOOGLE_REDIRECT_URI|TELEGRAM_REDIRECT_URI|PAYMENT_[A-Z0-9_]+|YOOKASSA_[A-Z0-9_]+)=/.test(
+          !/^(DATABASE_URL|DISABLE_NEW_PAYMENTS|PG[A-Z_]+|POSTGRES_[A-Z_]+|YC_[A-Z_]+|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|WEB_ORIGIN|TRUSTED_WEB_ORIGINS|GOOGLE_[A-Z_]+|TELEGRAM_REDIRECT_URI|API_PUBLIC_ORIGIN|PAYMENT_[A-Z0-9_]+|YOOKASSA_[A-Z0-9_]+)=/.test(
             line,
           ),
       );
@@ -29,8 +29,8 @@ export function renderEnvironment(app, old, m) {
   if (app === 'api')
     lines.push(
       `TRUSTED_WEB_ORIGINS='https://${m.domains.web}'`,
-      `GOOGLE_REDIRECT_URI='https://${m.domains.api}/auth/google/callback'`,
-      `TELEGRAM_REDIRECT_URI='https://${m.domains.api}/auth/telegram/callback'`,
+      `API_PUBLIC_ORIGIN='https://${m.domains.api}'`,
+      `TELEGRAM_REDIRECT_URI='https://${m.domains.api}/me/connections/telegram/callback'`,
     );
   if (app === 'api') {
     lines.push("DISABLE_NEW_PAYMENTS='true'");

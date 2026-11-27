@@ -204,6 +204,13 @@
       "when": 1795202878276,
       "tag": "0028_community_cube",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1795708800000,
+      "tag": "0029_email_auth",
+      "breakpoints": true
     }
   ]
 }

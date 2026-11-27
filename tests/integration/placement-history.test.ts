@@ -37,8 +37,6 @@ const app = buildApi(
   undefined,
   undefined,
   undefined,
-  undefined,
-  undefined,
   new PlacementHistoryService(
     createPgPlacementHistoryRepository(database.pool),
   ),

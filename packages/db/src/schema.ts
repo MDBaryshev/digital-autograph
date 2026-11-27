@@ -201,6 +201,69 @@ export const users = pgTable('users', {
   updatedAt: updatedAt(),
 });
 
+export const emailCredentials = pgTable(
+  'email_credentials',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    email: text('email').notNull(),
+    passwordHash: text('password_hash').notNull(),
+    verifiedAt: timestamp('verified_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('email_credentials_email_uidx').on(t.email),
+    check(
+      'email_credentials_normalized',
+      sql`${t.email} = lower(btrim(${t.email})) AND length(${t.email}) BETWEEN 3 AND 254`,
+    ),
+  ],
+);
+
+export const emailAuthChallenges = pgTable(
+  'email_auth_challenges',
+  {
+    id: id(),
+    email: text('email').notNull(),
+    purpose: text('purpose').$type<'register' | 'reset'>().notNull(),
+    userId: uuid('user_id').references(() => users.id, {
+      onDelete: 'restrict',
+    }),
+    tokenHash: text('token_hash').notNull(),
+    createdAt: createdAt(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('email_auth_challenges_token_uidx').on(t.tokenHash),
+    index('email_auth_challenges_email_idx').on(
+      t.email,
+      t.purpose,
+      t.createdAt,
+    ),
+    index('email_auth_challenges_expiry_idx').on(t.expiresAt),
+    check(
+      'email_auth_challenges_purpose',
+      sql`(${t.purpose} = 'register' AND ${t.userId} IS NULL) OR (${t.purpose} = 'reset' AND ${t.userId} IS NOT NULL)`,
+    ),
+    check('email_auth_challenges_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
+  ],
+);
+
+export const authRateLimits = pgTable(
+  'auth_rate_limits',
+  {
+    keyHash: text('key_hash').primaryKey(),
+    used: integer('used').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [index('auth_rate_limits_expiry_idx').on(t.expiresAt)],
+);
+
 export const userRoles = pgTable(
   'user_roles',
   {
@@ -235,6 +298,9 @@ export const socialIdentities = pgTable(
       table.providerUserId,
     ),
     index('social_identities_user_idx').on(table.userId),
+    uniqueIndex('social_identities_telegram_user_uidx')
+      .on(table.userId)
+      .where(sql`${table.provider} = 'telegram'`),
     check(
       'social_identities_provider_nonblank',
       sql`length(btrim(${table.provider})) > 0`,

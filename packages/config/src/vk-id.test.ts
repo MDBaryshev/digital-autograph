@@ -3,7 +3,7 @@ import { loadVkIdAuthConfig, loadYandexAuthConfig } from './index';
 const base = {
   APP_ENV: 'test',
   WEB_ORIGIN: 'http://127.0.0.1:3000',
-  GOOGLE_REDIRECT_URI: 'http://127.0.0.1:4000/auth/google/callback',
+  API_PUBLIC_ORIGIN: 'http://127.0.0.1:4000',
   VK_CLIENT_ID: '123456',
   VK_SERVICE_TOKEN: 'synthetic-secret-marker',
   VK_REDIRECT_URI: 'http://127.0.0.1:4000/auth/vk-id/callback',
@@ -72,8 +72,7 @@ describe('VkId opt-in configuration', () => {
       ...base,
       APP_ENV: 'staging',
       WEB_ORIGIN: 'https://staging.example.test',
-      GOOGLE_REDIRECT_URI:
-        'https://api.staging.example.test/auth/google/callback',
+      API_PUBLIC_ORIGIN: 'https://api.staging.example.test',
       VK_REDIRECT_URI: 'https://api.staging.example.test/auth/vk-id/callback',
     };
     expect(loadVkIdAuthConfig(config)?.redirectUri).toBe(

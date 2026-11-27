@@ -117,3 +117,9 @@ export {
   WallDesignError,
   type WallDesignRepository,
 } from './wall-design-repository';
+
+export { createPgEmailAuthRepository } from './email-auth-repository';
+export {
+  createPgTelegramLinkRepository,
+  type TelegramLinkRepository,
+} from './telegram-link-repository';

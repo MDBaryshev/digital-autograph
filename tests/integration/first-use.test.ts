@@ -74,8 +74,6 @@ function api(
       firstUseEnforced: enforced,
     },
     undefined,
-    undefined,
-    undefined,
     new AutographService(
       createPgAutographRepository(db.pool),
       {} as ConstructorParameters<typeof AutographService>[1],

@@ -101,11 +101,11 @@ function createApp(
     },
   ];
   if (enabled)
-    args[18] = {
+    args[16] = {
       login,
       config: { appEnvironment: environment, webOrigin, redirectUri },
     };
-  args[20] = stream;
+  args[18] = stream;
   const app = buildApi(...args);
   return { app, requests, login };
 }

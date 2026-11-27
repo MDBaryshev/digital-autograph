@@ -91,7 +91,7 @@ test('VkId browser code flow returns to Wall, persists session, repeats safely a
       trustedWebOrigins: [webOrigin],
     },
   ];
-  args[19] = {
+  args[17] = {
     login,
     config: {
       appEnvironment: 'test',
@@ -166,7 +166,7 @@ test('VkId browser code flow returns to Wall, persists session, repeats safely a
   }
 });
 
-test('default deployment exposes no VkId route or public button; UI uses server availability', async ({
+test('default deployment exposes no VkId route and the current sign-in UI excludes VK even if advertised', async ({
   page,
   scenario,
 }) => {
@@ -187,7 +187,7 @@ test('default deployment exposes no VkId route or public button; UI uses server 
   await expect(
     page.getByRole('link', { name: 'Continue with VK ID' }),
   ).toHaveCount(0);
-  // Component visibility only; this does not enable the runtime route.
+  // The selected public sign-in methods are Yandex and email only.
   await page.route(`${apiOrigin}/auth/providers`, (route) =>
     route.fulfill({
       json: { vk_id: true },
@@ -203,15 +203,5 @@ test('default deployment exposes no VkId route or public button; UI uses server 
     .getByRole('button', { name: 'Sign in to claim' })
     .click();
   const link = page.getByRole('link', { name: 'Continue with VK ID' });
-  await expect(link).toHaveAttribute(
-    'href',
-    `${apiOrigin}/auth/vk-id/start?returnTo=${encodeURIComponent(`/walls/${e2eWallId}`)}`,
-  );
-  for (const width of [320, 390, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    const bounds = await link.boundingBox();
-    expect(bounds).not.toBeNull();
-    expect(bounds!.height).toBeGreaterThanOrEqual(44);
-    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
-  }
+  await expect(link).toHaveCount(0);
 });

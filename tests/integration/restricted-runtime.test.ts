@@ -517,6 +517,11 @@ it('starts the real API with restricted roles after stripping a previously valid
     GOOGLE_CLIENT_ID: 'synthetic-client',
     GOOGLE_CLIENT_SECRET: 'synthetic-google',
     GOOGLE_REDIRECT_URI: 'https://old.invalid/auth/google/callback',
+    YANDEX_AUTH_ENABLED: 'true',
+    YANDEX_AUTH_APPROVED: 'true',
+    YANDEX_CLIENT_ID: 'synthetic-yandex-client',
+    YANDEX_CLIENT_SECRET: 'synthetic-yandex-secret',
+    YANDEX_REDIRECT_URI: 'https://api.invalid/auth/yandex/callback',
     TELEGRAM_CLIENT_ID: 'synthetic-client',
     TELEGRAM_CLIENT_SECRET: 'synthetic-telegram',
     TELEGRAM_REDIRECT_URI: 'https://old.invalid/auth/telegram/callback',
@@ -554,6 +559,9 @@ it('starts the real API with restricted roles after stripping a previously valid
   u.port = new URL(base).port;
   u.password = passwords[0]!;
   generated.DATABASE_URL = u.href;
+  expect(Object.keys(generated).some((key) => key.startsWith('GOOGLE_'))).toBe(
+    false,
+  );
   expect(loadApiStartupConfig(undefined, generated).paymentConfig).toBeNull();
   expect(generated.DISABLE_NEW_PAYMENTS).toBe('true');
   const env = { ...process.env, ...generated };
@@ -598,10 +606,22 @@ it('starts the real API with restricted roles after stripping a previously valid
       await new Promise((r) => setTimeout(r, 100));
     }
     expect(ready, 'Real restricted API should become ready').toBe(true);
-    const auth = await fetch(`http://127.0.0.1:${port}/auth/google/start`, {
+    const auth = await fetch(`http://127.0.0.1:${port}/auth/yandex/start`, {
       redirect: 'manual',
+      headers: { host: 'api.invalid' },
     });
     expect(auth.status).toBe(302);
+    expect(new URL(auth.headers.get('location')!).hostname).toBe(
+      'oauth.yandex.ru',
+    );
+    for (const retired of ['google', 'telegram'])
+      expect(
+        (
+          await fetch(`http://127.0.0.1:${port}/auth/${retired}/start`, {
+            redirect: 'manual',
+          })
+        ).status,
+      ).toBe(404);
     const payment = await fetch(`http://127.0.0.1:${port}/payments/orders`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

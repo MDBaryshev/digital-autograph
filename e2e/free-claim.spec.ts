@@ -64,14 +64,29 @@ test('new user uploads, reviews, claims and reads only their persistent history'
   );
   expect(initial.rowCount).toBe(0);
   const studioPath = `/autograph/create?wall=${e2eWallId}`;
+  // Exercise the selected email control's real layout; provider credentials are
+  // deliberately not activated in the synthetic runtime for this placement test.
+  await page.route(`${apiUrl}/auth/providers`, (route) =>
+    route.fulfill({
+      json: { email: true },
+      headers: {
+        'Access-Control-Allow-Origin': webUrl,
+        'Access-Control-Allow-Credentials': 'true',
+      },
+    }),
+  );
   await page.goto(studioPath);
   await expect(
     page.getByRole('heading', { name: 'Sign in to continue' }),
   ).toBeVisible();
   await responsive(
     page,
-    page.getByRole('link', { name: 'Continue with Google' }),
+    page.getByRole('link', { name: 'Continue with email' }),
   );
+  await expect(
+    page.getByRole('link', { name: /Continue with (Google|Telegram)/ }),
+  ).toHaveCount(0);
+  await page.unroute(`${apiUrl}/auth/providers`);
   await page.goto(
     `${apiUrl}/auth/test/start?returnTo=${encodeURIComponent(studioPath)}`,
   );

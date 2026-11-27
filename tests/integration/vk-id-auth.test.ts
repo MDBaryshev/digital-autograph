@@ -127,24 +127,24 @@ function createApp(
     },
   ];
   if (firstUseEnforced) {
-    args[6] = new AutographService(
+    args[4] = new AutographService(
       createPgAutographRepository(db.pool),
       {} as ConstructorParameters<typeof AutographService>[1],
       300,
     );
-    args[17] = {
+    args[15] = {
       repository: createPgLegalRepository(db.pool),
       ageDeclarations: createPgAgeDeclarationRepository(db.pool),
       documents: syntheticFirstUseDocuments,
     };
   }
   if (enabled)
-    args[19] = {
+    args[17] = {
       login,
       config: { appEnvironment: environment, webOrigin, redirectUri },
     };
   if (yandexEnabled)
-    args[18] = {
+    args[16] = {
       login: new YandexLoginService(
         attempts,
         {
@@ -164,7 +164,7 @@ function createApp(
         redirectUri: 'http://127.0.0.1:4000/auth/yandex/callback',
       },
     };
-  args[20] = stream;
+  args[18] = stream;
   const app = buildApi(...args);
   return { app, requests, login };
 }

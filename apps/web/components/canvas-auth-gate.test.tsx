@@ -10,7 +10,11 @@ afterEach(() => {
 
 describe('CanvasAuthGate', () => {
   it('uses the API session cookie and offers fixed return-path login links to anonymous users', async () => {
-    const fetchMock = vi.fn(async () => ({ ok: false, status: 401 }));
+    const fetchMock = vi.fn(async (url: string) =>
+      url.endsWith('/auth/providers')
+        ? Response.json({ email: true })
+        : { ok: false, status: 401 },
+    );
     vi.stubGlobal('fetch', fetchMock);
     render(<CanvasAuthGate apiOrigin="http://127.0.0.1:4000" />);
     expect(
@@ -21,12 +25,10 @@ describe('CanvasAuthGate', () => {
       expect.objectContaining({ credentials: 'include', cache: 'no-store' }),
     );
     expect(
-      screen
-        .getByRole('link', { name: 'Continue with Google' })
-        .getAttribute('href'),
-    ).toBe(
-      'http://127.0.0.1:4000/auth/google/start?returnTo=%2Fautograph%2Fcreate',
-    );
+      (
+        await screen.findByRole('link', { name: 'Continue with email' })
+      ).getAttribute('href'),
+    ).toBe('/auth/email?returnTo=%2Fautograph%2Fcreate');
   });
 });
 

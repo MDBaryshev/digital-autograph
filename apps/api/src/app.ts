@@ -17,16 +17,6 @@ import { apiLoggerOptions, registerSafeApiErrors } from './logging';
 import { registerApiMetrics } from './metrics';
 import { registerOAuthRequestLimits } from './auth/request-limits';
 import {
-  registerGoogleRoutes,
-  type GoogleHttpConfig,
-} from './auth/google-http';
-import type { GoogleLoginService } from './auth/google-login';
-import {
-  registerTelegramRoutes,
-  type TelegramHttpConfig,
-} from './auth/telegram-http';
-import type { TelegramLoginService } from './auth/telegram-login';
-import {
   registerYandexRoutes,
   type YandexHttpConfig,
 } from './auth/yandex-http';
@@ -59,7 +49,8 @@ import {
   type HttpSessionService,
 } from './auth/http';
 import { registerTestAuthRoutes } from './auth/test-auth-http';
-import type { SessionService } from '@digital-autograph/auth';
+import type { EmailAuthService, SessionService } from '@digital-autograph/auth';
+import { registerEmailAuthRoutes } from './auth/email-http';
 import type {
   NotificationService,
   ShareRepository,
@@ -74,8 +65,6 @@ export function buildApi(
   database: DatabaseProbe,
   sessions: HttpSessionService,
   authConfig: AuthHttpConfig,
-  google?: { login: GoogleLoginService; config: GoogleHttpConfig },
-  telegram?: { login: TelegramLoginService; config: TelegramHttpConfig },
   walls?: WallService,
   autographs?: AutographService,
   moderation?: ModerationService,
@@ -103,6 +92,7 @@ export function buildApi(
   yandex?: { login: YandexLoginService; config: YandexHttpConfig },
   vkId?: { login: VkIdLoginService; config: VkIdHttpConfig },
   loggerStream?: Parameters<typeof apiLoggerOptions>[0],
+  emailAuth?: EmailAuthService,
 ) {
   const app = Fastify({
     logger: apiLoggerOptions(loggerStream),
@@ -112,6 +102,11 @@ export function buildApi(
   registerOAuthRequestLimits(app);
 
   app.addHook('onSend', async (_request, reply, payload) => {
+    if (
+      _request.routeOptions.url?.startsWith('/auth/') ||
+      _request.routeOptions.url?.startsWith('/me/connections/')
+    )
+      reply.header('Cache-Control', 'no-store');
     reply.header('X-Content-Type-Options', 'nosniff');
     reply.header('X-Frame-Options', 'DENY');
     reply.header(
@@ -163,8 +158,13 @@ export function buildApi(
   registerFirstUseEnforcement(app, legal, authConfig.firstUseEnforced ?? false);
   app.get('/auth/providers', async (_request, reply) => {
     reply.header('Cache-Control', 'no-store');
-    return { yandex: !!yandex, vk_id: !!vkId };
+    return {
+      yandex: !!yandex,
+      vk_id: !!vkId,
+      ...(emailAuth && { email: true }),
+    };
   });
+  if (emailAuth) registerEmailAuthRoutes(app, emailAuth, authConfig);
   if (yandex)
     registerYandexRoutes(app, yandex.login, authConfig, yandex.config);
   if (vkId) registerVkIdRoutes(app, vkId.login, authConfig, vkId.config);
@@ -182,10 +182,6 @@ export function buildApi(
       testAuth.webOrigin,
     );
   }
-  if (google)
-    registerGoogleRoutes(app, google.login, authConfig, google.config);
-  if (telegram)
-    registerTelegramRoutes(app, telegram.login, authConfig, telegram.config);
   if (walls) registerWallRoutes(app, walls);
   if (claims)
     registerFreeClaimRoutes(app, claims, incidentControls.disableFreeClaims);

@@ -107,16 +107,15 @@ describe('Placement history UI', () => {
       vi.fn(async (input: string) =>
         input.endsWith('/auth/me')
           ? json({ error: { code: 'UNAUTHENTICATED' } }, 401)
-          : json({}),
+          : json({ email: true }),
       ),
     );
     render(<UserPlacementHistory apiOrigin={origin} />);
     expect(
-      await screen.findByRole('link', { name: 'Continue with Google' }),
-    ).toHaveProperty(
-      'href',
-      `${origin}/auth/google/start?returnTo=%2Fme%2Fplacements`,
-    );
+      (
+        await screen.findByRole('link', { name: 'Continue with email' })
+      ).getAttribute('href'),
+    ).toBe(`/auth/email?returnTo=%2Fme%2Fplacements`);
   });
 
   it('identifies when the personal history reaches its result limit', async () => {

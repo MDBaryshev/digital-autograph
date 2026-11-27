@@ -454,7 +454,6 @@ export const messages: Record<string, string> = {
   'Sign in to continue': 'Войти, чтобы продолжить',
   'Your autograph creation will start after sign-in.':
     'Создание автографа начнётся после входа.',
-  'Continue with Google': 'Продолжить через Google',
   'Continue with Telegram': 'Продолжить через Telegram',
   'If sign-in cannot open inside this app, open this page in Safari or Chrome and try again.':
     'Если вход не открывается в этом приложении, открой страницу в Safari или Chrome и повтори попытку.',
@@ -700,9 +699,6 @@ export const messages: Record<string, string> = {
   'Sign-out could not be confirmed. Check your connection and retry.':
     'Не удалось подтвердить выход. Проверь соединение и повтори попытку.',
   'Sign-in': 'Вход',
-  'Google sign-in was cancelled.': 'Вход через Google отменён.',
-  'Google sign-in could not be completed.':
-    'Не удалось завершить вход через Google.',
   'Telegram sign-in was cancelled.': 'Вход через Telegram отменён.',
   'Telegram sign-in could not be completed.':
     'Не удалось завершить вход через Telegram.',
@@ -724,7 +720,6 @@ export const messages: Record<string, string> = {
     'Модерация временно недоступна. Обнови страницу.',
   'Sign in with a platform moderator account.':
     'Войди в аккаунт модератора платформы.',
-  'Sign in with Google': 'Войти через Google',
   'Sign in with Telegram': 'Войти через Telegram',
   'Pending autographs': 'Автографы на проверке',
   Pending: 'Ожидают проверки',
@@ -915,8 +910,8 @@ export const messages: Record<string, string> = {
     'Опубликованные документы представлены в оригинале на русском языке. Переключение языка интерфейса не переводит юридический текст.',
   'Before your first action': 'Перед первым действием',
   'Confirmations for supcube': 'Подтверждения для supcube',
-  'Confirm your age and read the service terms before creating an autograph or placing it on a Wall. Signing in with Google or Telegram does not mean accepting the terms.':
-    'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход через Google или Telegram не означает принятия условий.',
+  'Confirm your age and read the service terms before creating an autograph or placing it on a Wall. Signing in does not mean accepting the terms.':
+    'Для создания автографа и размещения на Wall подтвердите возраст и ознакомьтесь с условиями сервиса. Вход не означает принятия условий.',
   'An autograph is decorative content, not a legal signature. Do not upload a bank, official or other sensitive signature.':
     'Автограф — декоративный контент, а не юридическая подпись. Не загружайте банковскую, официальную или другую чувствительную подпись.',
   'Sign in to confirm the terms.': 'Войдите, чтобы подтвердить условия.',
@@ -1181,4 +1176,34 @@ export const messages: Record<string, string> = {
   'Could not confirm the change. Check your placement and try again.':
     'Не удалось подтвердить изменение. Проверь своё место и попробуй снова.',
   'Your autograph is published.': 'Твой автограф опубликован.',
+  'Continue with email': 'Продолжить с почтой',
+  'Use 15–128 characters. Spaces and password managers are supported.':
+    'Используйте от 15 до 128 символов. Можно использовать пробелы и менеджер паролей.',
+  'We will send a confirmation link. You will create your password after confirming your email.':
+    'Мы отправим ссылку для подтверждения. Вы создадите пароль после подтверждения почты.',
+  'If this address can be used, an email with a link will arrive shortly. Check your spam folder too.':
+    'Если адрес подходит, скоро придёт письмо со ссылкой. Проверьте также папку «Спам».',
+  'Your password is saved. Sign in with your email and password.':
+    'Пароль сохранён. Войдите с почтой и паролем.',
+  'This link is invalid or has expired. Request a new email.':
+    'Ссылка недействительна или устарела. Запросите новое письмо.',
+  'Could not complete the request. Please try again.':
+    'Не удалось выполнить запрос. Попробуйте ещё раз.',
+  'Could not confirm the password change. Try signing in with your new password or request a new reset email.':
+    'Не удалось подтвердить смену пароля. Попробуйте войти с новым паролем или запросите новое письмо для сброса пароля.',
+  'Email or password is incorrect.': 'Неверная почта или пароль.',
+  'Too many attempts. Please try again later.':
+    'Слишком много попыток. Повторите позже.',
+  'Passwords do not match.': 'Пароли не совпадают.',
+  'Other sign-in options': 'Другие способы входа',
+  'Forgot password?': 'Забыли пароль?',
+  'Sign-in options': 'Способы входа',
+  'Send email': 'Отправить письмо',
+  'Save password': 'Сохранить пароль',
+  'Please wait…': 'Подождите…',
+  'Repeat password': 'Повторите пароль',
+  'Set your password': 'Задайте пароль',
+  'Reset password': 'Восстановить пароль',
+  'Create an account': 'Создать аккаунт',
+  'Sign in with email': 'Войти по почте',
 };

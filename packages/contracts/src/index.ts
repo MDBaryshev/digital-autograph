@@ -17,3 +17,5 @@ export { firstUseStateSchema, type FirstUseState } from './first-use';
 
 export * from './checkout';
 export * from './payment-status';
+
+export * from './email-auth';

@@ -9,9 +9,8 @@ const base = {
   SESSION_TTL_SECONDS: '1209600',
   TRUSTED_WEB_ORIGINS: 'http://127.0.0.1:3000',
   WEB_ORIGIN: 'http://127.0.0.1:3000',
-  GOOGLE_CLIENT_ID: 'test-client',
-  GOOGLE_CLIENT_SECRET: 'test-secret',
-  GOOGLE_REDIRECT_URI: 'http://127.0.0.1:4000/auth/google/callback',
+
+  API_PUBLIC_ORIGIN: 'http://127.0.0.1:4000',
   TELEGRAM_CLIENT_ID: 'test-client',
   TELEGRAM_CLIENT_SECRET: 'test-secret',
   TELEGRAM_REDIRECT_URI: 'http://127.0.0.1:4000/auth/telegram/callback',

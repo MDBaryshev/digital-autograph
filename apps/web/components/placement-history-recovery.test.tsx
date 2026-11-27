@@ -225,7 +225,8 @@ it('discards private history immediately on origin change and shows sign-in if t
     .mockResolvedValueOnce(json({ user: {} }))
     .mockResolvedValueOnce(json({ items: [ownPlacement] }))
     .mockReturnValueOnce(pending.promise)
-    .mockResolvedValueOnce(json({ error: { code: 'UNAUTHENTICATED' } }, 401));
+    .mockResolvedValueOnce(json({ error: { code: 'UNAUTHENTICATED' } }, 401))
+    .mockImplementation(async () => json({ email: true }));
   vi.stubGlobal('fetch', fetcher);
   const view = render(<UserPlacementHistory apiOrigin={origin} />);
   expect(await screen.findByText('Current placement')).toBeTruthy();
@@ -239,12 +240,10 @@ it('discards private history immediately on origin change and shows sign-in if t
   ).toBeTruthy();
   expect(screen.queryByText('Current placement')).toBeNull();
   expect(
-    screen
-      .getByRole('link', { name: 'Continue with Google' })
-      .getAttribute('href'),
-  ).toBe(
-    'https://other-api.test/auth/google/start?returnTo=%2Fme%2Fplacements',
-  );
+    (
+      await screen.findByRole('link', { name: 'Continue with email' })
+    ).getAttribute('href'),
+  ).toBe('/auth/email?returnTo=%2Fme%2Fplacements');
 });
 
 it.each(['public', 'private'] as const)(

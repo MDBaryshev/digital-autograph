@@ -173,7 +173,7 @@ test('a cube supports face controls, dragging, keyboard rotation and focus retur
   await page.mouse.move(
     box.x + box.width / 2 + 140,
     box.y + box.height / 2 + 30,
-    { steps: 10 },
+    { steps: 3 },
   );
   await page.mouse.up();
   await expect(

@@ -1,6 +1,6 @@
 # Authentication Core
 
-PR #3 provides provider-independent, PostgreSQL-backed authentication. Google and Telegram login verify the provider assertion, resolve a User, then call `SessionService.createSession(userId)` and set the returned credential with `setSessionCookie`. There is no public session-creation endpoint.
+Authentication is provider-independent and backed by PostgreSQL. Yandex verifies the provider assertion before creating a local session; email/password requires mailbox confirmation before credential creation. There is no public session-creation endpoint.
 
 ## Credential and persistence
 
@@ -27,22 +27,30 @@ Production uses the host-only `__Host-da_session` cookie with `HttpOnly`, `Secur
 
 Normal request logging contains method and path, with query parameters stripped before serialization so callback `code` and `state` do not enter API logs. Fastify redacts Cookie and Authorization header paths; service and repository code never log raw credentials or hashes. API responses never include raw credentials or stored hashes.
 
-## Google sign-in
+## Current sign-in providers
 
-`GET /auth/google/start` is an anonymous top-level browser navigation. It normalizes `returnTo` to a local path (default `/`), generates independent 256-bit random state, nonce, and browser-binding values, and writes only their SHA-256 hashes to `oauth_login_attempts`. The attempt expires after ten minutes and has a one-time `consumed_at` transition. The browser receives the binding value in a short-lived HttpOnly, `SameSite=Lax`, `Path=/` cookie; production uses `__Host-` and Secure, staging uses Secure. The authorization request uses Google's code flow with only `openid`, no offline access or forced consent.
+Yandex ID and verified email/password are the selected public methods. See
+[Yandex authentication](yandex-id-authentication.md),
+[email authentication](email-authentication.md) and the
+[operator setup](../operations/auth-provider-setup.md). Google OAuth and Telegram
+login routes/adapters are removed. Historic social identities and user-owned data
+are preserved; there is no automatic account merge or recovery by provider email.
 
-Google navigates to `GET /auth/google/callback`. The API hashes the returned state, requires the browser-binding cookie to match the persisted hash with a timing-safe comparison, checks that the attempt is active, then atomically consumes it before exchanging the code. A denial also consumes a valid attempt. The Google adapter exchanges the code server-side and uses the official Google authentication library to verify the ID token signature, issuer, audience, issue/expiry times, and authorized presenter when supplied. The application compares the verified ID token nonce to the attempt's stored nonce hash. A copied callback URL cannot authenticate in another browser without the binding cookie; replay cannot consume the attempt twice. Callback responses use `no-store` and `Referrer-Policy: no-referrer` so the callback URL is not forwarded to the web page as a referrer. The existing unsafe-request Origin check is for cookie-authenticated mutations; the callback is a GET navigation secured by state, browser binding, nonce, and one-time consumption.
+## Optional Telegram connection
 
-The provider-independent `IdentityService` resolves the verified Google `sub` through `(provider, provider_user_id)`. It never uses email to merge accounts. New User plus social identity are inserted in one PostgreSQL transaction; an advisory transaction lock serializes the same provider identity, while the database unique index remains the final invariant. A linked disabled or anonymized User is rejected, and SessionService rechecks active status when it creates the local session. Existing authenticated callers cannot start Google login or replace their current account through a callback; explicit account linking is separate future work. Successful callback sets the normal session cookie and redirects to `WEB_ORIGIN` plus the validated local path. Failure redirects to `/auth/error` with only a stable application code. Google codes, access tokens, refresh tokens, and raw ID tokens are never persisted; refresh tokens are not requested.
+Only an authenticated user can POST `/me/connections/telegram/start`. The Origin
+check applies before mutation. A ten-minute PKCE attempt uses a separate provider
+namespace `telegram_link` and is bound in PostgreSQL to the exact user and session.
+State, nonce, verifier and browser-binding are checked and consumed once before
+server-side Telegram verification. No session or primary credential is issued.
 
-The Google client ID, client secret, callback URL, and canonical web origin are server-only settings. Web and API must be deployed on the same site for the current `SameSite=Lax` session and OAuth cookies. The callback host must match the host that set the browser-binding cookie. Expired attempt rows become unusable immediately; the worker removes them in [bounded cleanup batches](../operations/oauth-attempt-cleanup.md).
+The callback rechecks the active user and exact session after provider I/O under
+the lifecycle locks. A Telegram subject already connected elsewhere cannot be
+transferred. PostgreSQL enforces one Telegram subject per user and uniqueness of
+the subject. No name, avatar or phone is requested or published.
 
-## Telegram sign-in
-
-Telegram login uses its [current OIDC Authorization Code Flow](https://core.telegram.org/bots/telegram-login), not the legacy iframe/HMAC widget. The API discovers `https://oauth.telegram.org/.well-known/openid-configuration` on first use and requests only `openid`. The OIDC adapter uses `openid-client` for discovery, authorization URL construction, code exchange with HTTP Basic client authentication, ID-token claim checks, and JWKS signature verification. It does not call UserInfo; Telegram returns the requested claims in the ID token. The adapter requires the expected issuer, configured audience, expiration, and nonce. A failed discovery request can be retried by a later login.
-
-`GET /auth/telegram/start` creates the same PostgreSQL `oauth_login_attempts` record used by Google with provider `telegram`, ten-minute expiry, and one-time consumption. State, nonce, browser binding, and a PKCE verifier are independent cryptographically random values. PostgreSQL stores only their SHA-256 hashes; the nullable `pkce_verifier_hash` remains null for Google attempts. The S256 challenge goes to Telegram. The browser receives two temporary HttpOnly, SameSite=Lax, Path=/ cookies: `da_telegram_oauth` holds the browser binding, and `da_telegram_pkce` holds the verifier and nonce. Staging uses Secure; production uses Secure and `__Host-` names. Their lifetime does not exceed the attempt lifetime.
-
-`GET /auth/telegram/callback` requires the returned state and both temporary cookies. The attempt repository looks up `(provider, state_hash)`; the service compares browser binding, PKCE verifier, and nonce hashes before atomically consuming the attempt. A valid denial also consumes it. Only then does the adapter exchange the code server-side, sending the original verifier and checking the signed ID token, including its nonce. Both temporary cookies are cleared on callback. A copied callback URL alone cannot complete login in another browser, and a Google attempt cannot be claimed by Telegram or vice versa.
-
-The provider-independent `IdentityService` uses verified Telegram `sub` with provider `telegram` as the sole external identity key. Username, name, picture, and the separate profile `id` do not determine identity or link accounts. First login transactionally creates a User and identity; repeated and concurrent logins reuse the User. A disabled or anonymized User cannot log in. The existing `SessionService` issues the application credential, which is set with the canonical session-cookie helper. Existing authenticated users cannot start or complete a replacement Telegram login; explicit linking is deferred. Success redirects to `WEB_ORIGIN` plus a normalized local path, while failures expose only `TELEGRAM_AUTH_CANCELLED`, `TELEGRAM_AUTH_FAILED`, or `ALREADY_AUTHENTICATED`. Authorization codes, access tokens, ID tokens, and raw PKCE verifiers are never persisted or logged. Expired attempts are unusable immediately; the worker removes them in [bounded cleanup batches](../operations/oauth-attempt-cleanup.md).
+DELETE `/me/connections/telegram` removes the private connection and all that user's
+pending/claimed link attempts under the same user lock. `connect` checks the
+durable claimed attempt inside that lock, so an in-flight provider callback cannot
+reconnect after a successful disconnect. This cancellation record is ephemeral,
+not an authentication or financial ledger.
