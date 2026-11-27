@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "issue": "EGO-209",
+  "status": "unpublished/legal-review-required",
+  "artifact_type": "proposed-clauses-not-canonical-editions",
+  "date": "2026-11-27",
+  "base_commit": "41ce212a133b5b075dbf1d65a572c9096d478d35",
+  "code_review_base": {
+    "pull_request": "https://github.com/MDBaryshev/digital-autograph/pull/28",
+    "commit": "839081836b56acf194b8b186a151f4b43ddc78e3",
+    "note": "Security build prerequisite only; legal source hashes remain based on base_commit. No publication acceptance is implied."
+  },
+  "publication_registry_changed": false,
+  "canonical_sources_changed": false,
+  "hash_semantics": "sha256 is exact Git blob bytes at base_commit; working_tree_sha256 records local checkout bytes separately because of line-ending conversion",
+  "sources": [
+    {
+      "path": "docs/legal/public/public-offer-destka-20261010.md",
+      "sha256": "45ac7dd0d5a258e6684db6298f03f55cf60ea4f87f06e10ef8f2efa35394d5be",
+      "working_tree_sha256": "45ac7dd0d5a258e6684db6298f03f55cf60ea4f87f06e10ef8f2efa35394d5be"
+    },
+    {
+      "path": "docs/legal/public/content-rules-destka-20261010.md",
+      "sha256": "9b096d9b5040f6f56b3919a948f4c2baeb063c0764d38317604dc57f3a4fe4b5",
+      "working_tree_sha256": "9b096d9b5040f6f56b3919a948f4c2baeb063c0764d38317604dc57f3a4fe4b5"
+    },
+    {
+      "path": "docs/legal/public/user-agreement-destka-20261010.md",
+      "sha256": "683da46a621c5ddf0fa9c9f8e5da6947be9110e0eddffbb036c76ef814b54107",
+      "working_tree_sha256": "683da46a621c5ddf0fa9c9f8e5da6947be9110e0eddffbb036c76ef814b54107"
+    },
+    {
+      "path": "docs/legal/public/refund-policy-destka-20261010.md",
+      "sha256": "9249777a71aacc018162a1261fb75f44af3c764ebe18668b5c10d9b44397b7fc",
+      "working_tree_sha256": "9249777a71aacc018162a1261fb75f44af3c764ebe18668b5c10d9b44397b7fc"
+    },
+    {
+      "path": "docs/legal/destka-source-map.json",
+      "sha256": "429b9041477dd381c6f1ef576dad06eeaae446486f3bd16b4cbd62a641154128",
+      "working_tree_sha256": "429b9041477dd381c6f1ef576dad06eeaae446486f3bd16b4cbd62a641154128"
+    },
+    {
+      "path": "docs/legal/destka-source-integrity.json",
+      "sha256": "9500f4692f7c6e764581706ae5404fbd57121f4f40118486352f89b859db3fd9",
+      "working_tree_sha256": "9500f4692f7c6e764581706ae5404fbd57121f4f40118486352f89b859db3fd9"
+    },
+    {
+      "path": "packages/config/src/legal-documents.json",
+      "sha256": "fa745e96413faba6caedc519d5af79dcb3c18c98d9e9ded2834ae1f404c48306",
+      "working_tree_sha256": "ddb1ace0aa2e20ac1f644488d67ee6bee9956b0616ce4233ac4ac47101513695"
+    }
+  ],
+  "drafts": [
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/proposed-clauses.md",
+      "sha256": "bea620b74d94861820cdc9c2d13cac698c2fb96be0a731dd6ff22442629dc319"
+    },
+    {
+      "path": "docs/legal/drafts/ugc-safety-20261127/review-notes.md",
+      "sha256": "1c912c5830253f978180b01c2f2163f7a524a8721fb98de70118e077c309d527"
+    }
+  ],
+  "review": {
+    "skeptical_second_pass": "completed-with-three-targeted-revisions",
+    "legal_acceptance": "required",
+    "implementation_acceptance": "required",
+    "final_revision_confirmation": "confirmed-exact-files-and-hashes",
+    "revisions": [
+      "Offer 5.14 preserves the 5.8–5.12 financial protections",
+      "General prohibition of unlawful promotion outside narcotics preserved",
+      "Analogues, precursors, plants/parts and new potentially dangerous psychoactive substances included",
+      "Agent consistency review is not owner or legal approval"
+    ]
+  },
+  "external_sources": [
+    {
+      "url": "https://epp.genproc.gov.ru/ru/proc_33/activity/legal-education/explain/e322581/",
+      "kind": "official-prosecutor-explanation-historical-only",
+      "observed": "read",
+      "published": "2021-08-19"
+    },
+    {
+      "url": "https://epp.genproc.gov.ru/ru/proc_59/activity/legal-education/explain/e8523684/",
+      "kind": "official-prosecutor-explanation",
+      "observed": "read",
+      "published": "2026-06-04"
+    },
+    {
+      "url": "https://publication.pravo.gov.ru/document/0001202408080017",
+      "kind": "official-publication-reference",
+      "observed": "timeout-content-not-read"
+    },
+    {
+      "url": "https://www.ksrf.ru/news/38266/",
+      "kind": "official-court-reference",
+      "observed": "timeout-content-not-read"
+    }
+  ]
+}
