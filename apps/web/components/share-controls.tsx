@@ -1,18 +1,25 @@
 'use client';
 import { useLocale } from './locale-provider';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { notificationRequest as request } from '../lib/notification-api';
 import styles from './notification-panel.module.css';
-export function ShareControls({
-  apiOrigin,
-  wallId,
-  slots,
-}: {
+type ShareControlsProps = {
   apiOrigin: string;
   wallId: string;
   slots: Array<{ id: string; position: number }>;
-}) {
+};
+
+export function ShareControls(props: ShareControlsProps) {
+  return (
+    <ScopedShareControls
+      key={JSON.stringify([props.apiOrigin, props.wallId])}
+      {...props}
+    />
+  );
+}
+
+function ScopedShareControls({ apiOrigin, wallId, slots }: ShareControlsProps) {
   const { t } = useLocale();
 
   const [slotId, setSlotId] = useState('');
@@ -21,17 +28,36 @@ export function ShareControls({
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
-  async function action(fn: () => Promise<void>) {
-    if (busy) return;
+  const operation = useRef<AbortController | null>(null);
+  const isCurrent = (controller: AbortController) =>
+    operation.current === controller && !controller.signal.aborted;
+  useEffect(
+    () => () => {
+      operation.current?.abort();
+      operation.current = null;
+    },
+    [],
+  );
+  async function action(fn: (controller: AbortController) => Promise<void>) {
+    if (operation.current) return;
+    const controller = new AbortController();
+    operation.current = controller;
     setBusy(true);
     setError('');
     setNotice('');
     try {
-      await fn();
+      await fn(controller);
     } catch (e) {
-      setError((e as Error).message);
+      if (isCurrent(controller))
+        setError(
+          e instanceof Error ? e.message : 'Request failed. Please retry.',
+        );
     } finally {
-      setBusy(false);
+      if (operation.current === controller) {
+        operation.current = null;
+        setBusy(false);
+      }
+      controller.abort();
     }
   }
   const url =
@@ -52,7 +78,7 @@ export function ShareControls({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          void action(async () => {
+          void action(async (controller) => {
             const result = await request<{ id: string }>(
               apiOrigin,
               '/me/shares',
@@ -61,7 +87,9 @@ export function ShareControls({
                 wallId,
                 ...(slotId ? { slotId } : {}),
               },
+              controller.signal,
             );
+            if (!isCurrent(controller)) return;
             setShareId(result.id);
             setCopied(false);
           });
@@ -98,12 +126,13 @@ export function ShareControls({
             type="button"
             disabled={busy}
             onClick={() =>
-              void action(async () => {
+              void action(async (controller) => {
                 void request(
                   apiOrigin,
                   `/public/shares/${shareId}/interactions`,
                   'POST',
                   { kind: 'share_clicked', dedupeKey: crypto.randomUUID() },
+                  controller.signal,
                 ).catch(() => {});
                 if (navigator.share) {
                   try {
@@ -113,11 +142,12 @@ export function ShareControls({
                     if (e instanceof Error && e.name === 'AbortError') return;
                   }
                 }
+                if (!isCurrent(controller)) return;
                 try {
                   await navigator.clipboard.writeText(url);
-                  setCopied(true);
+                  if (isCurrent(controller)) setCopied(true);
                 } catch {
-                  setError(`Copy this link: ${url}`);
+                  if (isCurrent(controller)) setError(`Copy this link: ${url}`);
                 }
               })
             }
@@ -132,9 +162,15 @@ export function ShareControls({
             type="button"
             disabled={busy}
             onClick={() =>
-              void action(async () => {
-                await request(apiOrigin, `/me/shares/${shareId}`, 'DELETE');
-                setShareId('');
+              void action(async (controller) => {
+                await request(
+                  apiOrigin,
+                  `/me/shares/${shareId}`,
+                  'DELETE',
+                  undefined,
+                  controller.signal,
+                );
+                if (isCurrent(controller)) setShareId('');
               })
             }
           >
@@ -146,13 +182,15 @@ export function ShareControls({
         type="button"
         disabled={busy}
         onClick={() =>
-          void action(async () => {
+          void action(async (controller) => {
             await request(
               apiOrigin,
               `/me/notifications/walls/${wallId}`,
               'PUT',
               { enabled: true },
+              controller.signal,
             );
+            if (!isCurrent(controller)) return;
             setNotice(
               'Wall reminders enabled. Manage channels in Notifications.',
             );
@@ -165,14 +203,16 @@ export function ShareControls({
         type="button"
         disabled={busy}
         onClick={() =>
-          void action(async () => {
+          void action(async (controller) => {
             await request(
               apiOrigin,
               `/me/notifications/walls/${wallId}`,
               'PUT',
               { enabled: false },
+              controller.signal,
             );
-            setNotice('Unsubscribed from Wall reminders.');
+            if (isCurrent(controller))
+              setNotice('Unsubscribed from Wall reminders.');
           })
         }
       >
